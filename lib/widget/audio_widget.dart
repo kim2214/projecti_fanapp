@@ -13,16 +13,19 @@ class AudioWidget extends StatefulWidget {
 }
 
 class _AudioWidgetState extends State<AudioWidget> {
-  String imgUrl =
-      'https://firebasestorage.googleapis.com/v0/b/new-ml-6c02d.appspot.com/o/lessonAssets%2Fcs3%2Fch7%2Fls4%2Fearth.jpeg?alt=media&token=b9ce6139-5e08-495d-b74f-9dfce09e86e2';
-  String url =
-      'https://files.freemusicarchive.org//storage-freemusicarchive-org//tracks//CAsMyXsiK0RkmsBG2K75J4wdewYDJElKJCe1tSQM.mp3';
+  // String imgUrl =
+  //     'https://firebasestorage.googleapis.com/v0/b/new-ml-6c02d.appspot.com/o/lessonAssets%2Fcs3%2Fch7%2Fls4%2Fearth.jpeg?alt=media&token=b9ce6139-5e08-495d-b74f-9dfce09e86e2';
+  // String url =
+  //     'https://files.freemusicarchive.org//storage-freemusicarchive-org//tracks//CAsMyXsiK0RkmsBG2K75J4wdewYDJElKJCe1tSQM.mp3';
 
   // Declare AudioPlayer variable
   late AudioPlayer player;
   bool isPlaying = false;
   double volume = 0.5;
   bool isVolumeDisabled = false;
+  String? musicTitle = '';
+  String? imgUrl;
+
 
   @override
   void initState() {
@@ -32,7 +35,7 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   Future<String?> extractAudioUrl(String videoUrl) async {
     var youtube = YoutubeExplode();
-    // var video = await youtube.videos.get(videoUrl);
+    // video = await youtube.videos.get(videoUrl);
 
     var streamManifest =
         await youtube.videos.streamsClient.getManifest(videoUrl);
@@ -44,12 +47,55 @@ class _AudioWidgetState extends State<AudioWidget> {
     return audioStream.url.toString();
   }
 
+  Future<String> getVideoTitle(String videoUrl) async {
+    try {
+      var youtube = YoutubeExplode();
+      var video = await youtube.videos.get(videoUrl);
+
+      // Get the video title
+      var title = video.title;
+
+
+      // Close the YoutubeExplode client
+      youtube.close();
+
+      return title;
+    } catch (e) {
+      print('Error: $e');
+      return 'Error retrieving video title';
+    }
+  }
+
+  Future<String> getVideoImage(String videoUrl) async {
+    try {
+      var youtube = YoutubeExplode();
+      var video = await youtube.videos.get(videoUrl);
+
+      // Get the video title
+      var imageUrl = video.thumbnails.maxResUrl;
+
+
+      // Close the YoutubeExplode client
+      youtube.close();
+
+      return imageUrl;
+    } catch (e) {
+      print('Error: $e');
+      return 'Error retrieving video title';
+    }
+  }
+
   void _initialize() async {
     // Instantiate AudioPlayer class
     player = AudioPlayer();
 
     String? audioURL =
-        await extractAudioUrl('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+        await extractAudioUrl('https://www.youtube.com/watch?v=QXbykPTLXuc');
+
+    musicTitle = await getVideoTitle('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+
+    imgUrl = await getVideoImage('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+
 
     // Set the audio url
     await player.setUrl(audioURL!);
@@ -122,13 +168,15 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   @override
   Widget build(BuildContext context) {
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Text(musicTitle!),
         SizedBox(
           height: 200,
           width: 300,
-          child: Image.network(imgUrl),
+          child: Image.network(imgUrl ?? ''),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -173,7 +221,7 @@ class _AudioWidgetState extends State<AudioWidget> {
                       '$remaining',
                   style: Theme.of(context)
                       .textTheme
-                      .caption
+                      .labelSmall
                       ?.copyWith(color: Colors.white),
                 ),
               ],
