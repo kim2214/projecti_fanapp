@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:stellive_music/widget/audio_widget.dart';
+import 'package:stellive_music/widget/main_page.dart';
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
             //   '$_counter',
             //   style: Theme.of(context).textTheme.headlineMedium,
             // ),
-            AudioWidget(),
+            MainPageWidget(),
           ],
         ),
       ),

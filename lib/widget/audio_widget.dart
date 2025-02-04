@@ -26,7 +26,6 @@ class _AudioWidgetState extends State<AudioWidget> {
   String? musicTitle = '';
   String? imgUrl;
 
-
   @override
   void initState() {
     super.initState();
@@ -55,7 +54,6 @@ class _AudioWidgetState extends State<AudioWidget> {
       // Get the video title
       var title = video.title;
 
-
       // Close the YoutubeExplode client
       youtube.close();
 
@@ -74,7 +72,6 @@ class _AudioWidgetState extends State<AudioWidget> {
       // Get the video title
       var imageUrl = video.thumbnails.maxResUrl;
 
-
       // Close the YoutubeExplode client
       youtube.close();
 
@@ -92,10 +89,10 @@ class _AudioWidgetState extends State<AudioWidget> {
     String? audioURL =
         await extractAudioUrl('https://www.youtube.com/watch?v=QXbykPTLXuc');
 
-    musicTitle = await getVideoTitle('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+    musicTitle =
+        await getVideoTitle('https://www.youtube.com/watch?v=XY4mPKSe1zE');
 
     imgUrl = await getVideoImage('https://www.youtube.com/watch?v=XY4mPKSe1zE');
-
 
     // Set the audio url
     await player.setUrl(audioURL!);
@@ -168,7 +165,6 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
