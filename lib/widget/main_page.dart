@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:stellive_music/widget/components/streamer_card.dart';
 
 class MainPageWidget extends StatefulWidget {
   const MainPageWidget({super.key});
@@ -12,16 +12,13 @@ class _MainPageWidgetState extends State<MainPageWidget> {
   @override
   void initState() {
     super.initState();
-    // FlutterNativeSplash.remove();
   }
 
   @override
   Widget build(BuildContext context) {
     return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("이곳은 메인페이지 입니다"),
-      ],
+      children: [StreamerCard()],
     );
   }
 }

@@ -9,6 +9,9 @@ class ScreenBaseWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: BackButton(),
+      ),
       body: Center(child: widget),
     );
   }
