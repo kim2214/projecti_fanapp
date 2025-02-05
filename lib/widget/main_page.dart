@@ -12,7 +12,7 @@ class _MainPageWidgetState extends State<MainPageWidget> {
   @override
   void initState() {
     super.initState();
-    FlutterNativeSplash.remove();
+    // FlutterNativeSplash.remove();
   }
 
   @override
