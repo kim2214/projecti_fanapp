@@ -16,9 +16,17 @@ class _MainPageWidgetState extends State<MainPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [StreamerCard()],
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.8,
+        mainAxisSpacing: 20,
+        crossAxisSpacing: 0,
+      ),
+      itemCount: 6,
+      itemBuilder: (BuildContext context, int index) {
+        return StreamerCard();
+      },
     );
   }
 }
