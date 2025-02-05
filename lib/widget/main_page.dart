@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stellive_music/widget/components/streamer_card.dart';
+import 'package:honeyz_fan_app/widget/components/streamer_card.dart';
 
 class MainPageWidget extends StatefulWidget {
   const MainPageWidget({super.key});

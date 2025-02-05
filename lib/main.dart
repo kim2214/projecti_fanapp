@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:stellive_music/widget/main_page.dart';
-import 'package:stellive_music/widget/screen_base_widget.dart';
+import 'package:honeyz_fan_app/widget/main_page.dart';
+import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
