@@ -16,16 +16,14 @@ class _MainPageWidgetState extends State<MainPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.8,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 0,
-      ),
+    return ListView.builder(
       itemCount: 6,
-      itemBuilder: (BuildContext context, int index) {
-        return StreamerCard();
+      padding: EdgeInsets.all(5.0),
+      itemBuilder: (context, index) {
+        return Container(
+            margin: EdgeInsets.symmetric(vertical: 20.0),
+            decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+            child: StreamerCard());
       },
     );
   }
