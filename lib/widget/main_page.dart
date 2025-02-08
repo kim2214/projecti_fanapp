@@ -21,9 +21,12 @@ class _MainPageWidgetState extends State<MainPageWidget> {
       padding: EdgeInsets.all(5.0),
       itemBuilder: (context, index) {
         return Container(
-            margin: EdgeInsets.symmetric(vertical: 20.0),
-            decoration: BoxDecoration(border: Border.all(color: Colors.black)),
-            child: StreamerCard());
+          margin: EdgeInsets.symmetric(vertical: 20.0),
+          decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+          child: StreamerCard(
+            index: index,
+          ),
+        );
       },
     );
   }
