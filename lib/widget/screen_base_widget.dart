@@ -10,7 +10,9 @@ class ScreenBaseWidget extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        scrolledUnderElevation: 0.0,
         leading: BackButton(),
+        backgroundColor: Colors.white,
       ),
       body: Center(child: widget),
     );
