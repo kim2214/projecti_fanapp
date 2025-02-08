@@ -41,6 +41,7 @@ dependencies:
 #  audioplayers: ^5.2.1
   just_audio: ^0.9.36
   logging: any
+  go_router: ^14.6.0
 
 dev_dependencies:
   flutter_test:
