@@ -22,7 +22,20 @@ class _MainPageWidgetState extends State<MainPageWidget> {
       itemBuilder: (context, index) {
         return Container(
           margin: EdgeInsets.symmetric(vertical: 20.0),
-          decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.black54,
+            //     blurRadius: 20.0,
+            //     spreadRadius: -20.0,
+            //     offset: Offset(0.0, 15.0),
+            //   )
+            // ],
+            borderRadius: BorderRadius.all(
+              Radius.circular(10.0),
+            ),
+          ),
           child: StreamerCard(
             index: index,
           ),
