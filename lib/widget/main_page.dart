@@ -16,29 +16,37 @@ class _MainPageWidgetState extends State<MainPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: 6,
-      padding: EdgeInsets.all(5.0),
-      itemBuilder: (context, index) {
-        return Container(
-          margin: EdgeInsets.symmetric(vertical: 20.0),
-          padding: EdgeInsets.all(20.0),
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFF5E88).withOpacity(0.8),
-                offset: Offset(0.0, 0.0),
-              )
-            ],
-            borderRadius: BorderRadius.all(
-              Radius.circular(10.0),
-            ),
+    return Column(
+      children: [
+        Image.asset('assets/honeyz_logo.png'),
+        Expanded(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: 6,
+            padding: EdgeInsets.all(5.0),
+            itemBuilder: (context, index) {
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: 20.0),
+                padding: EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFF5E88).withOpacity(0.8),
+                      offset: Offset(0.0, 0.0),
+                    )
+                  ],
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(10.0),
+                  ),
+                ),
+                child: StreamerCard(
+                  index: index,
+                ),
+              );
+            },
           ),
-          child: StreamerCard(
-            index: index,
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
