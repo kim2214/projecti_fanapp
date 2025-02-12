@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:honeyz_fan_app/router.dart';
@@ -34,9 +35,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  void preload() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+  }
+
   @override
   void initState() {
     super.initState();
+    preload();
     FlutterNativeSplash.remove();
   }
 
