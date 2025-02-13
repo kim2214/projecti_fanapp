@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:honeyz_fan_app/widget/main_page.dart';
+import 'package:honeyz_fan_app/widget/honeyz_page.dart';
 import 'package:honeyz_fan_app/widget/schedule_page.dart';
 
 class ScreenBaseWidget extends StatefulWidget {
@@ -22,7 +22,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
 
   final List<Widget> _screens = [
     SchedulePageWidget(),
-    MainPageWidget(),
+    HoneyzPageWidget(),
     Text('두번쨰'),
   ];
 

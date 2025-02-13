@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/model/honeyz_model.dart';
 
 class StreamerDetail extends StatelessWidget {
-  const StreamerDetail({super.key});
+  final HoneyzModel honeyz;
+
+  const StreamerDetail({super.key, required this.honeyz});
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +20,16 @@ class StreamerDetail extends StatelessWidget {
         ),
         backgroundColor: Colors.white,
       ),
-      body: Column(
-        children: [
-          Image.asset('assets/damyui_profile.png'),
-          SizedBox(
-            height: 20,
-          ),
-          Text('담유이'),
-        ],
+      body: Center(
+        child: Column(
+          children: [
+            Image.asset('assets/${honeyz.profileName}_profile.png'),
+            SizedBox(
+              height: 20,
+            ),
+            Text(honeyz.name!),
+          ],
+        ),
       ),
     );
   }
