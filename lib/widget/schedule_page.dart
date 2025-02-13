@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/model/schedule_model.dart';
 
 List<String> sequence = [
@@ -47,7 +49,6 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
       for (int i = 0; i < sequence.length; i++) {
         for (var snapshot in _snapshot.docs) {
-          print(snapshot.id);
           if (sequence[i] == snapshot.id) {
             _result.add(ScheduleModel.fromJson(snapshot.data()));
           }
@@ -67,7 +68,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
         Padding(
           padding: EdgeInsets.only(top: 30.0),
           child: Text(
-            "허니즈의 주간 스케줄 표 입니다.",
+            "허니즈 맴버들의 주간 스케줄 표 입니다.",
             style: TextStyle(fontSize: 17.0),
           ),
         ),
@@ -76,9 +77,11 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             //해당 부분은 data를 아직 받아 오지 못했을때 실행되는 부분
             if (snapshot.hasData == false) {
-              return Center(
-                child: CircularProgressIndicator(
-                  backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
+              return Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
+                  ),
                 ),
               );
             }
@@ -102,9 +105,15 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                   itemBuilder: (context, index) {
                     return SizedBox(
                       height: 350,
-                      child: ScheduleCard(
-                        imageURL: _result[index].scheduleURL!,
-                        index: index,
+                      child: InkWell(
+                        onTap: () {
+                          context.push(
+                              '/scheduleDetail?url=${_result[index].scheduleURL}&name=${nameList[index]}');
+                        },
+                        child: ScheduleCard(
+                          imageURL: _result[index].scheduleURL!,
+                          index: index,
+                        ),
                       ),
                     );
                   },
@@ -149,12 +158,23 @@ class ScheduleCard extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 5,
-            child: Image.network(
-              imageURL,
-              fit: BoxFit.fill,
-            ),
-          ),
+              flex: 5,
+              child: ExtendedImage.network(
+                imageURL,
+                fit: BoxFit.fill,
+                mode: ExtendedImageMode.gesture, // 줌/팬 모드 활성화
+                initGestureConfigHandler: (state) => GestureConfig(
+                  minScale: 1.0,
+                  maxScale: 5.0,
+                  speed: 1.0,
+                  initialScale: 1.0,
+                ),
+              )
+              // Image.network(
+              //   imageURL,
+              //   fit: BoxFit.fill,
+              // ),
+              ),
         ],
       ),
     );
