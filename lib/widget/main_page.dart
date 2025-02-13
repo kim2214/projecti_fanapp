@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:honeyz_fan_app/model/honeyz_model.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_card.dart';
 
 class MainPageWidget extends StatefulWidget {
@@ -12,6 +14,17 @@ class _MainPageWidgetState extends State<MainPageWidget> {
   @override
   void initState() {
     super.initState();
+    _fromFirestore();
+  }
+
+  Future<List<HoneyzModel>> _fromFirestore() async {
+    FirebaseFirestore _firestore = FirebaseFirestore.instance;
+    QuerySnapshot<Map<String, dynamic>> _snapshot =
+    await _firestore.collection("honeyz").get();
+    List<HoneyzModel> _result =
+    _snapshot.docs.map((e) => HoneyzModel.fromJson(e.data())).toList();
+    print(_result[0]);
+    return _result;
   }
 
   @override

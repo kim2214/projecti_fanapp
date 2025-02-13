@@ -4,9 +4,11 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:honeyz_fan_app/router.dart';
 import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
 
-void main() {
+void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -36,15 +38,15 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  void preload() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp();
-  }
+  // void preload() async {
+  //   WidgetsFlutterBinding.ensureInitialized();
+  //   await Firebase.initializeApp();
+  // }
 
   @override
   void initState() {
     super.initState();
-    preload();
+    // preload();
     FlutterNativeSplash.remove();
   }
 
