@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:honeyz_fan_app/widget/main_page.dart';
+import 'package:honeyz_fan_app/widget/schedule_page.dart';
 
 class ScreenBaseWidget extends StatefulWidget {
   ScreenBaseWidget({super.key});
@@ -11,25 +12,23 @@ class ScreenBaseWidget extends StatefulWidget {
 class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
     with SingleTickerProviderStateMixin {
   int _index = 0;
-  late TabController _tabController; // TabController 추가
+
+  PageController pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(tabListener);
-  }
-
-  void tabListener() {
-    setState(() {
-      _index = _tabController.index;
-    });
   }
 
   final List<Widget> _screens = [
+    SchedulePageWidget(),
     MainPageWidget(),
     Text('두번쨰'),
   ];
+
+  void updateScreenIndex(int newIndex) {
+    _index = newIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +36,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
       backgroundColor: Colors.white,
       bottomNavigationBar: BottomNavigationBar(
         onTap: (int index) {
-          _tabController.animateTo(index);
+          pageController.jumpToPage(index);
         },
         currentIndex: _index,
         items: const [
@@ -46,17 +45,33 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
             label: '홈',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Honeyz',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.music_note),
             label: '음악',
           ),
         ],
       ),
-      appBar: AppBar(
-        scrolledUnderElevation: 0.0,
-        leading: BackButton(),
-        backgroundColor: Colors.white,
+      // appBar: AppBar(
+      //   scrolledUnderElevation: 0.0,
+      //   leading: BackButton(),
+      //   backgroundColor: Colors.white,
+      // ),
+      body: SafeArea(
+        child: PageView(
+          controller: pageController,
+          onPageChanged: (index) {
+            setState(
+              () {
+                updateScreenIndex(index);
+              },
+            );
+          },
+          children: _screens,
+        ),
       ),
-      body: Center(child: _screens[_index]),
     );
   }
 }
