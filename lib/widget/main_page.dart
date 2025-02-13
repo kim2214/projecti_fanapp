@@ -44,7 +44,7 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFF5E88).withOpacity(0.8),
+                      color: Color(0x0fff5e88).withOpacity(0.8),
                       offset: Offset(0.0, 0.0),
                     )
                   ],

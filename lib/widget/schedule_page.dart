@@ -9,7 +9,17 @@ List<String> sequence = [
   "damyui",
   "ddddragon",
   "ohwayo",
-  "mangnae"
+  "mangnae",
+];
+
+List<String> nameList = [
+  "허니즈",
+  "허니츄러스",
+  "아야",
+  "담유이",
+  "디디디용",
+  "오화요",
+  "망내",
 ];
 
 class SchedulePageWidget extends StatefulWidget {
@@ -50,47 +60,63 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _loadFirestore(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        //해당 부분은 data를 아직 받아 오지 못했을때 실행되는 부분
-        if (snapshot.hasData == false) {
-          return Center(
-            child: CircularProgressIndicator(
-              backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
-            ),
-          );
-        }
-        //error가 발생하게 될 경우 반환하게 되는 부분
-        else if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: TextStyle(fontSize: 15),
-            ),
-          );
-        }
-        // 데이터를 정상적으로 받아오게 되면 다음 부분을 실행
-        else {
-          return ListView.separated(
-            shrinkWrap: true,
-            itemCount: _result.length,
-            padding: EdgeInsets.all(15.0),
-            itemBuilder: (context, index) {
-              return SizedBox(
-                height: 350,
-                child: ScheduleCard(
-                  imageURL: _result[index].scheduleURL!,
+    super.build(context);
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.only(top: 30.0),
+          child: Text(
+            "허니즈의 주간 스케줄 표 입니다.",
+            style: TextStyle(fontSize: 17.0),
+          ),
+        ),
+        FutureBuilder(
+          future: _loadFirestore(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            //해당 부분은 data를 아직 받아 오지 못했을때 실행되는 부분
+            if (snapshot.hasData == false) {
+              return Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
                 ),
               );
-            },
-            separatorBuilder: (context, index) => SizedBox(
-              height: 30.0,
-            ),
-          );
-        }
-      },
+            }
+            //error가 발생하게 될 경우 반환하게 되는 부분
+            else if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(fontSize: 15),
+                ),
+              );
+            }
+            // 데이터를 정상적으로 받아오게 되면 다음 부분을 실행
+            else {
+              return Expanded(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _result.length,
+                  padding: EdgeInsets.all(15.0),
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      height: 350,
+                      child: ScheduleCard(
+                        imageURL: _result[index].scheduleURL!,
+                        index: index,
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) => SizedBox(
+                    height: 30.0,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -100,8 +126,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
 class ScheduleCard extends StatelessWidget {
   final String imageURL;
+  final int index;
 
-  const ScheduleCard({super.key, required this.imageURL});
+  const ScheduleCard({super.key, required this.imageURL, required this.index});
 
   @override
   Widget build(BuildContext context) {
@@ -113,9 +140,12 @@ class ScheduleCard extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              decoration: BoxDecoration(color: Colors.blue[900]),
-              child: Center(child: Text('asd') //custom text and style
-                  ),
+              decoration: BoxDecoration(
+                color: Color(0x0fff5e88).withOpacity(1.0),
+              ),
+              child: Center(
+                child: Text(nameList[index]),
+              ),
             ),
           ),
           Expanded(
