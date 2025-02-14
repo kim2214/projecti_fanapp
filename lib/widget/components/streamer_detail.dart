@@ -25,9 +25,38 @@ class StreamerDetail extends StatelessWidget {
           children: [
             Image.asset('assets/${honeyz.profileName}_profile.png'),
             SizedBox(
-              height: 20,
+              height: 40,
             ),
-            Text(honeyz.name!),
+            Text(
+              "허니즈 소속 ${honeyz.name!} 입니다.",
+              style: TextStyle(fontSize: 17.0),
+            ),
+            SizedBox(
+              height: 40.0,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Image.asset(
+                    "assets/icons/chzzk_icon.png",
+                    height: 100,
+                    width: 100,
+                  ),
+                  Image.asset(
+                    "assets/icons/youtube_icon.png",
+                    height: 100,
+                    width: 100,
+                  ),
+                  Image.asset(
+                    "assets/icons/x_icon.png",
+                    height: 100,
+                    width: 100,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
