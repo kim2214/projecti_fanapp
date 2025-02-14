@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StreamerDetail extends StatelessWidget {
   final HoneyzModel honeyz;
@@ -39,20 +40,50 @@ class StreamerDetail extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Image.asset(
-                    "assets/icons/chzzk_icon.png",
-                    height: 100,
-                    width: 100,
+                  InkWell(
+                    child: Image.asset(
+                      "assets/icons/chzzk_icon.png",
+                      height: 100,
+                      width: 100,
+                    ),
+                    onTap: () async {
+                      Uri chzzkUrl = Uri.parse(honeyz.chzzk!);
+                      if (await canLaunchUrl(chzzkUrl)) {
+                        await launchUrl(chzzkUrl);
+                      } else {
+                        throw 'Could not launch $chzzkUrl';
+                      }
+                    },
                   ),
-                  Image.asset(
-                    "assets/icons/youtube_icon.png",
-                    height: 100,
-                    width: 100,
+                  InkWell(
+                    child: Image.asset(
+                      "assets/icons/youtube_icon.png",
+                      height: 100,
+                      width: 100,
+                    ),
+                    onTap: () async {
+                      Uri youtubeUrl = Uri.parse(honeyz.youtube!);
+                      if (await canLaunchUrl(youtubeUrl)) {
+                        await launchUrl(youtubeUrl);
+                      } else {
+                        throw 'Could not launch $youtubeUrl';
+                      }
+                    },
                   ),
-                  Image.asset(
-                    "assets/icons/x_icon.png",
-                    height: 100,
-                    width: 100,
+                  InkWell(
+                    child: Image.asset(
+                      "assets/icons/x_icon.png",
+                      height: 100,
+                      width: 100,
+                    ),
+                    onTap: () async {
+                      Uri xUrl = Uri.parse(honeyz.twitter!);
+                      if (await canLaunchUrl(xUrl)) {
+                        await launchUrl(xUrl);
+                      } else {
+                        throw 'Could not launch $xUrl';
+                      }
+                    },
                   ),
                 ],
               ),
