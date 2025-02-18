@@ -1,5 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class MusicCard extends StatelessWidget {
   final String name;
@@ -18,9 +19,10 @@ class MusicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      // onTap: () {
-      //   context.push('/streamerDetail', extra: streamer);
-      // },
+      onTap: () {
+        context.push(
+            '/audioPage?musicURL=$musicURL&title=$title&thumbnail=$thumbnail');
+      },
       child: Row(
         children: [
           ExtendedImage.network(

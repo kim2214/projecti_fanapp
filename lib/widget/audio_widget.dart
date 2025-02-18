@@ -1,12 +1,22 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class AudioWidget extends StatefulWidget {
-  const AudioWidget({super.key});
+  final String? musicURL;
+  final String? musicTitle;
+  final String? imgUrl;
+
+  const AudioWidget({
+    super.key,
+    required this.musicURL,
+    required this.musicTitle,
+    required this.imgUrl,
+  });
 
   @override
   State<AudioWidget> createState() => _AudioWidgetState();
@@ -23,13 +33,14 @@ class _AudioWidgetState extends State<AudioWidget> {
   bool isPlaying = false;
   double volume = 0.5;
   bool isVolumeDisabled = false;
-  String? musicTitle = '';
-  String? imgUrl;
+
+  // String? musicTitle = '';
+  // String? imgUrl;
 
   @override
   void initState() {
     super.initState();
-    _initialize();
+    // _initialize();
   }
 
   Future<String?> extractAudioUrl(String videoUrl) async {
@@ -64,42 +75,42 @@ class _AudioWidgetState extends State<AudioWidget> {
     }
   }
 
-  Future<String> getVideoImage(String videoUrl) async {
-    try {
-      var youtube = YoutubeExplode();
-      var video = await youtube.videos.get(videoUrl);
+  // Future<String> getVideoImage(String videoUrl) async {
+  //   try {
+  //     var youtube = YoutubeExplode();
+  //     var video = await youtube.videos.get(videoUrl);
+  //
+  //     // Get the video title
+  //     var imageUrl = video.thumbnails.maxResUrl;
+  //
+  //     // Close the YoutubeExplode client
+  //     youtube.close();
+  //
+  //     return imageUrl;
+  //   } catch (e) {
+  //     print('Error: $e');
+  //     return 'Error retrieving video title';
+  //   }
+  // }
 
-      // Get the video title
-      var imageUrl = video.thumbnails.maxResUrl;
-
-      // Close the YoutubeExplode client
-      youtube.close();
-
-      return imageUrl;
-    } catch (e) {
-      print('Error: $e');
-      return 'Error retrieving video title';
-    }
-  }
-
-  void _initialize() async {
+  Future<bool> _initialize() async {
     // Instantiate AudioPlayer class
     player = AudioPlayer();
 
-    String? audioURL =
-        await extractAudioUrl('https://www.youtube.com/watch?v=QXbykPTLXuc');
+    String? audioURL = await extractAudioUrl(widget.musicURL!);
 
-    musicTitle =
-        await getVideoTitle('https://www.youtube.com/watch?v=XY4mPKSe1zE');
-
-    imgUrl = await getVideoImage('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+    // musicTitle =
+    //     await getVideoTitle('https://www.youtube.com/watch?v=XY4mPKSe1zE');
+    //
+    // imgUrl = await getVideoImage('https://www.youtube.com/watch?v=XY4mPKSe1zE');
 
     // Set the audio url
     await player.setUrl(audioURL!);
 
     // Set the initial volume
     await player.setVolume(volume);
-    setState(() {});
+    // setState(() {});
+    return true;
   }
 
   @override
@@ -165,96 +176,134 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(musicTitle!),
-        SizedBox(
-          height: 200,
-          width: 300,
-          child: Image.network(imgUrl ?? ''),
+    return Scaffold(
+        appBar: AppBar(
+          scrolledUnderElevation: 0.0,
+          leading: BackButton(
+            onPressed: () {
+              player.dispose();
+              context.pop();
+            },
+          ),
+          backgroundColor: Colors.white,
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed: () {
-                switch (isPlaying) {
-                  case true:
-                    return _pauseAudio();
-                  default:
-                    return _playAudio();
-                }
-              },
-              icon: Icon(_getPlayPauseIcon(), size: 50, color: Colors.white),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        StreamBuilder<PositionData>(
-          stream: _positionDataStream,
-          builder: (context, snapshot) {
-            final positionData = snapshot.data;
-            Duration remaining = (positionData?.duration != null &&
-                    positionData?.position != null)
-                ? positionData!.duration - positionData.position
-                : Duration.zero;
-            return Row(
-              children: [
-                Expanded(
-                  child: SeekBar(
-                    duration: positionData?.duration ?? Duration.zero,
-                    position: positionData?.position ?? Duration.zero,
-                    bufferedPosition:
-                        positionData?.bufferedPosition ?? Duration.zero,
-                    onChangeEnd: player.seek,
+        body: FutureBuilder(
+            future: _initialize(),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasData == false) {
+                return Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
+                    ),
                   ),
-                ),
-                Text(
-                  RegExp(r'((^0*[1-9]d*:)?d{2}:d{2}).d+$')
-                          .firstMatch("$remaining")
-                          ?.group(1) ??
-                      '$remaining',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: Colors.white),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            IconButton(
-              onPressed: () {
-                switch (isVolumeDisabled) {
-                  case true:
-                    return _activateVolume();
-                  default:
-                    return _disableVolume();
-                }
-              },
-              icon: Icon(_getVolumeIcon(), size: 30, color: Colors.white),
-            ),
-            Expanded(
-              child: Slider(
-                value: player.volume,
-                max: 1,
-                min: 0,
-                onChanged: (value) async {
-                  setState(() {
-                    volume = value;
-                  });
-                  await player.setVolume(value);
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+                );
+              } else if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                );
+              } else {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(widget.musicTitle!),
+                    SizedBox(
+                      height: 200,
+                      width: 300,
+                      child: Image.network(widget.imgUrl ?? ''),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            switch (isPlaying) {
+                              case true:
+                                return _pauseAudio();
+                              default:
+                                return _playAudio();
+                            }
+                          },
+                          icon: Icon(_getPlayPauseIcon(),
+                              size: 50, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<PositionData>(
+                      stream: _positionDataStream,
+                      builder: (context, snapshot) {
+                        final positionData = snapshot.data;
+                        Duration remaining = (positionData?.duration != null &&
+                                positionData?.position != null)
+                            ? positionData!.duration - positionData.position
+                            : Duration.zero;
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: SeekBar(
+                                duration:
+                                    positionData?.duration ?? Duration.zero,
+                                position:
+                                    positionData?.position ?? Duration.zero,
+                                bufferedPosition:
+                                    positionData?.bufferedPosition ??
+                                        Duration.zero,
+                                onChangeEnd: player.seek,
+                              ),
+                            ),
+                            Text(
+                              RegExp(r'((^0*[1-9]d*:)?d{2}:d{2}).d+$')
+                                      .firstMatch("$remaining")
+                                      ?.group(1) ??
+                                  '$remaining',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            switch (isVolumeDisabled) {
+                              case true:
+                                return _activateVolume();
+                              default:
+                                return _disableVolume();
+                            }
+                          },
+                          icon: Icon(_getVolumeIcon(),
+                              size: 30, color: Colors.white),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: player.volume,
+                            max: 1,
+                            min: 0,
+                            onChanged: (value) async {
+                              setState(() {
+                                volume = value;
+                              });
+                              await player.setVolume(value);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }
+            }));
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/widget/audio_widget.dart';
 import 'package:honeyz_fan_app/widget/components/schedule_detail.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_detail.dart';
 
@@ -29,6 +30,20 @@ final router = GoRouter(
       builder: (context, state) {
         final honeyz = state.extra as HoneyzModel;
         return StreamerDetail(honeyz: honeyz);
+        // return StreamerDetail();
+      },
+    ),
+    GoRoute(
+      path: '/audioPage',
+      builder: (context, state) {
+        String musicURL = state.uri.queryParameters['musicURL']!;
+        String thumbnail = state.uri.queryParameters['thumbnail']!;
+        String title = state.uri.queryParameters['title']!;
+        return AudioWidget(
+          musicURL: musicURL,
+          musicTitle: title,
+          imgUrl: thumbnail,
+        );
         // return StreamerDetail();
       },
     ),
