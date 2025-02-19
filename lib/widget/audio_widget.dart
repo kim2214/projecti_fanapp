@@ -29,7 +29,7 @@ class _AudioWidgetState extends State<AudioWidget> {
   //     'https://files.freemusicarchive.org//storage-freemusicarchive-org//tracks//CAsMyXsiK0RkmsBG2K75J4wdewYDJElKJCe1tSQM.mp3';
 
   // Declare AudioPlayer variable
-  late AudioPlayer player;
+  final _player = AudioPlayer();
   bool isPlaying = false;
   double volume = 0.5;
   bool isVolumeDisabled = false;
@@ -95,8 +95,6 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   Future<bool> _initialize() async {
     // Instantiate AudioPlayer class
-    player = AudioPlayer();
-
     String? audioURL = await extractAudioUrl(widget.musicURL!);
 
     // musicTitle =
@@ -105,23 +103,25 @@ class _AudioWidgetState extends State<AudioWidget> {
     // imgUrl = await getVideoImage('https://www.youtube.com/watch?v=XY4mPKSe1zE');
 
     // Set the audio url
-    await player.setUrl(audioURL!);
+    await _player.setUrl(audioURL!);
 
     // Set the initial volume
-    await player.setVolume(volume);
+    await _player.setVolume(volume);
     // setState(() {});
     return true;
   }
 
   @override
   void dispose() {
-    player.dispose();
+    // ambiguate(WidgetsBinding.instance)!.removeObserver(this);
+    _player.dispose();
+    // _player.pause();
     super.dispose();
   }
 
   void _disableVolume() async {
     // Set volume to 0
-    await player.setVolume(0);
+    await _player.setVolume(0);
     setState(() {
       if (volume > 0) {
         isVolumeDisabled = true;
@@ -131,14 +131,14 @@ class _AudioWidgetState extends State<AudioWidget> {
 
   void _activateVolume() async {
     // Set volume to previous value before it was 0
-    await player.setVolume(volume);
+    await _player.setVolume(volume);
     setState(() {
       isVolumeDisabled = false;
     });
   }
 
   IconData _getVolumeIcon() {
-    return (player.volume == 0) ? Icons.volume_off : Icons.volume_up_rounded;
+    return (_player.volume == 0) ? Icons.volume_off : Icons.volume_up_rounded;
   }
 
   void _playAudio() async {
@@ -147,7 +147,7 @@ class _AudioWidgetState extends State<AudioWidget> {
     });
 
     // Play the audio
-    await player.play();
+    await _player.play();
   }
 
   void _pauseAudio() async {
@@ -156,7 +156,7 @@ class _AudioWidgetState extends State<AudioWidget> {
     });
 
     // Pause the audio
-    await player.pause();
+    await _player.pause();
   }
 
   IconData _getPlayPauseIcon() {
@@ -168,20 +168,21 @@ class _AudioWidgetState extends State<AudioWidget> {
   // Listen for max audio length
   Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
-          player.positionStream,
-          player.bufferedPositionStream,
-          player.durationStream,
+          _player.positionStream,
+          _player.bufferedPositionStream,
+          _player.durationStream,
           (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
         appBar: AppBar(
           scrolledUnderElevation: 0.0,
           leading: BackButton(
             onPressed: () {
-              player.dispose();
+              _player.dispose();
               context.pop();
             },
           ),
@@ -253,7 +254,7 @@ class _AudioWidgetState extends State<AudioWidget> {
                                 bufferedPosition:
                                     positionData?.bufferedPosition ??
                                         Duration.zero,
-                                onChangeEnd: player.seek,
+                                onChangeEnd: _player.seek,
                               ),
                             ),
                             Text(
@@ -287,14 +288,14 @@ class _AudioWidgetState extends State<AudioWidget> {
                         ),
                         Expanded(
                           child: Slider(
-                            value: player.volume,
+                            value: _player.volume,
                             max: 1,
                             min: 0,
                             onChanged: (value) async {
                               setState(() {
                                 volume = value;
                               });
-                              await player.setVolume(value);
+                              await _player.setVolume(value);
                             },
                           ),
                         ),
