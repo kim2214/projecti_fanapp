@@ -22,8 +22,10 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
   Future<List<MusicModel>> _loadFirestore() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-    QuerySnapshot<Map<String, dynamic>> _snapshot =
-        await _firestore.collection("music").get();
+    QuerySnapshot<Map<String, dynamic>> _snapshot = await _firestore
+        .collection("music")
+        .orderBy('created_at', descending: false)
+        .get();
     _result = _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
     return _result;
   }
