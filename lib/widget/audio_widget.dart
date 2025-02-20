@@ -1,6 +1,7 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -8,18 +9,9 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'audio_common.dart';
 
 class AudioWidget extends StatefulWidget {
-  final String? musicURL;
-  final String? musicTitle;
-  final String? imgUrl;
-  final String? name;
+  final MusicModel musicModel;
 
-  const AudioWidget({
-    super.key,
-    required this.musicURL,
-    required this.musicTitle,
-    required this.imgUrl,
-    required this.name,
-  });
+  const AudioWidget({super.key, required this.musicModel});
 
   @override
   State<AudioWidget> createState() => _AudioWidgetState();
@@ -35,7 +27,6 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
-    // _init();
   }
 
   Future<bool> _init() async {
@@ -50,7 +41,7 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
     });
     // Try to load audio from a source and catch any errors.
     try {
-      String? audioURL = await extractAudioUrl(widget.musicURL!);
+      String? audioURL = await extractAudioUrl(widget.musicModel.musicURL!);
 
       // Set the audio url
       await _player.setUrl(audioURL!);
@@ -145,7 +136,7 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(7.0),
                       ),
                       child: Image.network(
-                        widget.imgUrl ?? '',
+                        widget.musicModel.thumbnail ?? '',
                         fit: BoxFit.fill,
                       ),
                     ),
@@ -153,12 +144,12 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
                       height: 20.0,
                     ),
                     Text(
-                      widget.musicTitle!,
+                      widget.musicModel.title!,
                       style: TextStyle(
                           fontSize: 17.0, fontWeight: FontWeight.w700),
                     ),
                     Text(
-                      widget.name!,
+                      widget.musicModel.name!,
                       style: TextStyle(
                           fontSize: 13.0, fontWeight: FontWeight.w500),
                     ),

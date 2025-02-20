@@ -1,27 +1,21 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/model/music_model.dart';
 
 class MusicCard extends StatelessWidget {
-  final String name;
-  final String title;
-  final String musicURL;
-  final String thumbnail;
+  final MusicModel musicModel;
 
   const MusicCard({
     super.key,
-    required this.name,
-    required this.title,
-    required this.musicURL,
-    required this.thumbnail,
+    required this.musicModel,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.push(
-            '/audioPage?musicURL=$musicURL&title=$title&thumbnail=$thumbnail&name=$name');
+        context.push('/audioPage', extra: musicModel);
       },
       child: Row(
         children: [
@@ -29,7 +23,7 @@ class MusicCard extends StatelessWidget {
             height: 50,
             width: 50,
             clipBehavior: Clip.hardEdge,
-            thumbnail,
+            musicModel.thumbnail!,
             fit: BoxFit.fill,
             mode: ExtendedImageMode.gesture,
             cache: true,
@@ -41,8 +35,8 @@ class MusicCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title),
-                Text(name),
+                Text(musicModel.title!),
+                Text(musicModel.name!),
               ],
             ),
           ),

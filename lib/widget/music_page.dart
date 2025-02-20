@@ -80,10 +80,7 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
                           ),
                         ),
                         child: MusicCard(
-                          name: _result[index].name!,
-                          title: _result[index].title!,
-                          musicURL: _result[index].musicURL!,
-                          thumbnail: _result[index].thumbnail!,
+                          musicModel: _result[index],
                         ),
                       );
                     },
