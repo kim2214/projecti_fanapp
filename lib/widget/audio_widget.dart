@@ -107,89 +107,73 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        child:
             // Display seek bar. Using StreamBuilder, this widget rebuilds
             // each time the position, buffered position or duration changes.
-            FutureBuilder(
-              future: _init(),
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData == false) {
-                  return Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
-                      ),
+            Center(
+          child: FutureBuilder(
+            future: _init(),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasData == false) {
+                return Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
                     ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Error: ${snapshot.error}',
-                      style: TextStyle(fontSize: 15),
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                );
+              } else {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 200,
+                      width: 300,
+                      child: Image.network(widget.imgUrl ?? ''),
                     ),
-                  );
-                } else {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(widget.musicTitle!),
-                      SizedBox(
-                        height: 200,
-                        width: 300,
-                        child: Image.network(widget.imgUrl ?? ''),
-                      ),
-
-                      const SizedBox(height: 16),
-                      StreamBuilder<PositionData>(
-                        stream: _positionDataStream,
-                        builder: (context, snapshot) {
-                          final positionData = snapshot.data;
-                          Duration remaining = (positionData?.duration !=
-                                      null &&
-                                  positionData?.position != null)
-                              ? positionData!.duration - positionData.position
-                              : Duration.zero;
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: SeekBar(
-                                  duration:
-                                      positionData?.duration ?? Duration.zero,
-                                  position:
-                                      positionData?.position ?? Duration.zero,
-                                  bufferedPosition:
-                                      positionData?.bufferedPosition ??
-                                          Duration.zero,
-                                  onChangeEnd: _player.seek,
-                                ),
+                    Text(
+                      widget.musicTitle!,
+                      style: TextStyle(
+                          fontSize: 17.0, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<PositionData>(
+                      stream: _positionDataStream,
+                      builder: (context, snapshot) {
+                        final positionData = snapshot.data;
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: SeekBar(
+                                duration:
+                                    positionData?.duration ?? Duration.zero,
+                                position:
+                                    positionData?.position ?? Duration.zero,
+                                bufferedPosition:
+                                    positionData?.bufferedPosition ??
+                                        Duration.zero,
+                                onChangeEnd: _player.seek,
                               ),
-                              Text(
-                                RegExp(r'((^0*[1-9]d*:)?d{2}:d{2}).d+$')
-                                        .firstMatch("$remaining")
-                                        ?.group(1) ??
-                                    '$remaining',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(color: Colors.white),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-
-                      // Display play/pause button and volume/speed sliders.
-                      ControlButtons(_player),
-                    ],
-                  );
-                }
-              },
-            ),
-          ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    // Display play/pause button and volume/speed sliders.
+                    ControlButtons(_player),
+                  ],
+                );
+              }
+            },
+          ),
         ),
       ),
     );
