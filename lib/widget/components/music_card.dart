@@ -21,7 +21,7 @@ class MusicCard extends StatelessWidget {
     return InkWell(
       onTap: () {
         context.push(
-            '/audioPage?musicURL=$musicURL&title=$title&thumbnail=$thumbnail');
+            '/audioPage?musicURL=$musicURL&title=$title&thumbnail=$thumbnail&name=$name');
       },
       child: Row(
         children: [

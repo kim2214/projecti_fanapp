@@ -39,10 +39,12 @@ final router = GoRouter(
         String musicURL = state.uri.queryParameters['musicURL']!;
         String thumbnail = state.uri.queryParameters['thumbnail']!;
         String title = state.uri.queryParameters['title']!;
+        String name = state.uri.queryParameters['name']!;
         return AudioWidget(
           musicURL: musicURL,
           musicTitle: title,
           imgUrl: thumbnail,
+          name: name,
         );
         // return StreamerDetail();
       },

@@ -11,12 +11,14 @@ class AudioWidget extends StatefulWidget {
   final String? musicURL;
   final String? musicTitle;
   final String? imgUrl;
+  final String? name;
 
   const AudioWidget({
     super.key,
     required this.musicURL,
     required this.musicTitle,
     required this.imgUrl,
+    required this.name,
   });
 
   @override
@@ -54,7 +56,7 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
       await _player.setUrl(audioURL!);
 
       // Set the initial volume
-      await _player.setVolume(0.5);
+      await _player.setVolume(1.0);
     } on PlayerException catch (e) {
       print("Error loading audio source: $e");
     }
@@ -106,6 +108,7 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
       body: SafeArea(
         child:
             // Display seek bar. Using StreamBuilder, this widget rebuilds
@@ -134,15 +137,30 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Container(
+                      height: 350,
+                      width: 350,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 5.0, color: Colors.black),
+                        borderRadius: BorderRadius.circular(7.0),
+                      ),
+                      child: Image.network(
+                        widget.imgUrl ?? '',
+                        fit: BoxFit.fill,
+                      ),
+                    ),
                     SizedBox(
-                      height: 200,
-                      width: 300,
-                      child: Image.network(widget.imgUrl ?? ''),
+                      height: 20.0,
                     ),
                     Text(
                       widget.musicTitle!,
                       style: TextStyle(
                           fontSize: 17.0, fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      widget.name!,
+                      style: TextStyle(
+                          fontSize: 13.0, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 16),
                     StreamBuilder<PositionData>(
@@ -192,18 +210,20 @@ class ControlButtons extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Opens volume slider dialog
-        IconButton(
-          icon: const Icon(Icons.volume_up),
-          onPressed: () {
-            showSliderDialog(
-              context: context,
-              title: "Adjust volume",
-              divisions: 10,
-              min: 0.0,
-              max: 1.0,
-              value: player.volume,
-              stream: player.volumeStream,
-              onChanged: player.setVolume,
+        StreamBuilder<double>(
+          stream: player.volumeStream,
+          initialData: 0,
+          builder: (context, snapshot) {
+            return IconButton(
+              icon: Icon(
+                  snapshot.data == 1.0 ? Icons.volume_up : Icons.volume_off),
+              onPressed: () {
+                if (snapshot.data == 1.0) {
+                  player.setVolume(0.0);
+                } else {
+                  player.setVolume(1.0);
+                }
+              },
             );
           },
         ),
