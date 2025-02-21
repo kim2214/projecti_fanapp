@@ -69,7 +69,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
           padding: EdgeInsets.only(top: 30.0),
           child: Text(
             "허니즈 맴버들의 주간 스케줄 표 입니다.",
-            style: TextStyle(fontSize: 17.0),
+            style: TextStyle(fontSize: 17.0, fontFamily: "Yanolja"),
           ),
         ),
         FutureBuilder(
