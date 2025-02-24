@@ -9,4 +9,10 @@ class FontStyleSheet {
 
   static const TextStyle streamerCardItem = TextStyle(
       fontSize: 20.0, fontWeight: FontWeight.bold, fontFamily: "Yanolja");
+
+  static const TextStyle musicTitle = TextStyle(
+      fontSize: 19.0, fontWeight: FontWeight.w700, fontFamily: "Yanolja",overflow: TextOverflow.ellipsis);
+
+  static const TextStyle musicArtistName = TextStyle(
+      fontSize: 17.0, fontWeight: FontWeight.w700, fontFamily: "Yanolja");
 }
