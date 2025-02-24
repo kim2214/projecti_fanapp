@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/model/schedule_model.dart';
 
+import '../font_style_sheet.dart';
+
 List<String> sequence = [
   "honeyz",
   "honeychurros",
@@ -69,7 +71,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
           padding: EdgeInsets.only(top: 30.0),
           child: Text(
             "허니즈 맴버들의 주간 스케줄 표 입니다.",
-            style: TextStyle(fontSize: 17.0, fontFamily: "Yanolja"),
+            style: FontStyleSheet.title,
           ),
         ),
         FutureBuilder(
@@ -153,7 +155,10 @@ class ScheduleCard extends StatelessWidget {
                 color: Color(0x0fff5e88).withOpacity(1.0),
               ),
               child: Center(
-                child: Text(nameList[index]),
+                child: Text(
+                  nameList[index],
+                  style: FontStyleSheet.listItem,
+                ),
               ),
             ),
           ),
