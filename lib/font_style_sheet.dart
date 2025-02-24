@@ -6,4 +6,7 @@ class FontStyleSheet {
 
   static const TextStyle listItem = TextStyle(
       fontSize: 18.0, fontWeight: FontWeight.w300, fontFamily: "Yanolja");
+
+  static const TextStyle streamerCardItem = TextStyle(
+      fontSize: 20.0, fontWeight: FontWeight.bold, fontFamily: "Yanolja");
 }

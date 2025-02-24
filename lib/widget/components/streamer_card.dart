@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/font_style_sheet.dart';
 import 'package:honeyz_fan_app/model/honeyz_model.dart';
 
 List<String> assetName = [
@@ -42,7 +43,10 @@ class StreamerCard extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          Text(honeyzName[index]),
+          Text(
+            honeyzName[index],
+            style: FontStyleSheet.streamerCardItem,
+          ),
         ],
       ),
     );

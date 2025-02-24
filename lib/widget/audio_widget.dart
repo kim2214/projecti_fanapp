@@ -112,7 +112,7 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
                 return Expanded(
                   child: Center(
                     child: CircularProgressIndicator(
-                      backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
+                      backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
                     ),
                   ),
                 );

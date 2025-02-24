@@ -55,7 +55,7 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
             return Expanded(
               child: Center(
                 child: CircularProgressIndicator(
-                  backgroundColor: Color(0x0fff5e88).withOpacity(0.8),
+                  backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
                 ),
               ),
             );
@@ -87,7 +87,7 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0x0fff5e88).withOpacity(0.8),
+                              color: Color(0x0fff5e88).withOpacity(1.0),
                               offset: Offset(0.0, 0.0),
                             )
                           ],
