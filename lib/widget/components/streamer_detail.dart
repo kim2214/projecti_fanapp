@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/font_style_sheet.dart';
 import 'package:honeyz_fan_app/model/honeyz_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -30,7 +31,7 @@ class StreamerDetail extends StatelessWidget {
             ),
             Text(
               "허니즈 소속 ${honeyz.name!} 입니다.",
-              style: TextStyle(fontSize: 17.0),
+              style: FontStyleSheet.title,
             ),
             SizedBox(
               height: 40.0,

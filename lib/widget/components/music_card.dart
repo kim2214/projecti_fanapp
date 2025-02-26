@@ -47,17 +47,20 @@ class MusicCard extends StatelessWidget {
             SizedBox(
               height: 20.0,
             ),
-            Column(
-              children: [
-                Text(
-                  musicModel.title!,
-                  style: FontStyleSheet.musicTitle,
-                ),
-                Text(
-                  musicModel.name!,
-                  style: FontStyleSheet.musicArtistName,
-                ),
-              ],
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                children: [
+                  Text(
+                    musicModel.title!,
+                    style: FontStyleSheet.musicTitle,
+                  ),
+                  Text(
+                    musicModel.name!,
+                    style: FontStyleSheet.musicArtistName,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

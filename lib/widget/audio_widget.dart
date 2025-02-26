@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import '../font_style_sheet.dart';
 import 'audio_common.dart';
 
 class AudioWidget extends StatefulWidget {
@@ -109,11 +110,9 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
             future: _init(),
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.hasData == false) {
-                return Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
-                    ),
+                return Center(
+                  child: CircularProgressIndicator(
+                    backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
                   ),
                 );
               } else if (snapshot.hasError) {
@@ -145,13 +144,11 @@ class _AudioWidgetState extends State<AudioWidget> with WidgetsBindingObserver {
                     ),
                     Text(
                       widget.musicModel.title!,
-                      style: TextStyle(
-                          fontSize: 17.0, fontWeight: FontWeight.w700),
+                      style: FontStyleSheet.musicTitle,
                     ),
                     Text(
                       widget.musicModel.name!,
-                      style: TextStyle(
-                          fontSize: 13.0, fontWeight: FontWeight.w500),
+                      style: FontStyleSheet.musicArtistName,
                     ),
                     const SizedBox(height: 16),
                     StreamBuilder<PositionData>(
