@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/model/live_check_model.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_card.dart';
+import 'package:http/http.dart' as http;
 
 List<String> sequence = [
   "honeychurros",
@@ -10,6 +13,15 @@ List<String> sequence = [
   "ddddragon",
   "ohwayo",
   "mangnae",
+];
+
+List<String> brodcastIDList = [
+  "c0d9723cbb75dc223c6aa8a9d4f56002",
+  "abe8aa82baf3d3ef54ad8468ee73e7fc",
+  "b82e8bc2505e37156b2d1140ba1fc05c",
+  "798e100206987b59805cfb75f927e965",
+  "65a53076fe1a39636082dd6dba8b8a4b",
+  "bd07973b6021d72512240c01a386d5c9",
 ];
 
 class HoneyzPageWidget extends StatefulWidget {
@@ -27,8 +39,11 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
   }
 
   List<HoneyzModel> _result = [];
+  List<LiveCheckModel> _liveCheckResult = [];
 
   Future<List<HoneyzModel>> _loadFirestore() async {
+    await _liveCheck();
+
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
     QuerySnapshot<Map<String, dynamic>> _snapshot =
@@ -42,6 +57,34 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
       }
     }
     return _result;
+  }
+
+  Future<List<LiveCheckModel>> _liveCheck() async {
+    if (_liveCheckResult.isEmpty) {
+      for (int i = 0; i < brodcastIDList.length; i++) {
+        final url = Uri.parse(
+            'https://api.chzzk.naver.com/polling/v2/channels/${brodcastIDList[i]}/live-status');
+
+        try {
+          final response = await http.get(url);
+
+          if (response.statusCode == 200) {
+            final String decodedBody =
+                utf8.decode(response.bodyBytes); // UTF-8 디코딩
+            final Map<String, dynamic> data =
+                json.decode(decodedBody); // JSON을 Map으로 변환
+
+            _liveCheckResult.add(LiveCheckModel.fromJson(data['content']));
+          } else {
+            print('오류 발생: ${response.statusCode}');
+          }
+        } catch (e) {
+          print('예외 발생: $e');
+        }
+      }
+    }
+
+    return _liveCheckResult;
   }
 
   @override
@@ -85,6 +128,13 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
                         margin: EdgeInsets.symmetric(vertical: 20.0),
                         padding: EdgeInsets.all(20.0),
                         decoration: BoxDecoration(
+                          border: Border.all(
+                              color: _liveCheckResult[index].status == 'OPEN'
+                                  ? Colors.black
+                                  : Colors.red,
+                              width: _liveCheckResult[index].status == 'OPEN'
+                                  ? 5.0
+                                  : 0.0),
                           boxShadow: [
                             BoxShadow(
                               color: Color(0x0fff5e88).withOpacity(1.0),
@@ -98,6 +148,7 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
                         child: StreamerCard(
                           index: index,
                           streamer: _result[index],
+                          status: _liveCheckResult[index],
                         ),
                       );
                     },
