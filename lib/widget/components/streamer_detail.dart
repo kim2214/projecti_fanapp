@@ -49,11 +49,12 @@ class StreamerDetail extends StatelessWidget {
                     ),
                     onTap: () async {
                       Uri chzzkUrl = Uri.parse(honeyz.chzzk!);
-                      if (await canLaunchUrl(chzzkUrl)) {
-                        await launchUrl(chzzkUrl);
-                      } else {
-                        throw 'Could not launch $chzzkUrl';
-                      }
+                      await launchUrl(chzzkUrl);
+                      // if (await canLaunchUrl(chzzkUrl)) {
+                      //   await launchUrl(chzzkUrl);
+                      // } else {
+                      //   throw 'Could not launch $chzzkUrl';
+                      // }
                     },
                   ),
                   InkWell(
@@ -64,11 +65,12 @@ class StreamerDetail extends StatelessWidget {
                     ),
                     onTap: () async {
                       Uri youtubeUrl = Uri.parse(honeyz.youtube!);
-                      if (await canLaunchUrl(youtubeUrl)) {
-                        await launchUrl(youtubeUrl);
-                      } else {
-                        throw 'Could not launch $youtubeUrl';
-                      }
+                      await launchUrl(youtubeUrl);
+                      // if (await canLaunchUrl(youtubeUrl)) {
+                      //   await launchUrl(youtubeUrl);
+                      // } else {
+                      //   throw 'Could not launch $youtubeUrl';
+                      // }
                     },
                   ),
                   InkWell(
@@ -79,11 +81,12 @@ class StreamerDetail extends StatelessWidget {
                     ),
                     onTap: () async {
                       Uri xUrl = Uri.parse(honeyz.twitter!);
-                      if (await canLaunchUrl(xUrl)) {
-                        await launchUrl(xUrl);
-                      } else {
-                        throw 'Could not launch $xUrl';
-                      }
+                      await launchUrl(xUrl);
+                      // if (await canLaunchUrl(xUrl)) {
+                      //   await launchUrl(xUrl);
+                      // } else {
+                      //   throw 'Could not launch $xUrl';
+                      // }
                     },
                   ),
                 ],
