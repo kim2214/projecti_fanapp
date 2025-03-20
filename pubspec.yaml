@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
 #  youtube_player_flutter: ^8.1.2
   youtube_explode_dart: ^2.3.3
-  flutter_native_splash: 2.4.0
+#  flutter_native_splash: 2.4.0
 #  audioplayers: ^5.2.1
   just_audio: ^0.9.36
   logging: any
