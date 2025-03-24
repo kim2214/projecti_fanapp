@@ -23,7 +23,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0x0f2a2a2a).withOpacity(1.0),
+      // backgroundColor: Color(0x0f2a2a2a).withOpacity(1.0),
+      backgroundColor: Colors.white,
       body: Column(
         // mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -33,24 +34,24 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Image.asset(
-                //   'assets/splash_image.png',
-                //   width: 100,
-                //   height: 100,
-                // ),
+                Image.asset(
+                  'assets/fanapp_logo.png',
+                  width: 100,
+                  height: 100,
+                ),
                 SizedBox(
-                  height: 10.0,
+                  height: 15.0,
                 ),
                 Text(
-                  '부산 상수도 작업 관리자',
+                  '허니즈 팬앱',
                   style: TextStyle(
                       fontSize: 25.0,
-                      color: Colors.white,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '깨끗한 물, 건강한 시민, 책임지는 시스템',
-                  style: TextStyle(fontSize: 17.0, color: Colors.white),
+                  '(HONEYZ FANAPP)',
+                  style: TextStyle(fontSize: 17.0, color: Colors.black),
                 ),
               ],
             ),
@@ -58,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Spacer(),
           Align(
             alignment: Alignment.bottomCenter,
-            child: Text('Copyright @2025 부산 상수도 사업본부 V1.0.0',
+            child: Text('Copyright @2025 kimdev0821',
                 style: TextStyle(fontSize: 14.0, color: Colors.white)),
           ),
           SizedBox(
