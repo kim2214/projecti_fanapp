@@ -4,6 +4,7 @@ import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/audio_widget.dart';
 import 'package:honeyz_fan_app/widget/components/schedule_detail.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_detail.dart';
+import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
 
 import 'main.dart';
 
@@ -13,6 +14,12 @@ final router = GoRouter(
       path: '/',
       builder: (context, state) {
         return MyHomePage();
+      },
+    ),
+    GoRoute(
+      path: '/basePage',
+      builder: (context, state) {
+        return ScreenBaseWidget();
       },
     ),
     GoRoute(

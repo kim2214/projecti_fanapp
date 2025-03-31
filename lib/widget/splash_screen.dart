@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,13 +11,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.delayed(Duration(seconds: 3), () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ScreenBaseWidget(),
-        ),
-      );
+      context.pushReplacement('/basePage');
     });
   }
 
