@@ -7,7 +7,7 @@ import 'package:honeyz_fan_app/model/schedule_model.dart';
 import '../font_style_sheet.dart';
 
 List<String> sequence = [
-  "honeyz",
+  // "honeyz",
   "honeychurros",
   "ayauke",
   "damyui",
@@ -17,7 +17,7 @@ List<String> sequence = [
 ];
 
 List<String> nameList = [
-  "허니즈",
+  // "허니즈",
   "허니츄러스",
   "아야",
   "담유이",
