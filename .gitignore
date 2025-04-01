@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/app/.cxx
+
+# default config file
+/lib/default_firebase_options.dart
