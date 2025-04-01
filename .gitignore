@@ -46,3 +46,4 @@ app.*.map.json
 
 # default config file
 /lib/default_firebase_options.dart
+/android/app/google-services.json
