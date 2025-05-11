@@ -162,24 +162,27 @@ class ScheduleCard extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-              flex: 5,
-              child: ExtendedImage.network(
-                imageURL,
-                fit: BoxFit.fill,
-                mode: ExtendedImageMode.gesture, // 줌/팬 모드 활성화
-                initGestureConfigHandler: (state) => GestureConfig(
-                  minScale: 1.0,
-                  maxScale: 5.0,
-                  speed: 1.0,
-                  initialScale: 1.0,
+          imageURL.isNotEmpty
+              ? Expanded(
+                  flex: 5,
+                  child: ExtendedImage.network(
+                    imageURL,
+                    fit: BoxFit.fill,
+                    mode: ExtendedImageMode.gesture, // 줌/팬 모드 활성화
+                    initGestureConfigHandler: (state) => GestureConfig(
+                      minScale: 1.0,
+                      maxScale: 5.0,
+                      speed: 1.0,
+                      initialScale: 1.0,
+                    ),
+                  ))
+              : Expanded(
+                  flex: 5,
+                  child: Center(
+                    child: Text('금주의 ${nameList[index]}님은 방송이 없습니다.',
+                        style: FontStyleSheet.listItem),
+                  ),
                 ),
-              )
-              // Image.network(
-              //   imageURL,
-              //   fit: BoxFit.fill,
-              // ),
-              ),
         ],
       ),
     );
