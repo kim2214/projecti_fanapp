@@ -1,16 +1,33 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:honeyz_fan_app/default_firebase_options.dart';
 import 'package:honeyz_fan_app/router.dart';
+import 'package:honeyz_fan_app/widget/audio_manager.dart';
+import 'package:honeyz_fan_app/widget/audio_widget.dart';
 import 'package:honeyz_fan_app/widget/splash_screen.dart';
 
 void main() async {
+  // WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  // // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  // WidgetsFlutterBinding.ensureInitialized();
+  //
+  // // 앱 시작시 AudioService 초기화
+  // await AudioManager.initialize();
+  //
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.android
+  // );
+
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.android
-  );
+
+  // 1. Firebase 먼저 초기화
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+
+  // 2. 그 다음 AudioService 초기화
+  await AudioManager.initialize();
+
   runApp(const MyApp());
 }
 
@@ -39,7 +56,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   // void preload() async {
   //   WidgetsFlutterBinding.ensureInitialized();
   //   await Firebase.initializeApp();

@@ -45,7 +45,7 @@ final router = GoRouter(
       path: '/audioPage',
       builder: (context, state) {
         final musicModel = state.extra as MusicModel;
-        return AudioWidget(
+        return BackgroundAudioWidget(
           musicModel: musicModel,
         );
         // return StreamerDetail();
