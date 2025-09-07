@@ -2,11 +2,14 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/controllers/music_controller.dart';
 import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/audio_manager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:get/get.dart' as GetX;
 
 import '../font_style_sheet.dart';
 import 'audio_common.dart';
@@ -283,7 +286,11 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                     ),
 
                     // 컨트롤 버튼
-                    BackgroundControlButtons(audioHandler: _audioHandler!),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: BackgroundControlButtons(
+                          audioHandler: _audioHandler!),
+                    ),
                   ],
                 ),
         ),
@@ -300,6 +307,8 @@ class BackgroundControlButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final musicController = GetX.Get.put(MusicController());
+
     return StreamBuilder<PlaybackState>(
       stream: audioHandler.playbackState,
       builder: (context, snapshot) {
@@ -311,6 +320,36 @@ class BackgroundControlButtons extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 이전곡 버튼
+            Visibility(
+              visible: musicController.musicIndex.value != 0,
+              child: Column(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_circle_left_outlined,
+                      size: 30.0,
+                    ),
+                    onPressed: () {
+                      musicController.musicIndex.value -= 1;
+                      context.pushReplacement('/audioPage',
+                          extra: musicController
+                              .musicList[musicController.musicIndex.value]);
+                    },
+                  ),
+                  Text(
+                    '이전곡',
+                    style: FontStyleSheet.basicText,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            Spacer(),
+
             // 볼륨 버튼 (간소화)
             IconButton(
               icon: const Icon(Icons.volume_up),
@@ -365,6 +404,37 @@ class BackgroundControlButtons extends StatelessWidget {
                   },
                 );
               },
+            ),
+
+            Spacer(),
+
+            // 다음곡 버튼
+            Visibility(
+              visible: musicController.musicIndex.value !=
+                  (musicController.musicList.length - 1),
+              child: Column(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_circle_right_outlined,
+                      size: 30.0,
+                    ),
+                    onPressed: () {
+                      musicController.musicIndex.value += 1;
+                      context.pushReplacement('/audioPage',
+                          extra: musicController
+                              .musicList[musicController.musicIndex.value]);
+                    },
+                  ),
+                  Text(
+                    '다음곡',
+                    style: FontStyleSheet.basicText,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         );

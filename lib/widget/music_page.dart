@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:honeyz_fan_app/controllers/music_controller.dart';
 import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/components/music_card.dart';
+import 'package:get/get.dart';
 
 class MusicPageWidget extends StatefulWidget {
   const MusicPageWidget({super.key});
@@ -12,12 +14,14 @@ class MusicPageWidget extends StatefulWidget {
 
 class _MusicPageWidgetState extends State<MusicPageWidget>
     with AutomaticKeepAliveClientMixin {
+  final musicController = Get.put(MusicController());
+
   @override
   void initState() {
     super.initState();
   }
 
-  List<MusicModel> _result = [];
+  // List<MusicModel> _result = [];
 
   Future<List<MusicModel>> _loadFirestore() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -26,8 +30,9 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
         .collection("music")
         .orderBy('created_at', descending: false)
         .get();
-    _result = _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
-    return _result;
+    musicController.musicList.value =
+        _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
+    return musicController.musicList;
   }
 
   @override
@@ -64,7 +69,7 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
               Expanded(
                 child: ListView.separated(
                   shrinkWrap: true,
-                  itemCount: _result.length,
+                  itemCount: musicController.musicList.length,
                   itemBuilder: (context, index) {
                     return Container(
                       alignment: Alignment.center,
@@ -74,7 +79,8 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
                         ),
                       ),
                       child: MusicCard(
-                        musicModel: _result[index],
+                        musicModel: musicController.musicList[index],
+                        index: index,
                       ),
                     );
                   },

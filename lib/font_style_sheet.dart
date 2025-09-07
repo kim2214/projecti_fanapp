@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class FontStyleSheet {
+  static const TextStyle basicText = TextStyle(
+      fontSize: 13.0, fontWeight: FontWeight.w500, fontFamily: "Yanolja");
+
   static const TextStyle title = TextStyle(
       fontSize: 22.0, fontWeight: FontWeight.w600, fontFamily: "Yanolja");
 
@@ -11,7 +14,10 @@ class FontStyleSheet {
       fontSize: 20.0, fontWeight: FontWeight.bold, fontFamily: "Yanolja");
 
   static const TextStyle musicTitle = TextStyle(
-      fontSize: 19.0, fontWeight: FontWeight.w700, fontFamily: "Yanolja",overflow: TextOverflow.ellipsis);
+      fontSize: 19.0,
+      fontWeight: FontWeight.w700,
+      fontFamily: "Yanolja",
+      overflow: TextOverflow.ellipsis);
 
   static const TextStyle musicArtistName = TextStyle(
       fontSize: 17.0, fontWeight: FontWeight.w700, fontFamily: "Yanolja");
