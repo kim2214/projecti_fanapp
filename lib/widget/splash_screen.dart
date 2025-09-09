@@ -40,14 +40,18 @@ class _SplashScreenState extends State<SplashScreen> {
                   height: 15.0,
                 ),
                 Text(
-                  '허니즈 팬앱',
+                  '프로젝트아이(PROJECT i)\n비공식 팬앱',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 25.0,
                       color: Colors.black,
                       fontWeight: FontWeight.bold),
                 ),
+                SizedBox(
+                  height: 10,
+                ),
                 Text(
-                  '(HONEYZ FANAPP)',
+                  '(PROJECT i FANAPP)',
                   style: TextStyle(fontSize: 17.0, color: Colors.black),
                 ),
               ],

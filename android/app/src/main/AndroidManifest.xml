@@ -9,7 +9,7 @@
 
     <application
         android:name="${applicationName}"
-        android:icon="@mipmap/honeyz_fanapp_icon"
+        android:icon="@mipmap/projecti_fanapp_icon"
         android:label="honeyz_fan_app">
         <activity
             android:name=".MainActivity"

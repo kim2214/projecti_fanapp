@@ -24,7 +24,7 @@ class AudioManager {
           androidNotificationOngoing: true,
           androidShowNotificationBadge: true,
           androidNotificationClickStartsActivity: true,
-          androidNotificationIcon: 'mipmap/honeyz_fanapp_icon',
+          androidNotificationIcon: 'mipmap/projecti_fanapp_icon',
         ),
       ) as AudioPlayerHandler;
     }
