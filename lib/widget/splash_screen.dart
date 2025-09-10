@@ -13,7 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Future.delayed(Duration(seconds: 3), () {
-      context.pushReplacement('/basePage');
+      context.pushReplacement('/groupSelect');
     });
   }
 

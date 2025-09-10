@@ -24,7 +24,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
   }
 
   final List<Widget> _screens = [
-    GroupSelectWidget(),
+    SchedulePageWidget(),
     HoneyzPageWidget(),
     MusicPageWidget(),
   ];

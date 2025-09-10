@@ -4,6 +4,7 @@ import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/audio_widget.dart';
 import 'package:honeyz_fan_app/widget/components/schedule_detail.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_detail.dart';
+import 'package:honeyz_fan_app/widget/group_select_widget.dart';
 import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
 
 import 'main.dart';
@@ -17,7 +18,13 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/basePage',
+      path: '/groupSelect',
+      builder: (context, state) {
+        return GroupSelectWidget();
+      },
+    ),
+    GoRoute(
+      path: '/baseScreen',
       builder: (context, state) {
         return ScreenBaseWidget();
       },
