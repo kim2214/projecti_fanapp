@@ -3,6 +3,8 @@ import 'package:honeyz_fan_app/widget/honeyz_page.dart';
 import 'package:honeyz_fan_app/widget/music_page.dart';
 import 'package:honeyz_fan_app/widget/schedule_page.dart';
 
+import 'group_select_widget.dart';
+
 class ScreenBaseWidget extends StatefulWidget {
   ScreenBaseWidget({super.key});
 
@@ -22,7 +24,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
   }
 
   final List<Widget> _screens = [
-    SchedulePageWidget(),
+    GroupSelectWidget(),
     HoneyzPageWidget(),
     MusicPageWidget(),
   ];
