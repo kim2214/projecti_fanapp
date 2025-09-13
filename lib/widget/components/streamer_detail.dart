@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/font_style_sheet.dart';
-import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class StreamerDetail extends StatelessWidget {
-  final HoneyzModel honeyz;
+  final StreamerModel honeyz;
 
   const StreamerDetail({super.key, required this.honeyz});
 
@@ -25,7 +25,7 @@ class StreamerDetail extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
-            Image.asset('assets/${honeyz.profileName}_profile.png'),
+            Image.asset('assets/honeyz/${honeyz.profileName}_profile.png'),
             SizedBox(
               height: 40,
             ),

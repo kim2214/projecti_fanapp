@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:honeyz_fan_app/model/live_check_model.dart';
 import 'package:honeyz_fan_app/widget/components/streamer_card.dart';
 import 'package:http/http.dart' as http;
@@ -38,10 +38,10 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
     super.initState();
   }
 
-  List<HoneyzModel> _result = [];
+  List<StreamerModel> _result = [];
   List<LiveCheckModel> _liveCheckResult = [];
 
-  Future<List<HoneyzModel>> _loadFirestore() async {
+  Future<List<StreamerModel>> _loadFirestore() async {
     await _liveCheck();
 
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -52,7 +52,7 @@ class _HoneyzPageWidgetState extends State<HoneyzPageWidget>
     for (int i = 0; i < sequence.length; i++) {
       for (var snapshot in _snapshot.docs) {
         if (sequence[i] == snapshot.id) {
-          _result.add(HoneyzModel.fromJson(snapshot.data()));
+          _result.add(StreamerModel.fromJson(snapshot.data()));
         }
       }
     }

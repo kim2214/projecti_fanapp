@@ -1,19 +1,19 @@
-class HoneyzModel {
+class StreamerModel {
   final String? name;
   final String? profileName;
   final String? youtube;
   final String? chzzk;
   final String? twitter;
 
-  HoneyzModel(
+  StreamerModel(
       {required this.name,
       required this.profileName,
       required this.youtube,
       required this.chzzk,
       required this.twitter});
 
-  factory HoneyzModel.fromJson(Map<String, dynamic> json) {
-    return HoneyzModel(
+  factory StreamerModel.fromJson(Map<String, dynamic> json) {
+    return StreamerModel(
       name: json["name"],
       profileName: json["profile_name"],
       youtube: json["youtube"],

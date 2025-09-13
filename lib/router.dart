@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/audio_widget.dart';
 import 'package:honeyz_fan_app/widget/components/schedule_detail.dart';
@@ -43,7 +43,7 @@ final router = GoRouter(
     GoRoute(
       path: '/streamerDetail',
       builder: (context, state) {
-        final honeyz = state.extra as HoneyzModel;
+        final honeyz = state.extra as StreamerModel;
         return StreamerDetail(honeyz: honeyz);
         // return StreamerDetail();
       },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:honeyz_fan_app/font_style_sheet.dart';
-import 'package:honeyz_fan_app/model/honeyz_model.dart';
+import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:honeyz_fan_app/model/live_check_model.dart';
 
 List<String> assetName = [
@@ -24,7 +24,7 @@ List<String> honeyzName = [
 
 class StreamerCard extends StatelessWidget {
   final int index;
-  final HoneyzModel streamer;
+  final StreamerModel streamer;
   final LiveCheckModel status;
 
   const StreamerCard({
@@ -42,7 +42,7 @@ class StreamerCard extends StatelessWidget {
       },
       child: Column(
         children: [
-          Image.asset('assets/${assetName[index]}_profile.png'),
+          Image.asset('assets/honeyz/${assetName[index]}_profile.png'),
           SizedBox(
             height: 20,
           ),
