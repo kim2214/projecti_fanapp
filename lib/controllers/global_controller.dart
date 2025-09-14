@@ -27,12 +27,11 @@ class GlobalController extends GetxController {
   ];
 
   List<String> acaxiaSequence = [
-    "honeychurros",
-    "ayauke",
-    "damyui",
-    "ddddragon",
-    "ohwayo",
-    "mangnae",
+    "popopopo",
+    "violetaMone",
+    "blaireRose",
+    "hasiyo",
+    "ryushiho",
   ];
 
   List<String> honeyzNameList = [
@@ -50,6 +49,23 @@ class GlobalController extends GetxController {
     "블레어 로즈",
     "하시요",
     "류시호",
+  ];
+
+  List<String> honeyzAssetName = [
+    "honeychurros",
+    "ayauke",
+    "damyui",
+    "ddddragon",
+    "ohwayo",
+    "mangnae"
+  ];
+
+  List<String> acaxiaAssetName = [
+    "popopopo",
+    "violetaMone",
+    "blaireRose",
+    "hasiyo",
+    "ryushiho",
   ];
 
   List<String> honeyzBrodcastIDList = [

@@ -37,27 +37,29 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
             style: FontStyleSheet.title,
           ),
         ),
-        ListView.separated(
-          shrinkWrap: true,
-          itemCount: globalController.schedule.length,
-          padding: EdgeInsets.all(15.0),
-          itemBuilder: (context, index) {
-            return SizedBox(
-              height: 350,
-              child: InkWell(
-                onTap: () {
-                  context.push(
-                      '/scheduleDetail?url=${globalController.schedule[index].scheduleURL}&name=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}');
-                },
-                child: ScheduleCard(
-                  imageURL: globalController.schedule[index].scheduleURL!,
-                  index: index,
+        Expanded(
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: globalController.schedule.length,
+            padding: EdgeInsets.all(15.0),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                height: 350,
+                child: InkWell(
+                  onTap: () {
+                    context.push(
+                        '/scheduleDetail?url=${globalController.schedule[index].scheduleURL}&name=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}');
+                  },
+                  child: ScheduleCard(
+                    imageURL: globalController.schedule[index].scheduleURL!,
+                    index: index,
+                  ),
                 ),
-              ),
-            );
-          },
-          separatorBuilder: (context, index) => SizedBox(
-            height: 30.0,
+              );
+            },
+            separatorBuilder: (context, index) => SizedBox(
+              height: 30.0,
+            ),
           ),
         ),
       ],

@@ -1,26 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/controllers/global_controller.dart';
 import 'package:honeyz_fan_app/font_style_sheet.dart';
 import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:honeyz_fan_app/model/live_check_model.dart';
-
-List<String> assetName = [
-  "honeychurros",
-  "ayauke",
-  "damyui",
-  "ddddragon",
-  "ohwayo",
-  "mangnae"
-];
-
-List<String> honeyzName = [
-  "허니츄러스",
-  "아야",
-  "담유이",
-  "디디디용",
-  "오화요",
-  "망내",
-];
 
 class StreamerCard extends StatelessWidget {
   final int index;
@@ -36,19 +20,29 @@ class StreamerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final globalController = Get.find<GlobalController>();
+
     return InkWell(
       onTap: () {
         context.push('/streamerDetail', extra: streamer);
       },
       child: Column(
         children: [
-          Image.asset('assets/honeyz/${assetName[index]}_profile.png'),
+          Obx(
+            () => Image.asset(globalController.selectedGroup.value == 'honeyz'
+                ? 'assets/honeyz/${globalController.honeyzAssetName[index]}_profile.png'
+                : 'assets/acaxia/${globalController.acaxiaAssetName[index]}_profile.png'),
+          ),
           SizedBox(
             height: 20,
           ),
-          Text(
-            honeyzName[index],
-            style: FontStyleSheet.streamerCardItem,
+          Obx(
+            () => Text(
+              globalController.selectedGroup.value == 'honeyz'
+                  ? globalController.honeyzNameList[index]
+                  : globalController.acaxiaNameList[index],
+              style: FontStyleSheet.streamerCardItem,
+            ),
           ),
           Visibility(
             visible: status.status! == 'OPEN',
