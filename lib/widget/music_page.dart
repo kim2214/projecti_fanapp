@@ -14,14 +14,12 @@ class MusicPageWidget extends StatefulWidget {
 
 class _MusicPageWidgetState extends State<MusicPageWidget>
     with AutomaticKeepAliveClientMixin {
-  final musicController = Get.put(MusicController());
+  final musicController = Get.find<MusicController>();
 
   @override
   void initState() {
     super.initState();
   }
-
-  // List<MusicModel> _result = [];
 
   Future<List<MusicModel>> _loadFirestore() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;

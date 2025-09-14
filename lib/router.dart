@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/bindings.dart';
 import 'package:honeyz_fan_app/model/streamer_model.dart';
 import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/audio_widget.dart';
@@ -14,6 +15,7 @@ final router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) {
+        BindingClass().dependencies();
         return MyHomePage();
       },
     ),

@@ -18,7 +18,7 @@ class MusicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final musicController = Get.put(MusicController());
+    final musicController = Get.find<MusicController>();
 
     return InkWell(
       onTap: () {

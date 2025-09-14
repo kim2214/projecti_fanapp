@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:honeyz_fan_app/widget/honeyz_page.dart';
+import 'package:honeyz_fan_app/widget/group_page.dart';
 import 'package:honeyz_fan_app/widget/music_page.dart';
 import 'package:honeyz_fan_app/widget/schedule_page.dart';
 
@@ -24,7 +24,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
 
   final List<Widget> _screens = [
     SchedulePageWidget(),
-    HoneyzPageWidget(),
+    GroupPageWidget(),
     MusicPageWidget(),
   ];
 

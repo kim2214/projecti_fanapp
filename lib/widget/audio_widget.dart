@@ -307,7 +307,7 @@ class BackgroundControlButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final musicController = GetX.Get.put(MusicController());
+    final musicController = GetX.Get.find<MusicController>();
 
     return StreamBuilder<PlaybackState>(
       stream: audioHandler.playbackState,
