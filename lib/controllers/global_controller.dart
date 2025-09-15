@@ -12,7 +12,8 @@ class GlobalController extends GetxController {
 
   RxString selectedGroup = ''.obs;
 
-  RxList<ScheduleModel> schedule = <ScheduleModel>[].obs;
+  RxList<ScheduleModel> honeyzScheduleList = <ScheduleModel>[].obs;
+  RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;
   RxList<StreamerModel> honeyz = <StreamerModel>[].obs;
   RxList<StreamerModel> acaxia = <StreamerModel>[].obs;
   RxList<LiveCheckModel> liveCheckList = <LiveCheckModel>[].obs;
@@ -87,20 +88,39 @@ class GlobalController extends GetxController {
 
   Future<List<ScheduleModel>> loadScheduleFireStore(
       {required List<String> sequence}) async {
-    if (schedule.isEmpty) {
+    List<ScheduleModel> returnSchedule = [];
+
+    if (honeyzScheduleList.isEmpty && selectedGroup.value == 'honeyz') {
       QuerySnapshot<Map<String, dynamic>> snapshot =
           await _fireStore.collection("schedule").get();
 
       for (int i = 0; i < sequence.length; i++) {
         for (var snapshot in snapshot.docs) {
           if (sequence[i] == snapshot.id) {
-            schedule.add(ScheduleModel.fromJson(snapshot.data()));
+            honeyzScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
           }
         }
       }
+
+      returnSchedule = honeyzScheduleList;
     }
 
-    return schedule;
+    if (acaxiaScheduleList.isEmpty && selectedGroup.value == 'acaxia') {
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+          await _fireStore.collection("schedule_acaxia").get();
+
+      for (int i = 0; i < sequence.length; i++) {
+        for (var snapshot in snapshot.docs) {
+          if (sequence[i] == snapshot.id) {
+            acaxiaScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+          }
+        }
+      }
+
+      returnSchedule = acaxiaScheduleList;
+    }
+
+    return returnSchedule;
   }
 
   Future<List<StreamerModel>> loadStreamerFireStore(

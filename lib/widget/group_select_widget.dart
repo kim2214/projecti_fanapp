@@ -88,9 +88,18 @@ class GroupSelectWidget extends StatelessWidget {
                       Expanded(
                         flex: 1,
                         child: InkWell(
-                          onTap: () {
+                          onTap: () async {
                             globalController.selectedGroup.value = 'acaxia';
-                            context.push('/baseScreen');
+                            await globalController
+                                .loadScheduleFireStore(
+                                    sequence: globalController.acaxiaSequence)
+                                .then(
+                              (schedule) {
+                                if (schedule.isNotEmpty) {
+                                  context.push('/baseScreen');
+                                }
+                              },
+                            );
                           },
                           child: Container(
                             height: double.infinity,

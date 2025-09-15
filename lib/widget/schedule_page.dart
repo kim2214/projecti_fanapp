@@ -40,7 +40,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
         Expanded(
           child: ListView.separated(
             shrinkWrap: true,
-            itemCount: globalController.schedule.length,
+            itemCount: globalController.selectedGroup.value == 'honeyz'
+                ? globalController.honeyzScheduleList.length
+                : globalController.acaxiaScheduleList.length,
             padding: EdgeInsets.all(15.0),
             itemBuilder: (context, index) {
               return SizedBox(
@@ -48,10 +50,14 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 child: InkWell(
                   onTap: () {
                     context.push(
-                        '/scheduleDetail?url=${globalController.schedule[index].scheduleURL}&name=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}');
+                        '/scheduleDetail?url=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzScheduleList[index].scheduleURL : globalController.acaxiaScheduleList[index].scheduleURL}&name=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}');
                   },
                   child: ScheduleCard(
-                    imageURL: globalController.schedule[index].scheduleURL!,
+                    imageURL: globalController.selectedGroup.value == 'honeyz'
+                        ? globalController
+                            .honeyzScheduleList[index].scheduleURL!
+                        : globalController
+                            .acaxiaScheduleList[index].scheduleURL!,
                     index: index,
                   ),
                 ),
