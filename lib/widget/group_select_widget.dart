@@ -18,11 +18,9 @@ class GroupSelectWidget extends StatelessWidget {
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             //해당 부분은 data를 아직 받아 오지 못했을때 실행되는 부분
             if (snapshot.hasData == false) {
-              return Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
-                  ),
+              return Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
                 ),
               );
             }
