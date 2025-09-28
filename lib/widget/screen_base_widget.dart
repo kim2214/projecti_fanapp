@@ -2,6 +2,9 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
+import 'package:honeyz_fan_app/controllers/global_controller.dart';
 import 'package:honeyz_fan_app/theme/custom_colors_theme.dart';
 import 'package:honeyz_fan_app/widget/group_page.dart';
 import 'package:honeyz_fan_app/widget/music_page.dart';
@@ -116,17 +119,120 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<CustomColorsTheme>();
 
+    final globalController = Get.find<GlobalController>();
+
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        child: Icon(
-          Icons.brightness_3,
-          color: Colors.deepOrange,
+      floatingActionButton: PopupMenuButton<String>(
+        offset: Offset(0, -200),
+        // 메뉴 위치 조정
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
         ),
-        onPressed: () {
-          pageController.jumpToPage(0);
+        child: FloatingActionButton(
+          backgroundColor: Colors.white,
+          shape: CircleBorder(),
+          elevation: 4.0,
+          onPressed: null,
+          child: ClipOval(
+            child: Image.asset(
+              'assets/projecti_logo.png',
+              height: 50,
+              width: 50,
+              fit: BoxFit.cover,
+            ),
+          ), // PopupMenuButton이 처리함
+        ),
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem(
+            value: 'honeyz',
+            onTap: () async {
+              globalController.selectedGroup.value = 'honeyz';
+              await globalController
+                  .loadScheduleFireStore(
+                      sequence: globalController.honeyzSequence)
+                  .then(
+                (schedule) {
+                  if (schedule.isNotEmpty) {
+                    context.push('/baseScreen');
+                  }
+                },
+              );
+            },
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/honeyz_logo.png',
+                  height: 20,
+                  width: 20,
+                  fit: BoxFit.cover,
+                ),
+                SizedBox(width: 10),
+                Text('허니즈 탭'),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            value: 'acaxia',
+            onTap: () async {
+              globalController.selectedGroup.value = 'acaxia';
+              await globalController
+                  .loadScheduleFireStore(
+                      sequence: globalController.acaxiaSequence)
+                  .then(
+                (schedule) {
+                  if (schedule.isNotEmpty) {
+                    context.push('/baseScreen');
+                  }
+                },
+              );
+            },
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/acaxia_logo.png',
+                  height: 20,
+                  width: 20,
+                  fit: BoxFit.cover,
+                ),
+                SizedBox(width: 10),
+                Text('아카시아 탭'),
+              ],
+            ),
+          ),
+        ],
+        onSelected: (String value) {
+          switch (value) {
+            case 'home':
+              pageController.jumpToPage(0);
+              break;
+            case 'profile':
+              pageController.jumpToPage(1);
+              break;
+            case 'settings':
+              pageController.jumpToPage(2);
+              break;
+          }
         },
       ),
+      //   FloatingActionButton(
+      //     backgroundColor: Colors.white,
+      //     shape: CircleBorder(),
+      //     elevation: 4.0, // 그림자 효과
+      //     child:
+      // ClipOval(
+      // child:
+      // Image.asset('assets/projecti_logo.png',height: 50,width: 50,),
+      // ),
+      //     // Icon(
+      //     //   Icons.brightness_3,
+      //     //   color: Colors.deepOrange,
+      //     // ),
+      //     onPressed: () {
+      //       pageController.jumpToPage(0);
+      //
+      //     },
+      //   ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
         itemCount: iconList.length,

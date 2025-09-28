@@ -91,13 +91,15 @@ class GlobalController extends GetxController {
     List<ScheduleModel> returnSchedule = [];
 
     if (honeyzScheduleList.isEmpty && selectedGroup.value == 'honeyz') {
-      QuerySnapshot<Map<String, dynamic>> snapshot =
-          await _fireStore.collection("schedule").get();
+      if (honeyzScheduleList.isEmpty) {
+        QuerySnapshot<Map<String, dynamic>> snapshot =
+            await _fireStore.collection("schedule").get();
 
-      for (int i = 0; i < sequence.length; i++) {
-        for (var snapshot in snapshot.docs) {
-          if (sequence[i] == snapshot.id) {
-            honeyzScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+        for (int i = 0; i < sequence.length; i++) {
+          for (var snapshot in snapshot.docs) {
+            if (sequence[i] == snapshot.id) {
+              honeyzScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+            }
           }
         }
       }
@@ -106,18 +108,20 @@ class GlobalController extends GetxController {
     }
 
     if (acaxiaScheduleList.isEmpty && selectedGroup.value == 'acaxia') {
-      QuerySnapshot<Map<String, dynamic>> snapshot =
-          await _fireStore.collection("schedule_acaxia").get();
+      if (acaxiaScheduleList.isEmpty) {
+        QuerySnapshot<Map<String, dynamic>> snapshot =
+            await _fireStore.collection("schedule_acaxia").get();
 
-      for (int i = 0; i < sequence.length; i++) {
-        for (var snapshot in snapshot.docs) {
-          if (sequence[i] == snapshot.id) {
-            acaxiaScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+        for (int i = 0; i < sequence.length; i++) {
+          for (var snapshot in snapshot.docs) {
+            if (sequence[i] == snapshot.id) {
+              acaxiaScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+            }
           }
         }
-      }
 
-      returnSchedule = acaxiaScheduleList;
+        returnSchedule = acaxiaScheduleList;
+      }
     }
 
     return returnSchedule;
