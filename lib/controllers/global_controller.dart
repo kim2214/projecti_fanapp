@@ -16,7 +16,8 @@ class GlobalController extends GetxController {
   RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;
   RxList<StreamerModel> honeyz = <StreamerModel>[].obs;
   RxList<StreamerModel> acaxia = <StreamerModel>[].obs;
-  RxList<LiveCheckModel> liveCheckList = <LiveCheckModel>[].obs;
+  RxList<LiveCheckModel> honeyzliveCheckList = <LiveCheckModel>[].obs;
+  RxList<LiveCheckModel> acaxialiveCheckList = <LiveCheckModel>[].obs;
 
   List<String> honeyzSequence = [
     "honeychurros",
@@ -169,32 +170,30 @@ class GlobalController extends GetxController {
   }
 
   Future<List<LiveCheckModel>> liveCheck() async {
-    if (liveCheckList.isEmpty) {
-      if (selectedGroup.value == 'honeyz') {
-        for (int i = 0; i < honeyzBrodcastIDList.length; i++) {
-          final url = Uri.parse(
-              'https://api.chzzk.naver.com/polling/v2/channels/${honeyzBrodcastIDList[i]}/live-status');
+    if (honeyzliveCheckList.isEmpty) {
+      for (int i = 0; i < honeyzBrodcastIDList.length; i++) {
+        final url = Uri.parse(
+            'https://api.chzzk.naver.com/polling/v2/channels/${honeyzBrodcastIDList[i]}/live-status');
 
-          try {
-            final response = await http.get(url);
+        try {
+          final response = await http.get(url);
 
-            if (response.statusCode == 200) {
-              final String decodedBody =
-                  utf8.decode(response.bodyBytes); // UTF-8 디코딩
-              final Map<String, dynamic> data =
-                  json.decode(decodedBody); // JSON을 Map으로 변환
+          if (response.statusCode == 200) {
+            final String decodedBody =
+                utf8.decode(response.bodyBytes); // UTF-8 디코딩
+            final Map<String, dynamic> data =
+                json.decode(decodedBody); // JSON을 Map으로 변환
 
-              liveCheckList.add(LiveCheckModel.fromJson(data['content']));
-            } else {
-              print('오류 발생: ${response.statusCode}');
-            }
-          } catch (e) {
-            print('예외 발생: $e');
+            honeyzliveCheckList.add(LiveCheckModel.fromJson(data['content']));
+          } else {
+            print('오류 발생: ${response.statusCode}');
           }
+        } catch (e) {
+          print('예외 발생: $e');
         }
       }
 
-      if (selectedGroup.value == 'acaxia') {
+      if (acaxialiveCheckList.isEmpty) {
         for (int i = 0; i < acaxiaBrodcastIDList.length; i++) {
           final url = Uri.parse(
               'https://api.chzzk.naver.com/polling/v2/channels/${acaxiaBrodcastIDList[i]}/live-status');
@@ -208,7 +207,7 @@ class GlobalController extends GetxController {
               final Map<String, dynamic> data =
                   json.decode(decodedBody); // JSON을 Map으로 변환
 
-              liveCheckList.add(LiveCheckModel.fromJson(data['content']));
+              acaxialiveCheckList.add(LiveCheckModel.fromJson(data['content']));
             } else {
               print('오류 발생: ${response.statusCode}');
             }
@@ -219,6 +218,6 @@ class GlobalController extends GetxController {
       }
     }
 
-    return liveCheckList;
+    return honeyzliveCheckList;
   }
 }

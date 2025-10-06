@@ -49,51 +49,97 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                   children: [
                     Image.asset('assets/honeyz_logo.png'),
                     Expanded(
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        itemCount:
-                            globalController.selectedGroup.value == 'honeyz'
-                                ? globalController.honeyz.length
-                                : globalController.acaxia.length,
-                        padding: EdgeInsets.all(15.0),
-                        itemBuilder: (context, index) {
-                          return Container(
-                            margin: EdgeInsets.symmetric(vertical: 20.0),
-                            padding: EdgeInsets.all(20.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: globalController
-                                              .liveCheckList[index].status ==
-                                          'OPEN'
-                                      ? Colors.black
-                                      : Colors.red,
-                                  width: globalController
-                                              .liveCheckList[index].status ==
-                                          'OPEN'
-                                      ? 5.0
-                                      : 0.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x0fff5e88).withOpacity(1.0),
-                                  offset: Offset(0.0, 0.0),
-                                )
-                              ],
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10.0),
-                              ),
-                            ),
-                            child: StreamerCard(
-                              index: index,
-                              streamer: globalController.selectedGroup.value ==
-                                      'honeyz'
-                                  ? globalController.honeyz[index]
-                                  : globalController.acaxia[index],
-                              status: globalController.liveCheckList[index],
-                            ),
-                          );
-                        },
-                        separatorBuilder: (context, index) => SizedBox(
-                          height: 30.0,
+                      child: Obx(
+                        () => ListView.separated(
+                          shrinkWrap: true,
+                          itemCount:
+                              globalController.selectedGroup.value == 'honeyz'
+                                  ? globalController.honeyz.length
+                                  : globalController.acaxia.length,
+                          padding: EdgeInsets.all(15.0),
+                          itemBuilder: (context, index) {
+                            return globalController.selectedGroup.value ==
+                                    'honeyz'
+                                ? Container(
+                                    margin:
+                                        EdgeInsets.symmetric(vertical: 20.0),
+                                    padding: EdgeInsets.all(20.0),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: globalController
+                                                      .honeyzliveCheckList[
+                                                          index]
+                                                      .status ==
+                                                  'OPEN'
+                                              ? Colors.black
+                                              : Colors.red,
+                                          width: globalController
+                                                      .honeyzliveCheckList[
+                                                          index]
+                                                      .status ==
+                                                  'OPEN'
+                                              ? 5.0
+                                              : 0.0),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x0fff5e88)
+                                              .withOpacity(1.0),
+                                          offset: Offset(0.0, 0.0),
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0),
+                                      ),
+                                    ),
+                                    child: StreamerCard(
+                                      index: index,
+                                      streamer: globalController.honeyz[index],
+                                      status: globalController
+                                          .honeyzliveCheckList[index],
+                                    ),
+                                  )
+                                : Container(
+                                    margin:
+                                        EdgeInsets.symmetric(vertical: 20.0),
+                                    padding: EdgeInsets.all(20.0),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: globalController
+                                                      .acaxialiveCheckList[
+                                                          index]
+                                                      .status ==
+                                                  'OPEN'
+                                              ? Colors.black
+                                              : Colors.red,
+                                          width: globalController
+                                                      .acaxialiveCheckList[
+                                                          index]
+                                                      .status ==
+                                                  'OPEN'
+                                              ? 5.0
+                                              : 0.0),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x0fff5e88)
+                                              .withOpacity(1.0),
+                                          offset: Offset(0.0, 0.0),
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0),
+                                      ),
+                                    ),
+                                    child: StreamerCard(
+                                      index: index,
+                                      streamer: globalController.acaxia[index],
+                                      status: globalController
+                                          .acaxialiveCheckList[index],
+                                    ),
+                                  );
+                          },
+                          separatorBuilder: (context, index) => SizedBox(
+                            height: 30.0,
+                          ),
                         ),
                       ),
                     ),
