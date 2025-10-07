@@ -47,7 +47,9 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
               else {
                 return Column(
                   children: [
-                    Image.asset('assets/honeyz_logo.png'),
+                    Image.asset(globalController.selectedGroup.value == 'honeyz'
+                        ? 'assets/honeyz_logo.png'
+                        : 'assets/acaxia_logo.png'),
                     Expanded(
                       child: Obx(
                         () => ListView.separated(

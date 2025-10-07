@@ -45,8 +45,8 @@ final router = GoRouter(
     GoRoute(
       path: '/streamerDetail',
       builder: (context, state) {
-        final honeyz = state.extra as StreamerModel;
-        return StreamerDetail(honeyz: honeyz);
+        final pjiMember = state.extra as StreamerModel;
+        return StreamerDetail(pjiMember: pjiMember);
         // return StreamerDetail();
       },
     ),
