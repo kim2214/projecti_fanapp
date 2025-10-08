@@ -11,6 +11,9 @@ class GlobalController extends GetxController {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
 
   RxString selectedGroup = ''.obs;
+  RxList<String> selectedMusicGroup = <String>['all', 'honeyz', 'acaxia'].obs;
+
+  RxString selectedMusicGroupString = 'all'.obs;
 
   RxList<ScheduleModel> honeyzScheduleList = <ScheduleModel>[].obs;
   RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;

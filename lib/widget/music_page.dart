@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:honeyz_fan_app/controllers/global_controller.dart';
 import 'package:honeyz_fan_app/controllers/music_controller.dart';
+import 'package:honeyz_fan_app/font_style_sheet.dart';
 import 'package:honeyz_fan_app/model/music_model.dart';
 import 'package:honeyz_fan_app/widget/components/music_card.dart';
 import 'package:get/get.dart';
@@ -24,18 +26,30 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
   Future<List<MusicModel>> _loadFirestore() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-    QuerySnapshot<Map<String, dynamic>> _snapshot = await _firestore
-        .collection("music")
-        .orderBy('created_at', descending: false)
-        .get();
-    musicController.musicList.value =
-        _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
+    if (musicController.originMusicList.isEmpty) {
+      QuerySnapshot<Map<String, dynamic>> _snapshot = await _firestore
+          .collection("music")
+          .orderBy('created_at', descending: false)
+          .get();
+      musicController.originMusicList.value =
+          _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
+      musicController.musicList.value =
+          _snapshot.docs.map((e) => MusicModel.fromJson(e.data())).toList();
+    }
+
     return musicController.musicList;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    RxString? selectedValue = '전체(프로젝트아이)'.obs;
+
+    List<String> items = ['전체(프로젝트아이)', '허니즈', '아카시아'];
+
+    final globalController = Get.find<GlobalController>();
+
     return FutureBuilder(
       future: _loadFirestore(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -59,35 +73,91 @@ class _MusicPageWidgetState extends State<MusicPageWidget>
         }
         // 데이터를 정상적으로 받아오게 되면 다음 부분을 실행
         else {
-          return Column(
-            children: [
-              Image.asset(
-                'assets/honeyz_logo.png',
-              ),
-              Expanded(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: musicController.musicList.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10.0),
-                        ),
-                      ),
-                      child: MusicCard(
-                        musicModel: musicController.musicList[index],
-                        index: index,
-                      ),
-                    );
+          return Obx(
+            () => Column(
+              children: [
+                globalController.selectedMusicGroupString.value == 'all'
+                    ? Image.asset(
+                        'assets/projecti_logo.png',
+                        width: 150,
+                        height: 150,
+                      )
+                    : globalController.selectedMusicGroupString.value ==
+                            'honeyz'
+                        ? Image.asset(
+                            'assets/honeyz_logo.png',
+                            width: 150,
+                            height: 150,
+                          )
+                        : Image.asset(
+                            'assets/acaxia_logo.png',
+                            width: 150,
+                            height: 150,
+                          ),
+                DropdownButton<String>(
+                  // 초기값이 설정되지 않은 경우를 위해 value가 null일 수 있으므로 String? 타입 사용
+                  value: selectedValue.value,
+                  alignment: Alignment.center,
+                  hint: const Text('그룹을 선택해 주세요'),
+                  icon: const Icon(Icons.arrow_downward),
+
+                  style: FontStyleSheet.musicArtistName
+                      .copyWith(color: Colors.black),
+                  underline: const SizedBox.shrink(),
+                  onChanged: (String? newValue) {
+                    // setState(() {
+                    selectedValue.value = newValue!;
+                    globalController.selectedMusicGroupString.value =
+                        globalController
+                            .selectedMusicGroup[items.indexOf(newValue)];
+
+                    if (globalController
+                            .selectedMusicGroup[items.indexOf(newValue)] ==
+                        'all') {
+                      musicController.musicList.value =
+                          musicController.originMusicList;
+                    } else {
+                      musicController.musicList.value = musicController
+                          .originMusicList
+                          .where((music) => music.group!.contains(
+                              globalController
+                                  .selectedMusicGroup[items.indexOf(newValue)]))
+                          .toList();
+                    }
                   },
-                  separatorBuilder: (context, index) => SizedBox(
-                    height: 30.0,
+                  items: items.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    itemCount: musicController.musicList.length,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10.0),
+                          ),
+                        ),
+                        child: MusicCard(
+                          musicModel: musicController.musicList[index],
+                          index: index,
+                        ),
+                      );
+                    },
+                    separatorBuilder: (context, index) => SizedBox(
+                      height: 30.0,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         }
       },
