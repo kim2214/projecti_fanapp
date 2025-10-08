@@ -1,5 +1,5 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:honeyz_fan_app/widget/audio_widget.dart';
+import 'package:projecti_fan_app/widget/audio_widget.dart';
 
 // AudioManager 싱글톤 클래스
 class AudioManager {
@@ -19,7 +19,7 @@ class AudioManager {
       _audioHandler = await AudioService.init(
         builder: () => AudioPlayerHandler(),
         config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.devkim.honeyz_fan_app.channel.audio',
+          androidNotificationChannelId: 'com.devkim.projecti_fan_app.channel.audio',
           androidNotificationChannelName: 'Music Player',
           androidNotificationOngoing: true,
           androidShowNotificationBadge: true,

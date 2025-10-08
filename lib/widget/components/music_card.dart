@@ -2,9 +2,9 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/controllers/music_controller.dart';
-import 'package:honeyz_fan_app/font_style_sheet.dart';
-import 'package:honeyz_fan_app/model/music_model.dart';
+import 'package:projecti_fan_app/controllers/music_controller.dart';
+import 'package:projecti_fan_app/font_style_sheet.dart';
+import 'package:projecti_fan_app/model/music_model.dart';
 
 class MusicCard extends StatelessWidget {
   final MusicModel musicModel;

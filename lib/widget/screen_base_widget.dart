@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/controllers/global_controller.dart';
-import 'package:honeyz_fan_app/theme/custom_colors_theme.dart';
-import 'package:honeyz_fan_app/widget/group_page.dart';
-import 'package:honeyz_fan_app/widget/music_page.dart';
-import 'package:honeyz_fan_app/widget/schedule_page.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/theme/custom_colors_theme.dart';
+import 'package:projecti_fan_app/widget/group_page.dart';
+import 'package:projecti_fan_app/widget/music_page.dart';
+import 'package:projecti_fan_app/widget/schedule_page.dart';
 
 class ScreenBaseWidget extends StatefulWidget {
   ScreenBaseWidget({super.key});

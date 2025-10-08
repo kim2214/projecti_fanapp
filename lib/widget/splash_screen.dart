@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
+import 'package:projecti_fan_app/widget/screen_base_widget.dart';
 
 class SplashScreen extends StatefulWidget {
   @override

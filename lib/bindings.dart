@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:honeyz_fan_app/controllers/global_controller.dart';
-import 'package:honeyz_fan_app/controllers/music_controller.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/music_controller.dart';
 
 class BindingClass extends Bindings {
   @override

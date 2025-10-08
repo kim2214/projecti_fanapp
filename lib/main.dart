@@ -1,11 +1,11 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:honeyz_fan_app/default_firebase_options.dart';
-import 'package:honeyz_fan_app/router.dart';
-import 'package:honeyz_fan_app/widget/audio_manager.dart';
-import 'package:honeyz_fan_app/widget/audio_widget.dart';
-import 'package:honeyz_fan_app/widget/splash_screen.dart';
+import 'package:projecti_fan_app/default_firebase_options.dart';
+import 'package:projecti_fan_app/router.dart';
+import 'package:projecti_fan_app/widget/audio_manager.dart';
+import 'package:projecti_fan_app/widget/audio_widget.dart';
+import 'package:projecti_fan_app/widget/splash_screen.dart';
 
 void main() async {
   // WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();

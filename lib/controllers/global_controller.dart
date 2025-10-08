@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:extended_image/extended_image.dart' as http;
 import 'package:get/get.dart';
-import 'package:honeyz_fan_app/model/live_check_model.dart';
-import 'package:honeyz_fan_app/model/schedule_model.dart';
-import 'package:honeyz_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/schedule_model.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
 
 class GlobalController extends GetxController {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;

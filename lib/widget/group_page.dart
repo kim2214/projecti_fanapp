@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:honeyz_fan_app/controllers/global_controller.dart';
-import 'package:honeyz_fan_app/widget/components/streamer_card.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/widget/components/streamer_card.dart';
 
 class GroupPageWidget extends StatefulWidget {
   const GroupPageWidget({super.key});

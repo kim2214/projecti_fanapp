@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:honeyz_fan_app/model/music_model.dart';
+import 'package:projecti_fan_app/model/music_model.dart';
 
 class MusicController extends GetxController {
   RxList<MusicModel> originMusicList = <MusicModel>[].obs;

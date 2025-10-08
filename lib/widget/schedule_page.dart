@@ -2,7 +2,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
 
 import '../font_style_sheet.dart';
 

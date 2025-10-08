@@ -1,12 +1,12 @@
 import 'package:go_router/go_router.dart';
-import 'package:honeyz_fan_app/bindings.dart';
-import 'package:honeyz_fan_app/model/streamer_model.dart';
-import 'package:honeyz_fan_app/model/music_model.dart';
-import 'package:honeyz_fan_app/widget/audio_widget.dart';
-import 'package:honeyz_fan_app/widget/components/schedule_detail.dart';
-import 'package:honeyz_fan_app/widget/components/streamer_detail.dart';
-import 'package:honeyz_fan_app/widget/group_select_widget.dart';
-import 'package:honeyz_fan_app/widget/screen_base_widget.dart';
+import 'package:projecti_fan_app/bindings.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/model/music_model.dart';
+import 'package:projecti_fan_app/widget/audio_widget.dart';
+import 'package:projecti_fan_app/widget/components/schedule_detail.dart';
+import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
+import 'package:projecti_fan_app/widget/group_select_widget.dart';
+import 'package:projecti_fan_app/widget/screen_base_widget.dart';
 
 import 'main.dart';
 

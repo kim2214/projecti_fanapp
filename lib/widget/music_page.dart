@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:honeyz_fan_app/controllers/global_controller.dart';
-import 'package:honeyz_fan_app/controllers/music_controller.dart';
-import 'package:honeyz_fan_app/font_style_sheet.dart';
-import 'package:honeyz_fan_app/model/music_model.dart';
-import 'package:honeyz_fan_app/widget/components/music_card.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/music_controller.dart';
+import 'package:projecti_fan_app/font_style_sheet.dart';
+import 'package:projecti_fan_app/model/music_model.dart';
+import 'package:projecti_fan_app/widget/components/music_card.dart';
 import 'package:get/get.dart';
 
 class MusicPageWidget extends StatefulWidget {
