@@ -11,10 +11,8 @@ import 'package:rxdart/rxdart.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:get/get.dart' as GetX;
 
-import '../font_style_sheet.dart';
 import 'audio_common.dart';
 
-// 백그라운드 오디오 핸들러 (기존과 동일)
 class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
   final _playlist = ConcatenatingAudioSource(children: []);
@@ -24,24 +22,20 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Future<void> _init() async {
-    // AudioSession 설정
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.music());
 
-    // 플레이어 상태 변경 리스너
     _player.playbackEventStream.map(_transformEvent).pipe(playbackState);
     _player.sequenceStateStream.listen(_updateMediaItem);
 
-    // 플레이어에 플레이리스트 설정
     await _player.setAudioSource(_playlist);
   }
 
-  // 플레이리스트 클리어 메서드 추가
   Future<void> clearQueue() async {
     await _playlist.clear();
   }
 
-  // 오디오 소스 추가
+  @override
   Future<void> addQueueItem(MediaItem mediaItem) async {
     final audioSource = AudioSource.uri(
       Uri.parse(mediaItem.id),
@@ -50,15 +44,12 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     await _playlist.add(audioSource);
   }
 
-  // 재생
   @override
   Future<void> play() => _player.play();
 
-  // 일시정지
   @override
   Future<void> pause() => _player.pause();
 
-  // 정지
   @override
   Future<void> stop() async {
     await _player.stop();
@@ -68,14 +59,12 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     ));
   }
 
-  // 탐색
   @override
   Future<void> seek(Duration position) => _player.seek(position);
 
-  // 속도 설정 메서드 추가
+  @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
 
-  // PlaybackEvent를 PlaybackState로 변환
   PlaybackState _transformEvent(PlaybackEvent event) {
     return PlaybackState(
       controls: [
@@ -105,11 +94,9 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     );
   }
 
-  // 미디어 아이템 업데이트
   void _updateMediaItem(SequenceState? sequenceState) {
     final item = sequenceState?.currentSource?.tag as MediaItem?;
     if (item == null) return;
-
     mediaItem.add(item);
   }
 
@@ -124,7 +111,6 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> onTaskRemoved() async {
-    // 앱이 종료될 때 오디오 정리
     await stop();
   }
 }
@@ -147,22 +133,21 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
     super.initState();
     _initializeAudio();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.black,
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
     ));
   }
 
   Future<void> _initializeAudio() async {
     try {
-      // main에서 이미 초기화된 AudioService 핸들러 가져오기
       _audioHandler = AudioManager.instance.audioHandler;
 
       if (_audioHandler != null) {
-        // 기존 큐 클리어하고 새 음악 로드
         await _audioHandler!.clearQueue();
         await _loadAndPlayMusic();
       }
     } catch (e) {
-      print("Error initializing audio: $e");
+      debugPrint("Error initializing audio: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -181,12 +166,12 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         title: widget.musicModel.title ?? 'Unknown Title',
         artist: widget.musicModel.name ?? 'Unknown Artist',
         artUri: Uri.parse(widget.musicModel.thumbnail ?? ''),
-        duration: null, // 실제 재생 시 자동으로 설정됨
+        duration: null,
       );
 
       await _audioHandler!.addQueueItem(mediaItem);
     } catch (e) {
-      print("Error loading audio source: $e");
+      debugPrint("Error loading audio source: $e");
     }
   }
 
@@ -201,8 +186,6 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
 
   @override
   void dispose() {
-    // dispose에서는 AudioService를 완전히 중지하지 않고,
-    // 필요시 음악만 정지
     _audioHandler?.pause();
     super.dispose();
   }
@@ -210,126 +193,267 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0x0fff5e88).withOpacity(1.0),
-      body: SafeArea(
-        child: Center(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AudioTheme.backgroundLight,
+              AudioTheme.backgroundMid,
+              AudioTheme.background,
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
           child: _isLoading || _audioHandler == null
-              ? const CircularProgressIndicator()
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 앨범 아트
-                    Container(
-                      height: 350,
-                      width: 350,
-                      decoration: BoxDecoration(
-                        border: Border.all(width: 5.0, color: Colors.black),
-                        borderRadius: BorderRadius.circular(7.0),
-                      ),
-                      child: Image.network(
-                        widget.musicModel.thumbnail ?? '',
-                        fit: BoxFit.fill,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.music_note, size: 100);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-
-                    // 제목과 아티스트
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        children: [
-                          Text(
-                            widget.musicModel.title ?? 'Unknown Title',
-                            style: FontStyleSheet.musicTitle,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.musicModel.name ?? 'Unknown Artist',
-                            style: FontStyleSheet.musicArtistName,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 진행률 바
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: StreamBuilder<PositionData>(
-                        stream: _audioHandler?.positionDataStream,
-                        builder: (context, snapshot) {
-                          final data = snapshot.data ??
-                              PositionData(
-                                  Duration.zero, Duration.zero, Duration.zero);
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: SeekBar(
-                                  duration: data.duration,
-                                  position: data.position,
-                                  bufferedPosition: data.bufferedPosition,
-                                  onChangeEnd: _audioHandler?._player.seek,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-
-                    // 컨트롤 버튼
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: BackgroundControlButtons(
-                          audioHandler: _audioHandler!),
-                    ),
-                  ],
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AudioTheme.primary,
+                    strokeWidth: 3,
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      const Spacer(flex: 1),
+                      _buildAlbumArt(),
+                      const Spacer(flex: 1),
+                      _buildTrackInfo(),
+                      const SizedBox(height: 16),
+                      _buildSeekBar(),
+                      const SizedBox(height: 16),
+                      _buildControlButtons(context),
+                      const Spacer(flex: 1),
+                    ],
+                  ),
                 ),
         ),
       ),
     );
   }
-}
 
-class BackgroundControlButtons extends StatelessWidget {
-  final AudioPlayerHandler audioHandler;
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AudioTheme.surface.withAlpha(180),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AudioTheme.textPrimary,
+                size: 28,
+              ),
+              onPressed: () => context.pop(),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AudioTheme.surface.withAlpha(180),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'NOW PLAYING',
+                  style: TextStyle(
+                    color: AudioTheme.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.musicModel.name ?? '',
+                  style: const TextStyle(
+                    color: AudioTheme.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: AudioTheme.surface.withAlpha(180),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.favorite_border_rounded,
+                color: AudioTheme.primary,
+                size: 24,
+              ),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const BackgroundControlButtons({Key? key, required this.audioHandler})
-      : super(key: key);
+  Widget _buildAlbumArt() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // 화면 높이의 35% 또는 너비의 65% 중 작은 값 사용
+    final size = (screenHeight * 0.35).clamp(150.0, screenWidth * 0.65);
 
-  @override
-  Widget build(BuildContext context) {
+    return Hero(
+      tag: 'album_art_${widget.musicModel.title}',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AudioTheme.primary.withAlpha(80),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+              spreadRadius: 5,
+            ),
+            BoxShadow(
+              color: AudioTheme.primaryDark.withAlpha(50),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Image.network(
+            widget.musicModel.thumbnail ?? '',
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: AudioTheme.surfaceTint,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AudioTheme.primary,
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: AudioTheme.surfaceTint,
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 80,
+                  color: AudioTheme.primary,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrackInfo() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AudioTheme.surface.withAlpha(200),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            widget.musicModel.title ?? 'Unknown Title',
+            style: const TextStyle(
+              color: AudioTheme.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.3,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.musicModel.name ?? 'Unknown Artist',
+            style: const TextStyle(
+              color: AudioTheme.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeekBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AudioTheme.surface.withAlpha(180),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: StreamBuilder<PositionData>(
+        stream: _audioHandler?.positionDataStream,
+        builder: (context, snapshot) {
+          final data = snapshot.data ??
+              PositionData(Duration.zero, Duration.zero, Duration.zero);
+          return SeekBar(
+            duration: data.duration,
+            position: data.position,
+            bufferedPosition: data.bufferedPosition,
+            onChangeEnd: _audioHandler?.seek,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildControlButtons(BuildContext context) {
     final musicController = GetX.Get.find<MusicController>();
 
     return StreamBuilder<PlaybackState>(
-      stream: audioHandler.playbackState,
+      stream: _audioHandler?.playbackState,
       builder: (context, snapshot) {
         final playbackState = snapshot.data;
         final processingState =
             playbackState?.processingState ?? AudioProcessingState.idle;
         final playing = playbackState?.playing ?? false;
 
-        return Row(
-          mainAxisSize: MainAxisSize.min,
+        return Column(
           children: [
-            // 이전곡 버튼
-            Visibility(
-              visible: musicController.musicIndex.value != 0,
-              child: Column(
+            // 메인 컨트롤
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AudioTheme.surface.withAlpha(200),
+                borderRadius: BorderRadius.circular(35),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.arrow_circle_left_outlined,
-                      size: 30.0,
-                    ),
+                  // 이전곡
+                  _buildCircleButton(
+                    icon: Icons.skip_previous_rounded,
+                    size: 28,
+                    enabled: musicController.musicIndex.value != 0,
                     onPressed: () {
                       musicController.musicIndex.value -= 1;
                       context.pushReplacement('/audioPage',
@@ -337,88 +461,16 @@ class BackgroundControlButtons extends StatelessWidget {
                               .musicList[musicController.musicIndex.value]);
                     },
                   ),
-                  Text(
-                    '이전곡',
-                    style: FontStyleSheet.basicText,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
 
-            Spacer(),
+                  // 재생/일시정지
+                  _buildPlayButton(processingState, playing),
 
-            // 볼륨 버튼 (간소화)
-            IconButton(
-              icon: const Icon(Icons.volume_up),
-              onPressed: () {
-                // 볼륨 조절 다이얼로그 표시
-                _showVolumeDialog(context);
-              },
-            ),
-
-            // 재생/일시정지 버튼
-            if (processingState == AudioProcessingState.loading ||
-                processingState == AudioProcessingState.buffering)
-              Container(
-                margin: const EdgeInsets.all(8.0),
-                width: 64.0,
-                height: 64.0,
-                child: const CircularProgressIndicator(),
-              )
-            else if (!playing)
-              IconButton(
-                icon: const Icon(Icons.play_arrow),
-                iconSize: 64.0,
-                onPressed: audioHandler.play,
-              )
-            else if (processingState != AudioProcessingState.completed)
-              IconButton(
-                icon: const Icon(Icons.pause),
-                iconSize: 64.0,
-                onPressed: audioHandler.pause,
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.replay),
-                iconSize: 64.0,
-                onPressed: () => audioHandler.seek(Duration.zero),
-              ),
-
-            // 속도 조절 버튼
-            StreamBuilder<PlaybackState>(
-              stream: audioHandler.playbackState,
-              builder: (context, snapshot) {
-                final speed = snapshot.data?.speed ?? 1.0;
-                return IconButton(
-                  icon: Text(
-                    "${speed.toStringAsFixed(1)}x",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () {
-                    // 속도 조절 로직
-                    final newSpeed = speed >= 1.5 ? 0.5 : speed + 0.25;
-                    audioHandler.setSpeed(newSpeed);
-                  },
-                );
-              },
-            ),
-
-            Spacer(),
-
-            // 다음곡 버튼
-            Visibility(
-              visible: musicController.musicIndex.value !=
-                  (musicController.musicList.length - 1),
-              child: Column(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.arrow_circle_right_outlined,
-                      size: 30.0,
-                    ),
+                  // 다음곡
+                  _buildCircleButton(
+                    icon: Icons.skip_next_rounded,
+                    size: 28,
+                    enabled: musicController.musicIndex.value !=
+                        (musicController.musicList.length - 1),
                     onPressed: () {
                       musicController.musicIndex.value += 1;
                       context.pushReplacement('/audioPage',
@@ -426,15 +478,34 @@ class BackgroundControlButtons extends StatelessWidget {
                               .musicList[musicController.musicIndex.value]);
                     },
                   ),
-                  Text(
-                    '다음곡',
-                    style: FontStyleSheet.basicText,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // 보조 컨트롤
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildSmallButton(
+                  icon: Icons.shuffle_rounded,
+                  onPressed: () {},
+                ),
+                const SizedBox(width: 16),
+                _buildSmallButton(
+                  icon: Icons.repeat_rounded,
+                  onPressed: () {},
+                ),
+                const SizedBox(width: 16),
+                StreamBuilder<PlaybackState>(
+                  stream: _audioHandler?.playbackState,
+                  builder: (context, snapshot) {
+                    final speed = snapshot.data?.speed ?? 1.0;
+                    return _buildSpeedButton(speed);
+                  },
+                ),
+              ],
             ),
           ],
         );
@@ -442,19 +513,160 @@ class BackgroundControlButtons extends StatelessWidget {
     );
   }
 
-  void _showVolumeDialog(BuildContext context) {
-    // 볼륨 조절 다이얼로그 구현
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Volume Control'),
-        content: const Text('Volume control will be implemented here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+  Widget _buildCircleButton({
+    required IconData icon,
+    required double size,
+    required bool enabled,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onPressed : null,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: enabled ? AudioTheme.surfaceTint : AudioTheme.surfaceLight,
+          border: Border.all(
+            color: enabled
+                ? AudioTheme.primary.withAlpha(100)
+                : Colors.transparent,
+            width: 2,
           ),
-        ],
+        ),
+        child: Icon(
+          icon,
+          size: size,
+          color: enabled ? AudioTheme.primary : AudioTheme.textSecondary.withAlpha(100),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayButton(AudioProcessingState processingState, bool playing) {
+    if (processingState == AudioProcessingState.loading ||
+        processingState == AudioProcessingState.buffering) {
+      return Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AudioTheme.primaryLight, AudioTheme.primary],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AudioTheme.primary.withAlpha(100),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(18.0),
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 3,
+          ),
+        ),
+      );
+    }
+
+    IconData iconData;
+    VoidCallback onPressed;
+
+    if (!playing) {
+      iconData = Icons.play_arrow_rounded;
+      onPressed = _audioHandler!.play;
+    } else if (processingState != AudioProcessingState.completed) {
+      iconData = Icons.pause_rounded;
+      onPressed = _audioHandler!.pause;
+    } else {
+      iconData = Icons.replay_rounded;
+      onPressed = () => _audioHandler!.seek(Duration.zero);
+    }
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AudioTheme.primaryLight, AudioTheme.primary],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AudioTheme.primary.withAlpha(120),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Icon(
+          iconData,
+          size: 34,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AudioTheme.surface.withAlpha(200),
+          border: Border.all(
+            color: AudioTheme.primary.withAlpha(60),
+            width: 1.5,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: AudioTheme.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedButton(double speed) {
+    return GestureDetector(
+      onTap: () {
+        final newSpeed = speed >= 1.5 ? 0.5 : speed + 0.25;
+        _audioHandler?.setSpeed(newSpeed);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: AudioTheme.surface.withAlpha(200),
+          border: Border.all(
+            color: AudioTheme.primary.withAlpha(60),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          '${speed.toStringAsFixed(2)}x',
+          style: const TextStyle(
+            color: AudioTheme.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }
