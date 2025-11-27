@@ -92,9 +92,7 @@ class GlobalController extends GetxController {
 
   Future<List<ScheduleModel>> loadScheduleFireStore(
       {required List<String> sequence}) async {
-    List<ScheduleModel> returnSchedule = [];
-
-    if (honeyzScheduleList.isEmpty && selectedGroup.value == 'honeyz') {
+    if (selectedGroup.value == 'honeyz') {
       if (honeyzScheduleList.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("schedule").get();
@@ -107,11 +105,8 @@ class GlobalController extends GetxController {
           }
         }
       }
-
-      returnSchedule = honeyzScheduleList;
-    }
-
-    if (acaxiaScheduleList.isEmpty && selectedGroup.value == 'acaxia') {
+      return honeyzScheduleList;
+    } else if (selectedGroup.value == 'acaxia') {
       if (acaxiaScheduleList.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("schedule_acaxia").get();
@@ -123,24 +118,16 @@ class GlobalController extends GetxController {
             }
           }
         }
-
-        returnSchedule = acaxiaScheduleList;
       }
+      return acaxiaScheduleList;
     }
 
-    return returnSchedule;
+    return [];
   }
 
-  Future<List<StreamerModel>> loadStreamerFireStore(
-      // {required List<String> sequence}
-
-      ) async {
-    // await _liveCheck();
-
-    // FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-    if (honeyz.isEmpty) {
-      if (selectedGroup.value == 'honeyz') {
+  Future<List<StreamerModel>> loadStreamerFireStore() async {
+    if (selectedGroup.value == 'honeyz') {
+      if (honeyz.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("honeyz").get();
 
@@ -152,10 +139,9 @@ class GlobalController extends GetxController {
           }
         }
       }
-    }
-
-    if (acaxia.isEmpty) {
-      if (selectedGroup.value == 'acaxia') {
+      return honeyz;
+    } else if (selectedGroup.value == 'acaxia') {
+      if (acaxia.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("acaxia").get();
 
@@ -167,35 +153,39 @@ class GlobalController extends GetxController {
           }
         }
       }
+      return acaxia;
     }
 
-    return honeyz;
+    return [];
   }
 
   Future<List<LiveCheckModel>> liveCheck() async {
-    if (honeyzliveCheckList.isEmpty) {
-      for (int i = 0; i < honeyzBrodcastIDList.length; i++) {
-        final url = Uri.parse(
-            'https://api.chzzk.naver.com/polling/v2/channels/${honeyzBrodcastIDList[i]}/live-status');
+    if (selectedGroup.value == 'honeyz') {
+      if (honeyzliveCheckList.isEmpty) {
+        for (int i = 0; i < honeyzBrodcastIDList.length; i++) {
+          final url = Uri.parse(
+              'https://api.chzzk.naver.com/polling/v2/channels/${honeyzBrodcastIDList[i]}/live-status');
 
-        try {
-          final response = await http.get(url);
+          try {
+            final response = await http.get(url);
 
-          if (response.statusCode == 200) {
-            final String decodedBody =
-                utf8.decode(response.bodyBytes); // UTF-8 디코딩
-            final Map<String, dynamic> data =
-                json.decode(decodedBody); // JSON을 Map으로 변환
+            if (response.statusCode == 200) {
+              final String decodedBody =
+                  utf8.decode(response.bodyBytes); // UTF-8 디코딩
+              final Map<String, dynamic> data =
+                  json.decode(decodedBody); // JSON을 Map으로 변환
 
-            honeyzliveCheckList.add(LiveCheckModel.fromJson(data['content']));
-          } else {
-            print('오류 발생: ${response.statusCode}');
+              honeyzliveCheckList.add(LiveCheckModel.fromJson(data['content']));
+            } else {
+              print('오류 발생: ${response.statusCode}');
+            }
+          } catch (e) {
+            print('예외 발생: $e');
           }
-        } catch (e) {
-          print('예외 발생: $e');
         }
       }
-
+      return honeyzliveCheckList;
+    } else if (selectedGroup.value == 'acaxia') {
       if (acaxialiveCheckList.isEmpty) {
         for (int i = 0; i < acaxiaBrodcastIDList.length; i++) {
           final url = Uri.parse(
@@ -219,8 +209,9 @@ class GlobalController extends GetxController {
           }
         }
       }
+      return acaxialiveCheckList;
     }
 
-    return honeyzliveCheckList;
+    return [];
   }
 }

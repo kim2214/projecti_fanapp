@@ -26,50 +26,54 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
     final globalController = Get.find<GlobalController>();
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 30.0),
-          child: Text(
-            globalController.selectedGroup.value == 'honeyz'
-                ? "허니즈 맴버들의 주간 스케줄 표 입니다."
-                : "아카시아 맴버들의 주간 스케줄 표 입니다.",
-            style: FontStyleSheet.title,
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: globalController.selectedGroup.value == 'honeyz'
-                ? globalController.honeyzScheduleList.length
-                : globalController.acaxiaScheduleList.length,
-            padding: EdgeInsets.all(15.0),
-            itemBuilder: (context, index) {
-              return SizedBox(
-                height: 350,
-                child: InkWell(
-                  onTap: () {
-                    context.push(
-                        '/scheduleDetail?url=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzScheduleList[index].scheduleURL : globalController.acaxiaScheduleList[index].scheduleURL}&name=${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}');
-                  },
-                  child: ScheduleCard(
-                    imageURL: globalController.selectedGroup.value == 'honeyz'
-                        ? globalController
-                            .honeyzScheduleList[index].scheduleURL!
-                        : globalController
-                            .acaxiaScheduleList[index].scheduleURL!,
-                    index: index,
-                  ),
-                ),
-              );
-            },
-            separatorBuilder: (context, index) => SizedBox(
-              height: 30.0,
+    return Obx(() {
+      final isHoneyz = globalController.selectedGroup.value == 'honeyz';
+      final scheduleList = isHoneyz
+          ? globalController.honeyzScheduleList
+          : globalController.acaxiaScheduleList;
+      final nameList = isHoneyz
+          ? globalController.honeyzNameList
+          : globalController.acaxiaNameList;
+
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 30.0),
+            child: Text(
+              isHoneyz
+                  ? "허니즈 맴버들의 주간 스케줄 표 입니다."
+                  : "아카시아 맴버들의 주간 스케줄 표 입니다.",
+              style: FontStyleSheet.title,
             ),
           ),
-        ),
-      ],
-    );
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: scheduleList.length,
+              padding: EdgeInsets.all(15.0),
+              itemBuilder: (context, index) {
+                return SizedBox(
+                  height: 350,
+                  child: InkWell(
+                    onTap: () {
+                      context.push(
+                          '/scheduleDetail?url=${scheduleList[index].scheduleURL}&name=${nameList[index]}');
+                    },
+                    child: ScheduleCard(
+                      imageURL: scheduleList[index].scheduleURL!,
+                      index: index,
+                    ),
+                  ),
+                );
+              },
+              separatorBuilder: (context, index) => SizedBox(
+                height: 30.0,
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   @override
