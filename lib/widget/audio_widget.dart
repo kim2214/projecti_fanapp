@@ -8,7 +8,6 @@ import 'package:projecti_fan_app/model/music_model.dart';
 import 'package:projecti_fan_app/widget/audio_manager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:get/get.dart' as GetX;
 
 import 'audio_common.dart';
@@ -159,10 +158,11 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
 
   Future<void> _loadAndPlayMusic() async {
     try {
-      String? audioURL = await extractAudioUrl(widget.musicModel.musicURL!);
+      // Cloudinary URL을 직접 사용 (mp3 파일 직접 링크)
+      final audioURL = widget.musicModel.musicURL!;
 
       final mediaItem = MediaItem(
-        id: audioURL!,
+        id: audioURL,
         title: widget.musicModel.title ?? 'Unknown Title',
         artist: widget.musicModel.name ?? 'Unknown Artist',
         artUri: Uri.parse(widget.musicModel.thumbnail ?? ''),
@@ -173,15 +173,6 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
     } catch (e) {
       debugPrint("Error loading audio source: $e");
     }
-  }
-
-  Future<String?> extractAudioUrl(String videoUrl) async {
-    var youtube = YoutubeExplode();
-    var streamManifest =
-        await youtube.videos.streamsClient.getManifest(videoUrl);
-    var audioOnlyStreams = streamManifest.audioOnly;
-    var audioStream = audioOnlyStreams.withHighestBitrate();
-    return audioStream.url.toString();
   }
 
   @override
@@ -275,7 +266,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  widget.musicModel.name ?? '',
+                  widget.musicModel.title ?? '',
                   style: const TextStyle(
                     color: AudioTheme.textPrimary,
                     fontSize: 12,
@@ -537,7 +528,9 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         child: Icon(
           icon,
           size: size,
-          color: enabled ? AudioTheme.primary : AudioTheme.textSecondary.withAlpha(100),
+          color: enabled
+              ? AudioTheme.primary
+              : AudioTheme.textSecondary.withAlpha(100),
         ),
       ),
     );

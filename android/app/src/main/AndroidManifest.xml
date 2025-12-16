@@ -10,7 +10,8 @@
     <application
         android:name="${applicationName}"
         android:icon="@mipmap/projecti_fanapp_icon"
-        android:label="프로젝트아이 팬앱">
+        android:label="프로젝트아이 팬앱"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
