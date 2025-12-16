@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/widget/components/streamer_card.dart';
 
 class GroupPageWidget extends StatefulWidget {
@@ -19,6 +20,65 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
   static const Color acaxiaColor = Color(0xFFCCD1F9);
   static const Color honeyzColorDark = Color(0xFFE84A75);
   static const Color acaxiaColorDark = Color(0xFFB8BEF0);
+
+  // 로딩 상태 관리 (Rx로 변경하여 Obx에서 감지)
+  final RxBool _isLoading = true.obs;
+  String? _lastLoadedGroup;
+  bool _isLoadingInProgress = false;
+
+  // GetX worker
+  Worker? _groupChangeWorker;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 초기 데이터 로드
+    _loadData();
+
+    // 그룹 변경 감지 리스너
+    _groupChangeWorker = ever(_globalController.selectedGroup, (group) {
+      if (_lastLoadedGroup != group) {
+        _loadData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _groupChangeWorker?.dispose();
+    _isLoading.close();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    // 이미 로딩 중이면 스킵 (중복 호출 방지)
+    if (_isLoadingInProgress) return;
+
+    final currentGroup = _globalController.selectedGroup.value;
+
+    // 이미 같은 그룹 데이터가 로드 완료되었으면 스킵
+    if (_lastLoadedGroup == currentGroup && !_isLoading.value) {
+      return;
+    }
+
+    _isLoadingInProgress = true;
+    _isLoading.value = true;
+
+    try {
+      // 멤버 데이터와 라이브 체크 데이터를 순차적으로 로드
+      await _globalController.loadStreamerFireStore();
+      await _globalController.liveCheck();
+      _lastLoadedGroup = currentGroup;
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+    } finally {
+      _isLoadingInProgress = false;
+      if (mounted) {
+        _isLoading.value = false;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,58 +102,40 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
             stops: const [0.0, 0.4, 1.0],
           ),
         ),
-        child: FutureBuilder(
-          future: _globalController.liveCheck(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData == false) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: themeColor,
-                      strokeWidth: 3,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '멤버 정보를 불러오는 중...',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '오류가 발생했습니다',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return _buildContent(isHoneyz, themeColor, themeColorDark);
-            }
-          },
-        ),
+        child: _buildBody(isHoneyz, themeColor, themeColorDark),
       );
     });
+  }
+
+  Widget _buildBody(bool isHoneyz, Color themeColor, Color themeColorDark) {
+    final members =
+        isHoneyz ? _globalController.honeyz : _globalController.acaxia;
+
+    // 로딩 중이거나 멤버 데이터가 없는 경우만 로딩 표시
+    if (_isLoading.value || members.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: themeColor,
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '멤버 정보를 불러오는 중...',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildContent(isHoneyz, themeColor, themeColorDark);
   }
 
   Widget _buildContent(bool isHoneyz, Color themeColor, Color themeColorDark) {
@@ -108,6 +150,9 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     final nameList = isHoneyz
         ? _globalController.honeyzNameList
         : _globalController.acaxiaNameList;
+
+    // 라이브 체크 데이터가 없을 경우를 위한 기본값
+    final defaultLiveStatus = LiveCheckModel(status: 'CLOSE', liveTitle: null);
 
     return CustomScrollView(
       slivers: [
@@ -128,10 +173,18 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
+                // 인덱스 범위 체크
+                if (index >= members.length) {
+                  return const SizedBox.shrink();
+                }
+                // 라이브 상태 데이터가 없으면 기본값 사용
+                final status = index < liveStatusList.length
+                    ? liveStatusList[index]
+                    : defaultLiveStatus;
                 return StreamerCard(
                   index: index,
                   streamer: members[index],
-                  status: liveStatusList[index],
+                  status: status,
                   assetName: assetNames[index],
                   memberName: nameList[index],
                   themeColor: themeColor,

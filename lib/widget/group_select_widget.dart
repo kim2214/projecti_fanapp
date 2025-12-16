@@ -342,15 +342,15 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withAlpha(200),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        // const SizedBox(height: 8),
+                        // Text(
+                        //   description,
+                        //   style: TextStyle(
+                        //     fontSize: 13,
+                        //     color: Colors.white.withAlpha(200),
+                        //     fontWeight: FontWeight.w500,
+                        //   ),
+                        // ),
                         const SizedBox(height: 12),
                         // 스케줄 보기 버튼
                         Container(
