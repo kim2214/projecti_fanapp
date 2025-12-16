@@ -1,326 +1,289 @@
-import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
-import 'package:projecti_fan_app/theme/custom_colors_theme.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/music_page.dart';
 import 'package:projecti_fan_app/widget/schedule_page.dart';
 
 class ScreenBaseWidget extends StatefulWidget {
-  ScreenBaseWidget({super.key});
+  const ScreenBaseWidget({super.key});
 
   @override
   State<ScreenBaseWidget> createState() => _ScreenBaseWidgetState();
 }
 
-class _ScreenBaseWidgetState extends State<ScreenBaseWidget>
-    with TickerProviderStateMixin {
-  int _index = 0;
+class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
+  int _currentIndex = 0;
+  final PageController _pageController = PageController();
+  final GlobalController _globalController = Get.find<GlobalController>();
 
-  PageController pageController = PageController();
+  // 그룹별 테마 컬러
+  static const Color honeyzColor = Color(0xFFFF5E88);
+  static const Color acaxiaColor = Color(0xFFCCD1F9);
+  static const Color honeyzColorDark = Color(0xFFE84A75);
+  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
-  late AnimationController _fabAnimationController;
-  late AnimationController _borderRadiusAnimationController;
-  late Animation<double> fabAnimation;
-  late Animation<double> borderRadiusAnimation;
-  late CurvedAnimation fabCurve;
-  late CurvedAnimation borderRadiusCurve;
-  late AnimationController _hideBottomBarAnimationController;
-
-  final autoSizeGroup = AutoSizeGroup();
-
-  @override
-  void initState() {
-    super.initState();
-
-    _fabAnimationController = AnimationController(
-      duration: Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _borderRadiusAnimationController = AnimationController(
-      duration: Duration(milliseconds: 500),
-      vsync: this,
-    );
-    fabCurve = CurvedAnimation(
-      parent: _fabAnimationController,
-      curve: Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
-    );
-    borderRadiusCurve = CurvedAnimation(
-      parent: _borderRadiusAnimationController,
-      curve: Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
-    );
-
-    fabAnimation = Tween<double>(begin: 0, end: 1).animate(fabCurve);
-    borderRadiusAnimation = Tween<double>(begin: 0, end: 1).animate(
-      borderRadiusCurve,
-    );
-
-    _hideBottomBarAnimationController = AnimationController(
-      duration: Duration(milliseconds: 200),
-      vsync: this,
-    );
-
-    Future.delayed(
-      Duration(seconds: 1),
-      () => _fabAnimationController.forward(),
-    );
-    Future.delayed(
-      Duration(seconds: 1),
-      () => _borderRadiusAnimationController.forward(),
-    );
-  }
-
-  final List<Widget> _screens = [
+  final List<Widget> _pages = const [
     SchedulePageWidget(),
     GroupPageWidget(),
     MusicPageWidget(),
   ];
 
-  void updateScreenIndex(int newIndex) {
-    _index = newIndex;
+  final List<NavItem> _navItems = const [
+    NavItem(icon: Icons.calendar_month_rounded, label: '스케줄'),
+    NavItem(icon: Icons.people_alt_rounded, label: '멤버'),
+    NavItem(icon: Icons.music_note_rounded, label: '음악'),
+  ];
+
+  void _onPageChanged(int index) {
+    setState(() => _currentIndex = index);
   }
 
-  final iconList = <IconData>[
-    // Icons.home_outlined,
-    Icons.people,
-    Icons.music_note,
-    // Icons.brightness_7,
-  ];
+  void _onNavTap(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
-  List<String> bottomTitle = [
-    '소속멤버',
-    '음악',
-  ];
+  Future<void> _switchGroup(String group) async {
+    _globalController.selectedGroup.value = group;
+    final sequence = group == 'honeyz'
+        ? _globalController.honeyzSequence
+        : _globalController.acaxiaSequence;
 
-  bool onScrollNotification(ScrollNotification notification) {
-    if (notification is UserScrollNotification &&
-        notification.metrics.axis == Axis.vertical) {
-      switch (notification.direction) {
-        case ScrollDirection.forward:
-          _hideBottomBarAnimationController.reverse();
-          _fabAnimationController.forward(from: 0);
-          break;
-        case ScrollDirection.reverse:
-          _hideBottomBarAnimationController.forward();
-          _fabAnimationController.reverse(from: 1);
-          break;
-        case ScrollDirection.idle:
-          break;
-      }
+    await _globalController.loadScheduleFireStore(sequence: sequence);
+
+    // 스케줄 페이지로 이동
+    if (_currentIndex != 0) {
+      _onNavTap(0);
     }
-    return false;
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<CustomColorsTheme>();
+    return Obx(() {
+      final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
+      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
+      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
 
-    final globalController = Get.find<GlobalController>();
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: _buildAppBar(isHoneyz, themeColor, themeColorDark),
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomNav(themeColor, themeColorDark),
+      );
+    });
+  }
 
-    return Scaffold(
+  PreferredSizeWidget _buildAppBar(
+      bool isHoneyz, Color themeColor, Color themeColorDark) {
+    return AppBar(
       backgroundColor: Colors.white,
-      floatingActionButton: PopupMenuButton<String>(
-        offset: Offset(0, -200),
-        // 메뉴 위치 조정
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          color: Color(0xFF1A3A4A),
         ),
-        child: FloatingActionButton(
-          backgroundColor: Colors.white,
-          shape: CircleBorder(),
-          elevation: 4.0,
-          onPressed: null,
-          child: ClipOval(
-            child: Image.asset(
-              'assets/projecti_logo.png',
-              height: 50,
-              width: 50,
-              fit: BoxFit.cover,
+        onPressed: () => context.pop(),
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: themeColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ), // PopupMenuButton이 처리함
-        ),
-        itemBuilder: (BuildContext context) => [
-          PopupMenuItem(
-            value: 'honeyz',
-            onTap: () async {
-              globalController.selectedGroup.value = 'honeyz';
-              await globalController
-                  .loadScheduleFireStore(
-                      sequence: globalController.honeyzSequence)
-                  .then(
-                (schedule) {
-                  if (schedule.isNotEmpty) {
-                    context.push('/baseScreen');
-                  }
-                },
-              );
-            },
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/honeyz_logo.png',
-                  height: 20,
-                  width: 20,
-                  fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Image.asset(
+                  isHoneyz
+                      ? 'assets/honeyz_logo.png'
+                      : 'assets/acaxia_logo.png',
+                  fit: BoxFit.contain,
                 ),
-                SizedBox(width: 10),
-                Text('허니즈 탭'),
-              ],
+              ),
             ),
           ),
-          PopupMenuItem(
-            value: 'acaxia',
-            onTap: () async {
-              globalController.selectedGroup.value = 'acaxia';
-              await globalController
-                  .loadScheduleFireStore(
-                      sequence: globalController.acaxiaSequence)
-                  .then(
-                (schedule) {
-                  if (schedule.isNotEmpty) {
-                    context.push('/baseScreen');
-                  }
-                },
-              );
-            },
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/acaxia_logo.png',
-                  height: 20,
-                  width: 20,
-                  fit: BoxFit.cover,
-                ),
-                SizedBox(width: 10),
-                Text('아카시아 탭'),
-              ],
+          const SizedBox(width: 10),
+          Text(
+            isHoneyz ? '허니즈' : '아카시아',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A3A4A),
             ),
           ),
         ],
-        onSelected: (String value) {
-          switch (value) {
-            case 'home':
-              pageController.jumpToPage(0);
-              break;
-            case 'profile':
-              pageController.jumpToPage(1);
-              break;
-            case 'settings':
-              pageController.jumpToPage(2);
-              break;
-          }
-        },
       ),
-      //   FloatingActionButton(
-      //     backgroundColor: Colors.white,
-      //     shape: CircleBorder(),
-      //     elevation: 4.0, // 그림자 효과
-      //     child:
-      // ClipOval(
-      // child:
-      // Image.asset('assets/projecti_logo.png',height: 50,width: 50,),
-      // ),
-      //     // Icon(
-      //     //   Icons.brightness_3,
-      //     //   color: Colors.deepOrange,
-      //     // ),
-      //     onPressed: () {
-      //       pageController.jumpToPage(0);
-      //
-      //     },
-      //   ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: AnimatedBottomNavigationBar.builder(
-        itemCount: iconList.length,
-        tabBuilder: (int index, bool isActive) {
-          final color = isActive
-              ? colors?.activeNavigationBarColor
-              : colors?.notActiveNavigationBarColor;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                iconList[index],
-                size: 24,
-                color: color,
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: AutoSizeText(
-                  bottomTitle[index],
-                  maxLines: 1,
-                  style: TextStyle(color: color),
-                  group: autoSizeGroup,
-                ),
-              )
-            ],
-          );
-        },
-        backgroundColor: colors?.bottomNavigationBarBackgroundColor,
-        activeIndex: _index,
-        splashColor: colors?.activeNavigationBarColor,
-        notchAndCornersAnimation: borderRadiusAnimation,
-        splashSpeedInMilliseconds: 300,
-        notchSmoothness: NotchSmoothness.defaultEdge,
-        gapLocation: GapLocation.center,
-        leftCornerRadius: 32,
-        rightCornerRadius: 32,
-        onTap: (index) => setState(() {
-          _index = index + 1;
-          pageController.jumpToPage(index + 1);
-        }),
-        hideAnimationController: _hideBottomBarAnimationController,
-        shadow: BoxShadow(
-          offset: Offset(0, 1),
-          blurRadius: 12,
-          spreadRadius: 0.5,
-          color: Colors.red,
+      actions: [
+        // 그룹 전환 버튼
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: _buildGroupSwitcher(isHoneyz, themeColor),
         ),
+      ],
+    );
+  }
+
+  Widget _buildGroupSwitcher(bool isHoneyz, Color themeColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
       ),
-      // BottomNavigationBar(
-      //   onTap: (int index) {
-      //     pageController.jumpToPage(index);
-      //   },
-      //   currentIndex: _index,
-      //   items: const [
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home_outlined),
-      //       label: '홈',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.people),
-      //       label: '소속맴버',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.music_note),
-      //       label: '음악',
-      //     ),
-      //   ],
-      // ),
-      // appBar: AppBar(
-      //   scrolledUnderElevation: 0.0,
-      //   leading: BackButton(),
-      //   backgroundColor: Colors.white,
-      // ),
-      body: SafeArea(
-        child: PageView(
-          controller: pageController,
-          onPageChanged: (index) {
-            setState(
-              () {
-                updateScreenIndex(index);
-              },
-            );
-          },
-          children: _screens,
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildGroupToggle(
+            isSelected: isHoneyz,
+            label: '허니즈',
+            color: honeyzColor,
+            onTap: () => _switchGroup('honeyz'),
+          ),
+          _buildGroupToggle(
+            isSelected: !isHoneyz,
+            label: '아카시아',
+            color: acaxiaColor,
+            onTap: () => _switchGroup('acaxia'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupToggle({
+    required bool isSelected,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.grey[600],
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildBottomNav(Color themeColor, Color themeColorDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withAlpha(20),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_navItems.length, (index) {
+              final item = _navItems[index];
+              final isSelected = _currentIndex == index;
+
+              return _buildNavItem(
+                item: item,
+                isSelected: isSelected,
+                themeColor: themeColor,
+                themeColorDark: themeColorDark,
+                onTap: () => _onNavTap(index),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required NavItem item,
+    required bool isSelected,
+    required Color themeColor,
+    required Color themeColorDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 20 : 16,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? themeColor.withAlpha(25) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              item.icon,
+              size: 22,
+              color: isSelected ? themeColorDark : Colors.grey[400],
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: themeColorDark,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NavItem {
+  final IconData icon;
+  final String label;
+
+  const NavItem({required this.icon, required this.label});
 }
