@@ -4,8 +4,6 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 
-import '../font_style_sheet.dart';
-
 class SchedulePageWidget extends StatefulWidget {
   const SchedulePageWidget({super.key});
 
@@ -15,19 +13,21 @@ class SchedulePageWidget extends StatefulWidget {
 
 class _SchedulePageWidgetState extends State<SchedulePageWidget>
     with AutomaticKeepAliveClientMixin {
-  @override
-  void initState() {
-    super.initState();
-  }
+  // 그룹별 테마 컬러
+  static const Color honeyzColor = Color(0xFFFF5E88);
+  static const Color acaxiaColor = Color(0xFFCCD1F9);
+  static const Color honeyzColorDark = Color(0xFFE84A75);
+  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
     final globalController = Get.find<GlobalController>();
 
     return Obx(() {
       final isHoneyz = globalController.selectedGroup.value == 'honeyz';
+      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
+      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
       final scheduleList = isHoneyz
           ? globalController.honeyzScheduleList
           : globalController.acaxiaScheduleList;
@@ -35,45 +35,189 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
           ? globalController.honeyzNameList
           : globalController.acaxiaNameList;
 
-      return Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: 30.0),
-            child: Text(
-              isHoneyz
-                  ? "허니즈 맴버들의 주간 스케줄 표 입니다."
-                  : "아카시아 맴버들의 주간 스케줄 표 입니다.",
-              style: FontStyleSheet.title,
-            ),
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              themeColor.withAlpha(30),
+              Colors.white,
+              themeColor.withAlpha(15),
+            ],
+            stops: const [0.0, 0.4, 1.0],
           ),
-          Expanded(
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: scheduleList.length,
-              padding: EdgeInsets.all(15.0),
-              itemBuilder: (context, index) {
-                return SizedBox(
-                  height: 350,
-                  child: InkWell(
-                    onTap: () {
-                      context.push(
-                          '/scheduleDetail?url=${scheduleList[index].scheduleURL}&name=${nameList[index]}');
-                    },
-                    child: ScheduleCard(
-                      imageURL: scheduleList[index].scheduleURL!,
-                      index: index,
+        ),
+        child: CustomScrollView(
+          slivers: [
+            // 헤더
+            SliverToBoxAdapter(
+              child: _buildHeader(
+                  isHoneyz, themeColor, themeColorDark, scheduleList.length),
+            ),
+            // 멤버 스케줄 리스트
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: ScheduleCard(
+                        imageURL: scheduleList[index].scheduleURL ?? '',
+                        memberName: nameList[index],
+                        index: index,
+                        themeColor: themeColor,
+                        themeColorDark: themeColorDark,
+                        isHoneyz: isHoneyz,
+                      ),
+                    );
+                  },
+                  childCount: scheduleList.length,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildHeader(
+      bool isHoneyz, Color themeColor, Color themeColorDark, int memberCount) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 그룹 정보
+          Row(
+            children: [
+              // 로고
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: themeColor.withAlpha(60),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Image.asset(
+                      isHoneyz
+                          ? 'assets/honeyz_logo.png'
+                          : 'assets/acaxia_logo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                );
-              },
-              separatorBuilder: (context, index) => SizedBox(
-                height: 30.0,
+                ),
               ),
+              const SizedBox(width: 16),
+              // 텍스트 정보
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: themeColor.withAlpha(30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'WEEKLY SCHEDULE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                          color: themeColorDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isHoneyz ? '허니즈' : '아카시아',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A3A4A),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // 멤버 수 표시
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.people_alt_rounded,
+                  size: 18,
+                  color: themeColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '멤버 $memberCount명',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A3A4A),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 1,
+                  height: 16,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: themeColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '주간 스케줄',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      );
-    });
+      ),
+    );
   }
 
   @override
@@ -82,58 +226,215 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
 class ScheduleCard extends StatelessWidget {
   final String imageURL;
+  final String memberName;
   final int index;
+  final Color themeColor;
+  final Color themeColorDark;
+  final bool isHoneyz;
 
-  const ScheduleCard({super.key, required this.imageURL, required this.index});
+  const ScheduleCard({
+    super.key,
+    required this.imageURL,
+    required this.memberName,
+    required this.index,
+    required this.themeColor,
+    required this.themeColorDark,
+    required this.isHoneyz,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final globalController = Get.find<GlobalController>();
+    final hasSchedule = imageURL.isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-          border: Border.all(width: 2.0)),
-      child: Column(
-        children: [
-          Expanded(
-            child: Container(
+    return GestureDetector(
+      onTap: hasSchedule
+          ? () {
+              context.push('/scheduleDetail?url=$imageURL&name=$memberName');
+            }
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: themeColor.withAlpha(25),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 멤버 이름 헤더
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
-                color: Color(0x0fff5e88).withOpacity(1.0),
-              ),
-              child: Center(
-                child: Text(
-                  globalController.selectedGroup.value == 'honeyz'
-                      ? globalController.honeyzNameList[index]
-                      : globalController.acaxiaNameList[index],
-                  style: FontStyleSheet.listItem,
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    themeColor,
+                    themeColorDark,
+                  ],
                 ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(50),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        memberName.isNotEmpty ? memberName[0] : '?',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          memberName,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          hasSchedule ? '스케줄 등록됨' : '이번 주 스케줄 없음',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withAlpha(180),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasSchedule)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(50),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.open_in_full_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-          imageURL.isNotEmpty
-              ? Expanded(
-                  flex: 5,
-                  child: ExtendedImage.network(
-                    imageURL,
-                    fit: BoxFit.fill,
-                    mode: ExtendedImageMode.gesture, // 줌/팬 모드 활성화
-                    initGestureConfigHandler: (state) => GestureConfig(
-                      minScale: 1.0,
-                      maxScale: 5.0,
-                      speed: 1.0,
-                      initialScale: 1.0,
+            // 스케줄 이미지
+            hasSchedule
+                ? ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
                     ),
-                  ))
-              : Expanded(
-                  flex: 5,
-                  child: Center(
-                    child: Text(
-                        '금주의 ${globalController.selectedGroup.value == 'honeyz' ? globalController.honeyzNameList[index] : globalController.acaxiaNameList[index]}님은 방송이 없습니다.',
-                        style: FontStyleSheet.listItem),
+                    child: Container(
+                      color: themeColor.withAlpha(10),
+                      constraints: const BoxConstraints(
+                        minHeight: 200,
+                        maxHeight: 400,
+                      ),
+                      child: ExtendedImage.network(
+                        imageURL,
+                        fit: BoxFit.contain,
+                        cache: true,
+                        loadStateChanged: (ExtendedImageState state) {
+                          switch (state.extendedImageLoadState) {
+                            case LoadState.loading:
+                              return Container(
+                                height: 200,
+                                color: themeColor.withAlpha(15),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: themeColor,
+                                  ),
+                                ),
+                              );
+                            case LoadState.failed:
+                              return Container(
+                                height: 200,
+                                color: themeColor.withAlpha(15),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image_not_supported_rounded,
+                                      size: 40,
+                                      color: themeColor.withAlpha(150),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '이미지를 불러올 수 없습니다',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            case LoadState.completed:
+                              return null;
+                          }
+                        },
+                      ),
+                    ),
+                  )
+                : Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: themeColor.withAlpha(15),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_busy_rounded,
+                          size: 36,
+                          color: themeColor.withAlpha(150),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '금주 $memberName님은 방송이 없습니다',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-        ],
+          ],
+        ),
       ),
     );
   }
