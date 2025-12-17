@@ -17,6 +17,10 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
   final _playlist = ConcatenatingAudioSource(children: []);
 
+  // 이전곡/다음곡 콜백 (async 지원)
+  Future<void> Function()? onSkipToPreviousCallback;
+  Future<void> Function()? onSkipToNextCallback;
+
   AudioPlayerHandler() {
     _init();
   }
@@ -65,18 +69,28 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
 
+  @override
+  Future<void> skipToPrevious() async {
+    await onSkipToPreviousCallback?.call();
+  }
+
+  @override
+  Future<void> skipToNext() async {
+    await onSkipToNextCallback?.call();
+  }
+
   PlaybackState _transformEvent(PlaybackEvent event) {
     return PlaybackState(
       controls: [
-        MediaControl.rewind,
+        MediaControl.skipToPrevious,
         if (_player.playing) MediaControl.pause else MediaControl.play,
         MediaControl.stop,
-        MediaControl.fastForward,
+        MediaControl.skipToNext,
       ],
       systemActions: const {
         MediaAction.seek,
-        MediaAction.seekForward,
-        MediaAction.seekBackward,
+        MediaAction.skipToPrevious,
+        MediaAction.skipToNext,
       },
       androidCompactActionIndices: const [0, 1, 3],
       processingState: const {
@@ -128,10 +142,13 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
   AudioPlayerHandler? _audioHandler;
   bool _isLoading = true;
   bool _hasAutoAdvanced = false; // 자동 넘김 중복 방지 플래그
+  bool _isManualSkip = false; // 수동 곡 변경 플래그
+  late MusicModel _currentMusic; // 현재 재생 중인 곡
 
   @override
   void initState() {
     super.initState();
+    _currentMusic = widget.musicModel; // 초기값 설정
     _initializeAudio();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -147,6 +164,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         await _audioHandler!.clearQueue();
         await _loadAndPlayMusic();
         _listenForTrackCompletion();
+        _setupSkipCallbacks();
       }
     } catch (e) {
       debugPrint("Error initializing audio: $e");
@@ -164,6 +182,9 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
     _audioHandler?.playbackState.listen((state) {
       if (!mounted) return;
 
+      // 수동 곡 변경 중이면 자동 넘김 무시
+      if (_isManualSkip) return;
+
       // 곡이 완료되었고 아직 자동 넘김을 하지 않은 경우
       if (state.processingState == AudioProcessingState.completed &&
           !_hasAutoAdvanced) {
@@ -179,34 +200,103 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
     });
   }
 
+  /// 미디어 알림의 이전곡/다음곡 콜백 설정
+  void _setupSkipCallbacks() {
+    _audioHandler?.onSkipToPreviousCallback = _goToPreviousTrack;
+    _audioHandler?.onSkipToNextCallback = _goToNextTrack;
+  }
+
+  /// 이전 곡으로 이동
+  Future<void> _goToPreviousTrack() async {
+    final musicController = GetX.Get.find<MusicController>();
+    final currentIndex = musicController.musicIndex.value;
+
+    // 첫 번째 곡이면 아무것도 하지 않음
+    if (currentIndex <= 0) return;
+
+    // 수동 곡 변경 플래그 설정
+    _isManualSkip = true;
+
+    musicController.musicIndex.value -= 1;
+    final newMusic =
+        musicController.musicList[musicController.musicIndex.value];
+
+    // AudioHandler에서 새 곡을 로드하고 재생
+    await _loadNewTrack(newMusic);
+
+    // UI 상태 업데이트 (페이지 전환 없이)
+    if (mounted) {
+      setState(() {
+        _currentMusic = newMusic;
+      });
+    }
+
+    // 플래그 리셋
+    _isManualSkip = false;
+  }
+
   /// 다음 곡으로 이동
-  void _goToNextTrack() {
+  Future<void> _goToNextTrack() async {
     final musicController = GetX.Get.find<MusicController>();
     final currentIndex = musicController.musicIndex.value;
     final lastIndex = musicController.musicList.length - 1;
 
-    // 마지막 곡이 아니면 다음 곡으로 이동
-    if (currentIndex < lastIndex) {
-      musicController.musicIndex.value += 1;
-      if (mounted) {
-        context.pushReplacement(
-          '/audioPage',
-          extra: musicController.musicList[musicController.musicIndex.value],
-        );
-      }
+    // 마지막 곡이면 아무것도 하지 않음
+    if (currentIndex >= lastIndex) return;
+
+    // 수동 곡 변경 플래그 설정
+    _isManualSkip = true;
+
+    musicController.musicIndex.value += 1;
+    final newMusic =
+        musicController.musicList[musicController.musicIndex.value];
+
+    // AudioHandler에서 새 곡을 로드하고 재생
+    await _loadNewTrack(newMusic);
+
+    // UI 상태 업데이트 (페이지 전환 없이)
+    if (mounted) {
+      setState(() {
+        _currentMusic = newMusic;
+      });
+    }
+
+    // 플래그 리셋
+    _isManualSkip = false;
+  }
+
+  /// 새 곡을 AudioHandler에 로드하고 재생
+  Future<void> _loadNewTrack(MusicModel music) async {
+    if (_audioHandler == null) return;
+
+    try {
+      await _audioHandler!.clearQueue();
+
+      final mediaItem = MediaItem(
+        id: music.musicURL!,
+        title: music.title ?? 'Unknown Title',
+        artist: music.name ?? 'Unknown Artist',
+        artUri: Uri.parse(music.thumbnail ?? ''),
+        duration: null,
+      );
+
+      await _audioHandler!.addQueueItem(mediaItem);
+      _audioHandler!.play();
+    } catch (e) {
+      debugPrint("Error loading new track: $e");
     }
   }
 
   Future<void> _loadAndPlayMusic() async {
     try {
       // Cloudinary URL을 직접 사용 (mp3 파일 직접 링크)
-      final audioURL = widget.musicModel.musicURL!;
+      final audioURL = _currentMusic.musicURL!;
 
       final mediaItem = MediaItem(
         id: audioURL,
-        title: widget.musicModel.title ?? 'Unknown Title',
-        artist: widget.musicModel.name ?? 'Unknown Artist',
-        artUri: Uri.parse(widget.musicModel.thumbnail ?? ''),
+        title: _currentMusic.title ?? 'Unknown Title',
+        artist: _currentMusic.name ?? 'Unknown Artist',
+        artUri: Uri.parse(_currentMusic.thumbnail ?? ''),
         duration: null,
       );
 
@@ -311,7 +401,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  widget.musicModel.title ?? '',
+                  _currentMusic.title ?? '',
                   style: const TextStyle(
                     color: AudioTheme.textPrimary,
                     fontSize: 12,
@@ -322,10 +412,10 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
             ),
           ),
           GetX.Obx(() {
-            final isFavorite = favoriteController.isFavorite(widget.musicModel);
+            final isFavorite = favoriteController.isFavorite(_currentMusic);
             return GestureDetector(
               onTap: () async {
-                await favoriteController.toggleFavorite(widget.musicModel);
+                await favoriteController.toggleFavorite(_currentMusic);
                 // 피드백 표시
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -390,7 +480,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
     final size = (screenHeight * 0.35).clamp(150.0, screenWidth * 0.65);
 
     return Hero(
-      tag: 'album_art_${widget.musicModel.title}',
+      tag: 'album_art_${_currentMusic.title}',
       child: Container(
         width: size,
         height: size,
@@ -413,7 +503,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: Image.network(
-            widget.musicModel.thumbnail ?? '',
+            _currentMusic.thumbnail ?? '',
             fit: BoxFit.cover,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -456,7 +546,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
       child: Column(
         children: [
           Text(
-            widget.musicModel.title ?? 'Unknown Title',
+            _currentMusic.title ?? 'Unknown Title',
             style: const TextStyle(
               color: AudioTheme.textPrimary,
               fontSize: 18,
@@ -469,7 +559,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.musicModel.name ?? 'Unknown Artist',
+            _currentMusic.name ?? 'Unknown Artist',
             style: const TextStyle(
               color: AudioTheme.textSecondary,
               fontSize: 14,
@@ -533,12 +623,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                     icon: Icons.skip_previous_rounded,
                     size: 28,
                     enabled: musicController.musicIndex.value != 0,
-                    onPressed: () {
-                      musicController.musicIndex.value -= 1;
-                      context.pushReplacement('/audioPage',
-                          extra: musicController
-                              .musicList[musicController.musicIndex.value]);
-                    },
+                    onPressed: _goToPreviousTrack,
                   ),
 
                   // 재생/일시정지
@@ -550,12 +635,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                     size: 28,
                     enabled: musicController.musicIndex.value !=
                         (musicController.musicList.length - 1),
-                    onPressed: () {
-                      musicController.musicIndex.value += 1;
-                      context.pushReplacement('/audioPage',
-                          extra: musicController
-                              .musicList[musicController.musicIndex.value]);
-                    },
+                    onPressed: _goToNextTrack,
                   ),
                 ],
               ),

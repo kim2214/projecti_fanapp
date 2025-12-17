@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/widget/audio_widget.dart';
 
 // AudioManager 싱글톤 클래스
@@ -15,19 +16,20 @@ class AudioManager {
 
   // AudioService 초기화 (main에서 한 번만 호출)
   static Future<void> initialize() async {
-    if (_audioHandler == null) {
-      _audioHandler = await AudioService.init(
-        builder: () => AudioPlayerHandler(),
-        config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.devkim.projecti_fan_app.channel.audio',
-          androidNotificationChannelName: 'Music Player',
-          androidNotificationOngoing: true,
-          androidShowNotificationBadge: true,
-          androidNotificationClickStartsActivity: true,
-          androidNotificationIcon: 'mipmap/projecti_fanapp_icon',
-        ),
-      ) as AudioPlayerHandler;
-    }
+    _audioHandler ??= await AudioService.init(
+      builder: () => AudioPlayerHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId:
+            'com.devkim.projecti_fan_app.channel.audio',
+        androidNotificationChannelName: 'Music Player',
+        androidNotificationOngoing: true,
+        androidShowNotificationBadge: true,
+        androidNotificationClickStartsActivity: true,
+        androidNotificationIcon: 'mipmap/projecti_fanapp_icon',
+        // 앱 테마 색상 (#30bcec) 적용
+        notificationColor: Color(0xFF30bcec),
+      ),
+    );
   }
 
   // AudioHandler 가져오기
