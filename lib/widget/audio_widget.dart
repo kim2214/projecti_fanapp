@@ -127,6 +127,7 @@ class BackgroundAudioWidget extends StatefulWidget {
 class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
   AudioPlayerHandler? _audioHandler;
   bool _isLoading = true;
+  bool _hasAutoAdvanced = false; // 자동 넘김 중복 방지 플래그
 
   @override
   void initState() {
@@ -145,6 +146,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
       if (_audioHandler != null) {
         await _audioHandler!.clearQueue();
         await _loadAndPlayMusic();
+        _listenForTrackCompletion();
       }
     } catch (e) {
       debugPrint("Error initializing audio: $e");
@@ -153,6 +155,44 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  /// 곡이 완료되면 자동으로 다음 곡으로 이동하는 리스너
+  void _listenForTrackCompletion() {
+    _audioHandler?.playbackState.listen((state) {
+      if (!mounted) return;
+
+      // 곡이 완료되었고 아직 자동 넘김을 하지 않은 경우
+      if (state.processingState == AudioProcessingState.completed &&
+          !_hasAutoAdvanced) {
+        _hasAutoAdvanced = true;
+        _goToNextTrack();
+      }
+
+      // 재생 중이면 플래그 리셋 (새 곡이 시작됨)
+      if (state.processingState == AudioProcessingState.ready &&
+          state.playing) {
+        _hasAutoAdvanced = false;
+      }
+    });
+  }
+
+  /// 다음 곡으로 이동
+  void _goToNextTrack() {
+    final musicController = GetX.Get.find<MusicController>();
+    final currentIndex = musicController.musicIndex.value;
+    final lastIndex = musicController.musicList.length - 1;
+
+    // 마지막 곡이 아니면 다음 곡으로 이동
+    if (currentIndex < lastIndex) {
+      musicController.musicIndex.value += 1;
+      if (mounted) {
+        context.pushReplacement(
+          '/audioPage',
+          extra: musicController.musicList[musicController.musicIndex.value],
+        );
       }
     }
   }
@@ -171,6 +211,8 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
       );
 
       await _audioHandler!.addQueueItem(mediaItem);
+      // 로드 완료 후 자동 재생 (await 없이 호출하여 UI 블로킹 방지)
+      _audioHandler!.play();
     } catch (e) {
       debugPrint("Error loading audio source: $e");
     }
@@ -280,8 +322,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
             ),
           ),
           GetX.Obx(() {
-            final isFavorite =
-                favoriteController.isFavorite(widget.musicModel);
+            final isFavorite = favoriteController.isFavorite(widget.musicModel);
             return GestureDetector(
               onTap: () async {
                 await favoriteController.toggleFavorite(widget.musicModel);
@@ -300,9 +341,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            isFavorite
-                                ? '즐겨찾기에서 제거되었습니다'
-                                : '즐겨찾기에 추가되었습니다',
+                            isFavorite ? '즐겨찾기에서 제거되었습니다' : '즐겨찾기에 추가되었습니다',
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
