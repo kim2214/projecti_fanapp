@@ -3,6 +3,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/controllers/favorite_controller.dart';
 import 'package:projecti_fan_app/controllers/music_controller.dart';
 import 'package:projecti_fan_app/model/music_model.dart';
 import 'package:projecti_fan_app/widget/audio_manager.dart';
@@ -228,6 +229,8 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final favoriteController = GetX.Get.find<FavoriteController>();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
       child: Row(
@@ -276,20 +279,66 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: AudioTheme.surface.withAlpha(180),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.favorite_border_rounded,
-                color: AudioTheme.primary,
-                size: 24,
+          GetX.Obx(() {
+            final isFavorite =
+                favoriteController.isFavorite(widget.musicModel);
+            return GestureDetector(
+              onTap: () async {
+                await favoriteController.toggleFavorite(widget.musicModel);
+                // 피드백 표시
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            isFavorite
+                                ? Icons.favorite_border_rounded
+                                : Icons.favorite_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            isFavorite
+                                ? '즐겨찾기에서 제거되었습니다'
+                                : '즐겨찾기에 추가되었습니다',
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: AudioTheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isFavorite
+                      ? AudioTheme.primary.withAlpha(30)
+                      : AudioTheme.surface.withAlpha(180),
+                  shape: BoxShape.circle,
+                  border: isFavorite
+                      ? Border.all(color: AudioTheme.primary, width: 2)
+                      : null,
+                ),
+                padding: const EdgeInsets.all(10),
+                child: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: AudioTheme.primary,
+                  size: 24,
+                ),
               ),
-              onPressed: () {},
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

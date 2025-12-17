@@ -25,9 +25,19 @@ class MusicModel {
     return {
       "name": name,
       "title": title,
-      "musicURL": musicURL,
+      "music_url": musicURL,
       "thumbnail": thumbnail,
       "group": group,
     };
   }
+
+  // 동등성 비교를 위한 override (musicURL 기준으로 동일 여부 판단)
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is MusicModel && other.musicURL == musicURL;
+  }
+
+  @override
+  int get hashCode => musicURL.hashCode;
 }
