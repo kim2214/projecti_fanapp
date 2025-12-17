@@ -473,31 +473,31 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            // 보조 컨트롤
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildSmallButton(
-                  icon: Icons.shuffle_rounded,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: 16),
-                _buildSmallButton(
-                  icon: Icons.repeat_rounded,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: 16),
-                StreamBuilder<PlaybackState>(
-                  stream: _audioHandler?.playbackState,
-                  builder: (context, snapshot) {
-                    final speed = snapshot.data?.speed ?? 1.0;
-                    return _buildSpeedButton(speed);
-                  },
-                ),
-              ],
-            ),
+            // const SizedBox(height: 12),
+            //
+            // // 보조 컨트롤
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   children: [
+            //     _buildSmallButton(
+            //       icon: Icons.shuffle_rounded,
+            //       onPressed: () {},
+            //     ),
+            //     const SizedBox(width: 16),
+            //     _buildSmallButton(
+            //       icon: Icons.repeat_rounded,
+            //       onPressed: () {},
+            //     ),
+            //     const SizedBox(width: 16),
+            //     StreamBuilder<PlaybackState>(
+            //       stream: _audioHandler?.playbackState,
+            //       builder: (context, snapshot) {
+            //         final speed = snapshot.data?.speed ?? 1.0;
+            //         return _buildSpeedButton(speed);
+            //       },
+            //     ),
+            //   ],
+            // ),
           ],
         );
       },
