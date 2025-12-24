@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
-import 'package:projecti_fan_app/widget/favorites_page.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/youtube_page.dart';
 import 'package:projecti_fan_app/widget/schedule_page.dart';
@@ -29,14 +28,12 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     SchedulePageWidget(),
     GroupPageWidget(),
     YouTubePageWidget(),
-    FavoritesPageWidget(),
   ];
 
   final List<NavItem> _navItems = const [
     NavItem(icon: Icons.calendar_month_rounded, label: '스케줄'),
     NavItem(icon: Icons.people_alt_rounded, label: '멤버'),
     NavItem(icon: Icons.play_circle_rounded, label: 'YouTube'),
-    NavItem(icon: Icons.favorite_rounded, label: '즐겨찾기'),
   ];
 
   void _onPageChanged(int index) {
