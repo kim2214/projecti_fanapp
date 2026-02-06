@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:extended_image/extended_image.dart' as http;
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
@@ -159,53 +159,43 @@ class GlobalController extends GetxController {
     return [];
   }
 
+  Future<LiveCheckModel?> _fetchLiveStatus(String broadcastId) async {
+    final url = Uri.parse(
+        'https://api.chzzk.naver.com/polling/v2/channels/$broadcastId/live-status');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return LiveCheckModel.fromJson(data['content']);
+      }
+    } catch (_) {
+      // error handled silently
+    }
+    return null;
+  }
+
   Future<List<LiveCheckModel>> liveCheck() async {
     if (selectedGroup.value == 'honeyz') {
       if (honeyzliveCheckList.isEmpty) {
-        for (int i = 0; i < honeyzBrodcastIDList.length; i++) {
-          final url = Uri.parse(
-              'https://api.chzzk.naver.com/polling/v2/channels/${honeyzBrodcastIDList[i]}/live-status');
-
-          try {
-            final response = await http.get(url);
-
-            if (response.statusCode == 200) {
-              final String decodedBody =
-                  utf8.decode(response.bodyBytes); // UTF-8 디코딩
-              final Map<String, dynamic> data =
-                  json.decode(decodedBody); // JSON을 Map으로 변환
-
-              honeyzliveCheckList.add(LiveCheckModel.fromJson(data['content']));
-            } else {
-              // error handled silently
-            }
-          } catch (e) {
-            // error handled silently
+        final results = await Future.wait(
+          honeyzBrodcastIDList.map((id) => _fetchLiveStatus(id)),
+        );
+        for (final result in results) {
+          if (result != null) {
+            honeyzliveCheckList.add(result);
           }
         }
       }
       return honeyzliveCheckList;
     } else if (selectedGroup.value == 'acaxia') {
       if (acaxialiveCheckList.isEmpty) {
-        for (int i = 0; i < acaxiaBrodcastIDList.length; i++) {
-          final url = Uri.parse(
-              'https://api.chzzk.naver.com/polling/v2/channels/${acaxiaBrodcastIDList[i]}/live-status');
-
-          try {
-            final response = await http.get(url);
-
-            if (response.statusCode == 200) {
-              final String decodedBody =
-                  utf8.decode(response.bodyBytes); // UTF-8 디코딩
-              final Map<String, dynamic> data =
-                  json.decode(decodedBody); // JSON을 Map으로 변환
-
-              acaxialiveCheckList.add(LiveCheckModel.fromJson(data['content']));
-            } else {
-              // error handled silently
-            }
-          } catch (e) {
-            // error handled silently
+        final results = await Future.wait(
+          acaxiaBrodcastIDList.map((id) => _fetchLiveStatus(id)),
+        );
+        for (final result in results) {
+          if (result != null) {
+            acaxialiveCheckList.add(result);
           }
         }
       }
