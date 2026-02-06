@@ -19,9 +19,7 @@ class YouTubeVideoCard extends StatelessWidget {
 
   Future<void> _openYouTube() async {
     final url = Uri.parse(video.youtubeUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -208,21 +206,24 @@ class YouTubeVideoCard extends StatelessWidget {
   }
 
   Widget _buildPlayButton() {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: youtubeRed.withAlpha(15),
-        border: Border.all(
-          color: youtubeRed.withAlpha(40),
-          width: 1.5,
+    return GestureDetector(
+      onTap: _openYouTube,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: youtubeRed.withAlpha(15),
+          border: Border.all(
+            color: youtubeRed.withAlpha(40),
+            width: 1.5,
+          ),
         ),
-      ),
-      child: const Icon(
-        Icons.play_arrow_rounded,
-        color: youtubeRed,
-        size: 22,
+        child: const Icon(
+          Icons.play_arrow_rounded,
+          color: youtubeRed,
+          size: 22,
+        ),
       ),
     );
   }

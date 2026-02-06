@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/widget/audio_common.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
@@ -14,10 +15,13 @@ class YouTubePageWidget extends StatefulWidget {
 class _YouTubePageWidgetState extends State<YouTubePageWidget>
     with AutomaticKeepAliveClientMixin {
   final youtubeController = Get.find<YouTubeController>();
+  final globalController = Get.find<GlobalController>();
   final ScrollController _scrollController = ScrollController();
 
   // YouTube 브랜드 색상
   static const Color youtubeRed = Color(0xFFFF0000);
+
+  Worker? _groupChangeWorker;
 
   @override
   void initState() {
@@ -27,10 +31,17 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     if (youtubeController.videoList.isEmpty) {
       youtubeController.loadVideos();
     }
+    // 그룹 변경 시 스크롤 초기화
+    _groupChangeWorker = ever(globalController.selectedGroup, (_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _groupChangeWorker?.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -42,117 +53,6 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
         _scrollController.position.maxScrollExtent - 200) {
       youtubeController.loadMoreVideos();
     }
-  }
-
-  void _showChannelSettingsDialog() {
-    final textController = TextEditingController(
-      text: youtubeController.channelId.value,
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        backgroundColor: AudioTheme.surface,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: youtubeRed.withAlpha(20),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.settings, color: youtubeRed, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              '채널 설정',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: AudioTheme.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'YouTube 채널 ID를 입력하세요',
-              style: TextStyle(fontSize: 14, color: AudioTheme.textSecondary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '채널 ID는 "UC"로 시작하는 24자리 문자열입니다.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AudioTheme.textSecondary.withAlpha(150),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              style: const TextStyle(
-                color: AudioTheme.textPrimary,
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                hintText: 'UC...',
-                hintStyle: TextStyle(
-                  color: AudioTheme.textSecondary.withAlpha(100),
-                ),
-                filled: true,
-                fillColor: AudioTheme.surfaceTint,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: youtubeRed, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              '취소',
-              style: TextStyle(
-                color: AudioTheme.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final newChannelId = textController.text.trim();
-              if (newChannelId.isNotEmpty) {
-                youtubeController.setChannelId(newChannelId);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text(
-              '저장',
-              style: TextStyle(
-                color: youtubeRed,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -180,24 +80,13 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     // 로딩 중 (첫 로드)
     if (youtubeController.isLoading.value &&
         youtubeController.videoList.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: youtubeRed,
-          strokeWidth: 3,
-        ),
-      );
+      return _buildLoadingWithSelector();
     }
 
     // 에러 상태
     if (youtubeController.hasError.value &&
         youtubeController.videoList.isEmpty) {
       return _buildErrorState();
-    }
-
-    // 채널 ID 미설정
-    if (youtubeController.channelId.value.isEmpty &&
-        youtubeController.videoList.isEmpty) {
-      return _buildEmptyChannelState();
     }
 
     return RefreshIndicator(
@@ -208,7 +97,9 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
         slivers: [
           // 헤더
           SliverToBoxAdapter(child: _buildHeader()),
-          // 비디오 개수 및 설정
+          // 멤버 셀렉터
+          SliverToBoxAdapter(child: _buildMemberSelector()),
+          // 비디오 개수
           SliverToBoxAdapter(child: _buildVideoCount()),
           // 비디오 리스트
           SliverPadding(
@@ -265,7 +156,33 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     );
   }
 
+  /// 로딩 중일 때도 멤버 셀렉터는 표시
+  Widget _buildLoadingWithSelector() {
+    return Column(
+      children: [
+        _buildHeader(),
+        _buildMemberSelector(),
+        const Expanded(
+          child: Center(
+            child: CircularProgressIndicator(
+              color: youtubeRed,
+              strokeWidth: 3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeader() {
+    final isHoneyz = globalController.selectedGroup.value == 'honeyz';
+    final memberKeys = youtubeController.currentMemberKeys;
+    final memberNames = youtubeController.currentMemberNames;
+    final selectedKey = youtubeController.effectiveSelectedMemberKey;
+    final selectedIndex = memberKeys.indexOf(selectedKey);
+    final memberName =
+        selectedIndex >= 0 ? memberNames[selectedIndex] : 'YouTube';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
       child: Row(
@@ -300,23 +217,23 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
           ),
           const SizedBox(width: 20),
           // 정보
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'YouTube',
-                  style: TextStyle(
+                  memberName,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AudioTheme.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Video Collection',
-                  style: TextStyle(
+                  '${isHoneyz ? "허니즈" : "아카시아"} YouTube',
+                  style: const TextStyle(
                     fontSize: 14,
                     color: AudioTheme.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -330,220 +247,181 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     );
   }
 
+  Widget _buildMemberSelector() {
+    final memberKeys = youtubeController.currentMemberKeys;
+    final memberNames = youtubeController.currentMemberNames;
+    final assetNames = youtubeController.currentAssetNames;
+    final selectedKey = youtubeController.effectiveSelectedMemberKey;
+    final isHoneyz = globalController.selectedGroup.value == 'honeyz';
+    final groupFolder = isHoneyz ? 'honeyz' : 'acaxia';
+
+    return SizedBox(
+      height: 56,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: memberKeys.length,
+        itemBuilder: (context, index) {
+          final isSelected = memberKeys[index] == selectedKey;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: GestureDetector(
+              onTap: () {
+                youtubeController.selectMember(memberKeys[index]);
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(0);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? youtubeRed : AudioTheme.surface,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: isSelected ? youtubeRed : youtubeRed.withAlpha(50),
+                    width: 1.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: youtubeRed.withAlpha(60),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundImage: AssetImage(
+                        'assets/$groupFolder/${assetNames[index]}_profile.png',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      memberNames[index],
+                      style: TextStyle(
+                        color:
+                            isSelected ? Colors.white : AudioTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildVideoCount() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // 비디오 개수
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AudioTheme.surfaceTint,
-              borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AudioTheme.surfaceTint,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.play_circle_outline_rounded,
+              size: 16,
+              color: youtubeRed,
             ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.play_circle_outline_rounded,
-                  size: 16,
-                  color: youtubeRed,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${youtubeController.videoList.length}개 영상',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AudioTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 설정 버튼
-          GestureDetector(
-            onTap: _showChannelSettingsDialog,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: youtubeRed.withAlpha(15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: youtubeRed.withAlpha(40),
-                  width: 1,
-                ),
+            const SizedBox(width: 6),
+            Text(
+              '${youtubeController.videoList.length}개 영상',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AudioTheme.textPrimary,
               ),
-              child: Row(
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Column(
+      children: [
+        _buildHeader(),
+        _buildMemberSelector(),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.settings_outlined,
-                    size: 16,
-                    color: youtubeRed.withAlpha(200),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AudioTheme.surfaceTint,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.error_outline_rounded,
+                      size: 50,
+                      color: AudioTheme.textSecondary.withAlpha(100),
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '채널 설정',
+                  const SizedBox(height: 24),
+                  const Text(
+                    '오류가 발생했습니다',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: youtubeRed.withAlpha(200),
+                      color: AudioTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    youtubeController.errorMessage.value,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AudioTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: youtubeController.loadVideos,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('다시 시도'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: youtubeRed,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AudioTheme.surfaceTint,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 50,
-                color: AudioTheme.textSecondary.withAlpha(100),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '오류가 발생했습니다',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AudioTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              youtubeController.errorMessage.value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AudioTheme.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _showChannelSettingsDialog,
-                  icon: const Icon(Icons.settings_outlined, size: 18),
-                  label: const Text('채널 설정'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AudioTheme.surfaceTint,
-                    foregroundColor: AudioTheme.textPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: youtubeController.loadVideos,
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('다시 시도'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: youtubeRed,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyChannelState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: youtubeRed.withAlpha(20),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.play_circle_outline_rounded,
-                size: 50,
-                color: youtubeRed,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'YouTube 채널 설정',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AudioTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '시청할 YouTube 채널 ID를 설정해주세요',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AudioTheme.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _showChannelSettingsDialog,
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('채널 설정하기'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: youtubeRed,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
