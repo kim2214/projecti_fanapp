@@ -71,7 +71,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
       await _globalController.liveCheck();
       _lastLoadedGroup = currentGroup;
     } catch (e) {
-      debugPrint('Error loading data: $e');
+      // error handled by loading state
     } finally {
       _isLoadingInProgress = false;
       if (mounted) {

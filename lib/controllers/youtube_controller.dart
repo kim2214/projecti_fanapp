@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
@@ -162,7 +161,6 @@ class YouTubeController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = '알 수 없는 오류가 발생했습니다';
-      debugPrint('Error loading videos: $e');
     } finally {
       isLoading.value = false;
     }
@@ -193,10 +191,8 @@ class YouTubeController extends GetxController {
         _cache[memberKey]!.videos = List.from(videoList);
         _cache[memberKey]!.nextPageToken = _nextPageToken;
       }
-    } on YouTubeServiceException catch (e) {
-      debugPrint('추가 로드 실패: ${e.message}');
-    } catch (e) {
-      debugPrint('추가 로드 실패: $e');
+    } on YouTubeServiceException catch (_) {
+    } catch (_) {
     } finally {
       isLoadingMore.value = false;
     }

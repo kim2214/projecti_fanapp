@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
@@ -37,7 +36,8 @@ class YouTubeService {
       final response = await http.get(uri);
 
       if (response.statusCode != 200) {
-        throw YouTubeServiceException('채널 정보를 가져올 수 없습니다: ${response.statusCode}');
+        throw YouTubeServiceException(
+            '채널 정보를 가져올 수 없습니다: ${response.statusCode}');
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -61,9 +61,6 @@ class YouTubeService {
     String? pageToken,
   }) async {
     try {
-      debugPrint('=== YouTube API 호출 ===');
-      debugPrint('PlaylistId: $playlistId');
-
       final queryParams = {
         'part': 'snippet,contentDetails',
         'playlistId': playlistId,
@@ -90,25 +87,10 @@ class YouTubeService {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final items = json['items'] as List? ?? [];
 
-      debugPrint('응답 아이템 수: ${items.length}');
-
-      // 첫 번째 아이템 디버깅
-      if (items.isNotEmpty) {
-        final firstItem = items.first;
-        debugPrint('첫 번째 아이템: $firstItem');
-        debugPrint('title: ${firstItem['snippet']?['title']}');
-        debugPrint('videoId: ${firstItem['snippet']?['resourceId']?['videoId']}');
-      }
-
       final videos = items
-          .map((item) => YouTubeVideoModel.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+              YouTubeVideoModel.fromJson(item as Map<String, dynamic>))
           .toList();
-
-      debugPrint('변환된 비디오 수: ${videos.length}');
-      if (videos.isNotEmpty) {
-        debugPrint('첫 번째 비디오 title: ${videos.first.title}');
-        debugPrint('첫 번째 비디오 videoId: ${videos.first.videoId}');
-      }
 
       return YouTubeVideoListResponse(
         videos: videos,
@@ -116,7 +98,6 @@ class YouTubeService {
         totalResults: json['pageInfo']?['totalResults'] ?? 0,
       );
     } catch (e) {
-      debugPrint('에러: $e');
       if (e is YouTubeServiceException) rethrow;
       throw YouTubeServiceException('비디오 목록을 가져올 수 없습니다: $e');
     }
@@ -159,6 +140,7 @@ class YouTubeVideoListResponse {
 /// 서비스 예외 클래스
 class YouTubeServiceException implements Exception {
   final String message;
+
   YouTubeServiceException(this.message);
 
   @override

@@ -177,10 +177,10 @@ class GlobalController extends GetxController {
 
               honeyzliveCheckList.add(LiveCheckModel.fromJson(data['content']));
             } else {
-              print('오류 발생: ${response.statusCode}');
+              // error handled silently
             }
           } catch (e) {
-            print('예외 발생: $e');
+            // error handled silently
           }
         }
       }
@@ -202,10 +202,10 @@ class GlobalController extends GetxController {
 
               acaxialiveCheckList.add(LiveCheckModel.fromJson(data['content']));
             } else {
-              print('오류 발생: ${response.statusCode}');
+              // error handled silently
             }
           } catch (e) {
-            print('예외 발생: $e');
+            // error handled silently
           }
         }
       }

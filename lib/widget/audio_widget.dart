@@ -166,7 +166,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
         _setupSkipCallbacks();
       }
     } catch (e) {
-      debugPrint("Error initializing audio: $e");
+      // error handled silently
     } finally {
       if (mounted) {
         setState(() {
@@ -282,7 +282,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
       await _audioHandler!.addQueueItem(mediaItem);
       _audioHandler!.play();
     } catch (e) {
-      debugPrint("Error loading new track: $e");
+      // error handled silently
     }
   }
 
@@ -303,7 +303,7 @@ class _BackgroundAudioWidgetState extends State<BackgroundAudioWidget> {
       // 로드 완료 후 자동 재생 (await 없이 호출하여 UI 블로킹 방지)
       _audioHandler!.play();
     } catch (e) {
-      debugPrint("Error loading audio source: $e");
+      // error handled silently
     }
   }
 
