@@ -5,12 +5,10 @@ import 'package:projecti_fan_app/services/youtube_service.dart';
 
 class _MemberVideoCache {
   List<YouTubeVideoModel> videos;
-  String? nextPageToken;
   DateTime lastFetched;
 
   _MemberVideoCache({
     required this.videos,
-    this.nextPageToken,
     required this.lastFetched,
   });
 
@@ -43,14 +41,8 @@ class YouTubeController extends GetxController {
   RxString selectedMemberKey = ''.obs;
   RxList<YouTubeVideoModel> videoList = <YouTubeVideoModel>[].obs;
   RxBool isLoading = false.obs;
-  RxBool isLoadingMore = false.obs;
   RxBool hasError = false.obs;
   RxString errorMessage = ''.obs;
-
-  // 페이지네이션
-  String? _nextPageToken;
-
-  bool get hasMore => _nextPageToken != null;
 
   // 멤버별 캐시
   final Map<String, _MemberVideoCache> _cache = {};
@@ -94,6 +86,13 @@ class YouTubeController extends GetxController {
     return selectedMemberKey.value;
   }
 
+  /// 현재 선택된 멤버의 YouTube 채널 페이지 URL
+  String? get currentChannelUrl {
+    final channelId = currentChannelIds[effectiveSelectedMemberKey];
+    if (channelId == null) return null;
+    return 'https://www.youtube.com/channel/$channelId/videos';
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -102,7 +101,6 @@ class YouTubeController extends GetxController {
 
   void _onGroupChanged() {
     selectedMemberKey.value = '';
-    _nextPageToken = null;
     loadVideos();
   }
 
@@ -129,9 +127,7 @@ class YouTubeController extends GetxController {
     if (!forceRefresh &&
         _cache.containsKey(memberKey) &&
         !_cache[memberKey]!.isStale) {
-      final cached = _cache[memberKey]!;
-      videoList.value = List.from(cached.videos);
-      _nextPageToken = cached.nextPageToken;
+      videoList.value = List.from(_cache[memberKey]!.videos);
       return;
     }
 
@@ -139,20 +135,14 @@ class YouTubeController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
       errorMessage.value = '';
-      _nextPageToken = null;
 
-      final response = await _service.getChannelVideos(
-        channelId: channelId,
-        maxResults: 20,
-      );
+      final videos = await _service.getChannelVideos(channelId: channelId);
 
-      videoList.value = response.videos;
-      _nextPageToken = response.nextPageToken;
+      videoList.value = videos;
 
       // 캐시 저장
       _cache[memberKey] = _MemberVideoCache(
-        videos: List.from(response.videos),
-        nextPageToken: response.nextPageToken,
+        videos: List.from(videos),
         lastFetched: DateTime.now(),
       );
     } on YouTubeServiceException catch (e) {
@@ -166,42 +156,9 @@ class YouTubeController extends GetxController {
     }
   }
 
-  /// 추가 비디오 로드 (페이지네이션)
-  Future<void> loadMoreVideos() async {
-    if (!hasMore || isLoadingMore.value) return;
-
-    final memberKey = effectiveSelectedMemberKey;
-    final channelId = currentChannelIds[memberKey];
-    if (channelId == null) return;
-
-    try {
-      isLoadingMore.value = true;
-
-      final response = await _service.getChannelVideos(
-        channelId: channelId,
-        maxResults: 20,
-        pageToken: _nextPageToken,
-      );
-
-      videoList.addAll(response.videos);
-      _nextPageToken = response.nextPageToken;
-
-      // 캐시 업데이트
-      if (_cache.containsKey(memberKey)) {
-        _cache[memberKey]!.videos = List.from(videoList);
-        _cache[memberKey]!.nextPageToken = _nextPageToken;
-      }
-    } on YouTubeServiceException catch (_) {
-    } catch (_) {
-    } finally {
-      isLoadingMore.value = false;
-    }
-  }
-
   /// 새로고침
   @override
   Future<void> refresh() async {
-    _nextPageToken = null;
     await loadVideos(forceRefresh: true);
   }
 }

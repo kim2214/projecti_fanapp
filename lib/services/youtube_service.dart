@@ -1,11 +1,14 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
+import 'package:xml/xml.dart';
 
+/// YouTube 공식 RSS 피드 기반 서비스 (API 키 불필요)
+/// 채널당 최신 영상 15개를 제공한다.
 class YouTubeService {
   static YouTubeService? _instance;
-  static const String _baseUrl = 'https://www.googleapis.com/youtube/v3';
+  static const String _feedBaseUrl = 'https://www.youtube.com/feeds/videos.xml';
 
   YouTubeService._();
 
@@ -14,127 +17,51 @@ class YouTubeService {
     return _instance!;
   }
 
-  String get _apiKey {
-    final apiKey = dotenv.env['YOUTUBE_API_KEY'] ?? '';
-    if (apiKey.isEmpty) {
-      throw YouTubeServiceException('YouTube API Key가 설정되지 않았습니다');
-    }
-    return apiKey;
-  }
-
-  /// 채널의 uploads 플레이리스트 ID 가져오기
-  Future<String?> getUploadsPlaylistId(String channelId) async {
+  /// 채널의 최신 영상 목록 가져오기
+  Future<List<YouTubeVideoModel>> getChannelVideos({
+    required String channelId,
+  }) async {
     try {
-      final uri = Uri.parse('$_baseUrl/channels').replace(
-        queryParameters: {
-          'part': 'contentDetails',
-          'id': channelId,
-          'key': _apiKey,
-        },
+      final uri = Uri.parse(_feedBaseUrl).replace(
+        queryParameters: {'channel_id': channelId},
       );
 
       final response = await http.get(uri);
 
       if (response.statusCode != 200) {
         throw YouTubeServiceException(
-            '채널 정보를 가져올 수 없습니다: ${response.statusCode}');
+            '영상 목록을 가져올 수 없습니다 (${response.statusCode})');
       }
 
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = json['items'] as List?;
+      // 한글 제목 깨짐 방지를 위해 bodyBytes를 UTF-8로 디코딩
+      final document = XmlDocument.parse(utf8.decode(response.bodyBytes));
 
-      if (items == null || items.isEmpty) {
-        throw YouTubeServiceException('채널을 찾을 수 없습니다');
-      }
-
-      return items.first['contentDetails']?['relatedPlaylists']?['uploads'];
-    } catch (e) {
-      if (e is YouTubeServiceException) rethrow;
-      throw YouTubeServiceException('채널 정보를 가져올 수 없습니다: $e');
-    }
-  }
-
-  /// 플레이리스트의 비디오 목록 가져오기 (페이지네이션 지원)
-  Future<YouTubeVideoListResponse> getPlaylistVideos({
-    required String playlistId,
-    int maxResults = 20,
-    String? pageToken,
-  }) async {
-    try {
-      final queryParams = {
-        'part': 'snippet,contentDetails',
-        'playlistId': playlistId,
-        'maxResults': maxResults.toString(),
-        'key': _apiKey,
-      };
-
-      if (pageToken != null) {
-        queryParams['pageToken'] = pageToken;
-      }
-
-      final uri = Uri.parse('$_baseUrl/playlistItems').replace(
-        queryParameters: queryParams,
-      );
-
-      final response = await http.get(uri);
-
-      if (response.statusCode != 200) {
-        final errorJson = jsonDecode(response.body);
-        final errorMessage = errorJson['error']?['message'] ?? '알 수 없는 오류';
-        throw YouTubeServiceException('API 오류: $errorMessage');
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = json['items'] as List? ?? [];
-
-      final videos = items
-          .map((item) =>
-              YouTubeVideoModel.fromJson(item as Map<String, dynamic>))
+      return document
+          .findAllElements('entry')
+          .map(_parseEntry)
+          .where((video) => video.videoId != null)
           .toList();
-
-      return YouTubeVideoListResponse(
-        videos: videos,
-        nextPageToken: json['nextPageToken'],
-        totalResults: json['pageInfo']?['totalResults'] ?? 0,
-      );
     } catch (e) {
       if (e is YouTubeServiceException) rethrow;
-      throw YouTubeServiceException('비디오 목록을 가져올 수 없습니다: $e');
+      throw YouTubeServiceException('영상 목록을 가져올 수 없습니다: $e');
     }
   }
 
-  /// 채널 ID로 바로 비디오 목록 가져오기
-  Future<YouTubeVideoListResponse> getChannelVideos({
-    required String channelId,
-    int maxResults = 20,
-    String? pageToken,
-  }) async {
-    final playlistId = await getUploadsPlaylistId(channelId);
-    if (playlistId == null) {
-      throw YouTubeServiceException('채널의 업로드 플레이리스트를 찾을 수 없습니다');
-    }
+  /// RSS entry -> YouTubeVideoModel
+  YouTubeVideoModel _parseEntry(XmlElement entry) {
+    final mediaGroup = entry.getElement('media:group');
+    final published = entry.getElement('published')?.innerText;
 
-    return getPlaylistVideos(
-      playlistId: playlistId,
-      maxResults: maxResults,
-      pageToken: pageToken,
+    return YouTubeVideoModel(
+      videoId: entry.getElement('yt:videoId')?.innerText,
+      title: entry.getElement('title')?.innerText,
+      description: mediaGroup?.getElement('media:description')?.innerText,
+      thumbnailUrl:
+          mediaGroup?.getElement('media:thumbnail')?.getAttribute('url'),
+      channelTitle: entry.getElement('author')?.getElement('name')?.innerText,
+      publishedAt: published != null ? DateTime.tryParse(published) : null,
     );
   }
-}
-
-/// 비디오 목록 응답 클래스
-class YouTubeVideoListResponse {
-  final List<YouTubeVideoModel> videos;
-  final String? nextPageToken;
-  final int totalResults;
-
-  YouTubeVideoListResponse({
-    required this.videos,
-    this.nextPageToken,
-    required this.totalResults,
-  });
-
-  bool get hasMore => nextPageToken != null;
 }
 
 /// 서비스 예외 클래스

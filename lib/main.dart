@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
 import 'package:projecti_fan_app/widget/audio_manager.dart';
@@ -9,7 +8,6 @@ import 'package:projecti_fan_app/widget/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   await AudioManager.initialize();
 

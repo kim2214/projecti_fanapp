@@ -4,6 +4,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/widget/audio_common.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class YouTubePageWidget extends StatefulWidget {
   const YouTubePageWidget({super.key});
@@ -26,7 +27,6 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     // 초기 로드
     if (youtubeController.videoList.isEmpty) {
       youtubeController.loadVideos();
@@ -42,17 +42,15 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   @override
   void dispose() {
     _groupChangeWorker?.dispose();
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    // 스크롤이 끝에 도달하면 추가 로드
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      youtubeController.loadMoreVideos();
-    }
+  /// 멤버의 YouTube 채널 페이지 열기
+  Future<void> _openChannelPage() async {
+    final url = youtubeController.currentChannelUrl;
+    if (url == null) return;
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -119,31 +117,36 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
               ),
             ),
           ),
-          // 로딩 인디케이터 (추가 로드)
-          if (youtubeController.isLoadingMore.value)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: youtubeRed,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-            ),
-          // 더 이상 데이터 없음
-          if (!youtubeController.hasMore &&
-              youtubeController.videoList.isNotEmpty)
+          // 전체 영상은 YouTube 채널에서
+          if (youtubeController.videoList.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Center(
-                  child: Text(
-                    '모든 동영상을 불러왔습니다',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AudioTheme.textSecondary.withAlpha(150),
+                  child: OutlinedButton.icon(
+                    onPressed: _openChannelPage,
+                    icon: const Icon(
+                      Icons.open_in_new_rounded,
+                      size: 18,
+                      color: youtubeRed,
+                    ),
+                    label: const Text(
+                      'YouTube에서 전체 영상 보기',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: youtubeRed,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: youtubeRed.withAlpha(100)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),

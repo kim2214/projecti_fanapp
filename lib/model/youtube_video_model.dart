@@ -15,37 +15,6 @@ class YouTubeVideoModel {
     this.publishedAt,
   });
 
-  /// JSON에서 생성
-  factory YouTubeVideoModel.fromJson(Map<String, dynamic> json) {
-    final snippet = json['snippet'] as Map<String, dynamic>?;
-    final thumbnails = snippet?['thumbnails'] as Map<String, dynamic>?;
-
-    // 썸네일 URL 선택 (고화질 우선)
-    String? thumbnailUrl;
-    if (thumbnails?['maxres']?['url'] != null) {
-      thumbnailUrl = thumbnails!['maxres']['url'];
-    } else if (thumbnails?['high']?['url'] != null) {
-      thumbnailUrl = thumbnails!['high']['url'];
-    } else if (thumbnails?['medium']?['url'] != null) {
-      thumbnailUrl = thumbnails!['medium']['url'];
-    } else if (thumbnails?['standard']?['url'] != null) {
-      thumbnailUrl = thumbnails!['standard']['url'];
-    } else if (thumbnails?['default']?['url'] != null) {
-      thumbnailUrl = thumbnails!['default']['url'];
-    }
-
-    return YouTubeVideoModel(
-      videoId: snippet?['resourceId']?['videoId'],
-      title: snippet?['title'],
-      description: snippet?['description'],
-      thumbnailUrl: thumbnailUrl,
-      channelTitle: snippet?['channelTitle'],
-      publishedAt: snippet?['publishedAt'] != null
-          ? DateTime.tryParse(snippet!['publishedAt'])
-          : null,
-    );
-  }
-
   /// YouTube 앱/웹 URL 생성
   String get youtubeUrl => 'https://www.youtube.com/watch?v=$videoId';
 
