@@ -48,39 +48,55 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
             stops: const [0.0, 0.4, 1.0],
           ),
         ),
-        child: CustomScrollView(
-          slivers: [
-            // 헤더
-            SliverToBoxAdapter(
-              child: _buildHeader(
-                  isHoneyz, themeColor, themeColorDark, scheduleList.length),
-            ),
-            // 멤버 스케줄 리스트
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ScheduleCard(
-                        imageURL: scheduleList[index].scheduleURL ?? '',
-                        memberName: nameList[index],
-                        index: index,
-                        themeColor: themeColor,
-                        themeColorDark: themeColorDark,
-                        isHoneyz: isHoneyz,
-                      ),
-                    );
-                  },
-                  childCount: scheduleList.length,
+        child: RefreshIndicator(
+          color: themeColorDark,
+          onRefresh: () => _onRefresh(globalController, isHoneyz),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // 헤더
+              SliverToBoxAdapter(
+                child: _buildHeader(
+                    isHoneyz, themeColor, themeColorDark, scheduleList.length),
+              ),
+              // 멤버 스케줄 리스트
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: ScheduleCard(
+                          imageURL: scheduleList[index].scheduleURL ?? '',
+                          memberName: nameList[index],
+                          index: index,
+                          themeColor: themeColor,
+                          themeColorDark: themeColorDark,
+                          isHoneyz: isHoneyz,
+                        ),
+                      );
+                    },
+                    childCount: scheduleList.length,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     });
+  }
+
+  /// 당겨서 새로고침 - 스케줄을 다시 불러옴
+  Future<void> _onRefresh(
+      GlobalController globalController, bool isHoneyz) async {
+    await globalController.loadScheduleFireStore(
+      sequence: isHoneyz
+          ? globalController.honeyzSequence
+          : globalController.acaxiaSequence,
+      forceRefresh: true,
+    );
   }
 
   Widget _buildHeader(

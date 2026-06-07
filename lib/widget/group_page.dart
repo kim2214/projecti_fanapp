@@ -80,6 +80,20 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     }
   }
 
+  /// 당겨서 새로고침 - 멤버 정보와 라이브 상태를 다시 불러옴
+  Future<void> _onRefresh() async {
+    if (_isLoadingInProgress) return;
+    _isLoadingInProgress = true;
+    try {
+      await _globalController.loadStreamerFireStore(forceRefresh: true);
+      await _globalController.refreshLiveStatus();
+    } catch (e) {
+      // error handled by loading state
+    } finally {
+      _isLoadingInProgress = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -154,49 +168,54 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     // 라이브 체크 데이터가 없을 경우를 위한 기본값
     final defaultLiveStatus = LiveCheckModel(status: 'CLOSE', liveTitle: null);
 
-    return CustomScrollView(
-      slivers: [
-        // 헤더
-        SliverToBoxAdapter(
-          child: _buildHeader(
-              isHoneyz, themeColor, themeColorDark, members.length),
-        ),
-        // 멤버 그리드
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.75,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                // 인덱스 범위 체크
-                if (index >= members.length) {
-                  return const SizedBox.shrink();
-                }
-                // 라이브 상태 데이터가 없으면 기본값 사용
-                final status = index < liveStatusList.length
-                    ? liveStatusList[index]
-                    : defaultLiveStatus;
-                return StreamerCard(
-                  index: index,
-                  streamer: members[index],
-                  status: status,
-                  assetName: assetNames[index],
-                  memberName: nameList[index],
-                  themeColor: themeColor,
-                  themeColorDark: themeColorDark,
-                  isHoneyz: isHoneyz,
-                );
-              },
-              childCount: members.length,
+    return RefreshIndicator(
+      color: themeColorDark,
+      onRefresh: _onRefresh,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // 헤더
+          SliverToBoxAdapter(
+            child: _buildHeader(
+                isHoneyz, themeColor, themeColorDark, members.length),
+          ),
+          // 멤버 그리드
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.75,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  // 인덱스 범위 체크
+                  if (index >= members.length) {
+                    return const SizedBox.shrink();
+                  }
+                  // 라이브 상태 데이터가 없으면 기본값 사용
+                  final status = index < liveStatusList.length
+                      ? liveStatusList[index]
+                      : defaultLiveStatus;
+                  return StreamerCard(
+                    index: index,
+                    streamer: members[index],
+                    status: status,
+                    assetName: assetNames[index],
+                    memberName: nameList[index],
+                    themeColor: themeColor,
+                    themeColorDark: themeColorDark,
+                    isHoneyz: isHoneyz,
+                  );
+                },
+                childCount: members.length,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

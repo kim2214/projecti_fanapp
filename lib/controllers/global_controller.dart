@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -9,6 +11,34 @@ import 'package:projecti_fan_app/model/streamer_model.dart';
 
 class GlobalController extends GetxController {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+
+  // 라이브 상태 주기 갱신
+  static const Duration _liveRefreshInterval = Duration(minutes: 2);
+  Timer? _liveRefreshTimer;
+  AppLifecycleListener? _lifecycleListener;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // 주기적으로 라이브 상태 갱신
+    _liveRefreshTimer = Timer.periodic(
+      _liveRefreshInterval,
+      (_) => refreshLiveStatus(),
+    );
+
+    // 앱이 포그라운드로 복귀하면 즉시 갱신
+    _lifecycleListener = AppLifecycleListener(
+      onResume: refreshLiveStatus,
+    );
+  }
+
+  @override
+  void onClose() {
+    _liveRefreshTimer?.cancel();
+    _lifecycleListener?.dispose();
+    super.onClose();
+  }
 
   RxString selectedGroup = ''.obs;
   RxList<String> selectedMusicGroup = <String>['all', 'honeyz', 'acaxia'].obs;
@@ -91,33 +121,37 @@ class GlobalController extends GetxController {
   ];
 
   Future<List<ScheduleModel>> loadScheduleFireStore(
-      {required List<String> sequence}) async {
+      {required List<String> sequence, bool forceRefresh = false}) async {
     if (selectedGroup.value == 'honeyz') {
-      if (honeyzScheduleList.isEmpty) {
+      if (forceRefresh || honeyzScheduleList.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("schedule").get();
 
+        final List<ScheduleModel> loaded = [];
         for (int i = 0; i < sequence.length; i++) {
           for (var snapshot in snapshot.docs) {
             if (sequence[i] == snapshot.id) {
-              honeyzScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+              loaded.add(ScheduleModel.fromJson(snapshot.data()));
             }
           }
         }
+        honeyzScheduleList.value = loaded;
       }
       return honeyzScheduleList;
     } else if (selectedGroup.value == 'acaxia') {
-      if (acaxiaScheduleList.isEmpty) {
+      if (forceRefresh || acaxiaScheduleList.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("schedule_acaxia").get();
 
+        final List<ScheduleModel> loaded = [];
         for (int i = 0; i < sequence.length; i++) {
           for (var snapshot in snapshot.docs) {
             if (sequence[i] == snapshot.id) {
-              acaxiaScheduleList.add(ScheduleModel.fromJson(snapshot.data()));
+              loaded.add(ScheduleModel.fromJson(snapshot.data()));
             }
           }
         }
+        acaxiaScheduleList.value = loaded;
       }
       return acaxiaScheduleList;
     }
@@ -125,33 +159,38 @@ class GlobalController extends GetxController {
     return [];
   }
 
-  Future<List<StreamerModel>> loadStreamerFireStore() async {
+  Future<List<StreamerModel>> loadStreamerFireStore(
+      {bool forceRefresh = false}) async {
     if (selectedGroup.value == 'honeyz') {
-      if (honeyz.isEmpty) {
+      if (forceRefresh || honeyz.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("honeyz").get();
 
+        final List<StreamerModel> loaded = [];
         for (int i = 0; i < honeyzSequence.length; i++) {
           for (var snapshot in snapshot.docs) {
             if (honeyzSequence[i] == snapshot.id) {
-              honeyz.add(StreamerModel.fromJson(snapshot.data()));
+              loaded.add(StreamerModel.fromJson(snapshot.data()));
             }
           }
         }
+        honeyz.value = loaded;
       }
       return honeyz;
     } else if (selectedGroup.value == 'acaxia') {
-      if (acaxia.isEmpty) {
+      if (forceRefresh || acaxia.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
             await _fireStore.collection("acaxia").get();
 
+        final List<StreamerModel> loaded = [];
         for (int i = 0; i < acaxiaSequence.length; i++) {
           for (var snapshot in snapshot.docs) {
             if (acaxiaSequence[i] == snapshot.id) {
-              acaxia.add(StreamerModel.fromJson(snapshot.data()));
+              loaded.add(StreamerModel.fromJson(snapshot.data()));
             }
           }
         }
+        acaxia.value = loaded;
       }
       return acaxia;
     }
@@ -175,33 +214,40 @@ class GlobalController extends GetxController {
     return null;
   }
 
-  Future<List<LiveCheckModel>> liveCheck() async {
+  Future<List<LiveCheckModel>> liveCheck({bool forceRefresh = false}) async {
     if (selectedGroup.value == 'honeyz') {
-      if (honeyzliveCheckList.isEmpty) {
-        final results = await Future.wait(
-          honeyzBrodcastIDList.map((id) => _fetchLiveStatus(id)),
-        );
-        for (final result in results) {
-          if (result != null) {
-            honeyzliveCheckList.add(result);
-          }
-        }
+      if (forceRefresh || honeyzliveCheckList.isEmpty) {
+        await refreshLiveStatus();
       }
       return honeyzliveCheckList;
     } else if (selectedGroup.value == 'acaxia') {
-      if (acaxialiveCheckList.isEmpty) {
-        final results = await Future.wait(
-          acaxiaBrodcastIDList.map((id) => _fetchLiveStatus(id)),
-        );
-        for (final result in results) {
-          if (result != null) {
-            acaxialiveCheckList.add(result);
-          }
-        }
+      if (forceRefresh || acaxialiveCheckList.isEmpty) {
+        await refreshLiveStatus();
       }
       return acaxialiveCheckList;
     }
 
     return [];
+  }
+
+  /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체
+  Future<void> refreshLiveStatus() async {
+    final group = selectedGroup.value;
+    if (group != 'honeyz' && group != 'acaxia') return;
+
+    final broadcastIDList =
+        group == 'honeyz' ? honeyzBrodcastIDList : acaxiaBrodcastIDList;
+    final liveCheckList =
+        group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
+
+    final results = await Future.wait(
+      broadcastIDList.map((id) => _fetchLiveStatus(id)),
+    );
+
+    // 멤버 순서와 인덱스가 어긋나지 않도록 실패한 항목은 기본값으로 채움
+    liveCheckList.value = [
+      for (final result in results)
+        result ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
+    ];
   }
 }
