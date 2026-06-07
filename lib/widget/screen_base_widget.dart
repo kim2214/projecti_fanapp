@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
+import 'package:projecti_fan_app/widget/home_dashboard_page.dart';
 import 'package:projecti_fan_app/widget/youtube_page.dart';
 import 'package:projecti_fan_app/widget/schedule_page.dart';
 
@@ -24,13 +25,15 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   static const Color honeyzColorDark = Color(0xFFE84A75);
   static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
-  final List<Widget> _pages = const [
-    SchedulePageWidget(),
-    GroupPageWidget(),
-    YouTubePageWidget(),
+  late final List<Widget> _pages = [
+    HomeDashboardWidget(onNavigateToTab: _onNavTap),
+    const SchedulePageWidget(),
+    const GroupPageWidget(),
+    const YouTubePageWidget(),
   ];
 
   final List<NavItem> _navItems = const [
+    NavItem(icon: Icons.home_rounded, label: '홈'),
     NavItem(icon: Icons.calendar_month_rounded, label: '스케줄'),
     NavItem(icon: Icons.people_alt_rounded, label: '멤버'),
     NavItem(icon: Icons.play_circle_rounded, label: 'YouTube'),
@@ -57,7 +60,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     // 스케줄 데이터만 로드 (멤버/라이브체크는 GroupPageWidget에서 처리)
     await _globalController.loadScheduleFireStore(sequence: sequence);
 
-    // 스케줄 페이지로 이동
+    // 홈 페이지로 이동
     if (_currentIndex != 0) {
       _onNavTap(0);
     }

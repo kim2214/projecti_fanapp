@@ -44,8 +44,15 @@ class YouTubeController extends GetxController {
   RxBool hasError = false.obs;
   RxString errorMessage = ''.obs;
 
+  // 홈 대시보드용: 그룹 전체 멤버의 최신 영상
+  RxList<YouTubeVideoModel> groupLatestVideos = <YouTubeVideoModel>[].obs;
+  RxBool isGroupVideosLoading = false.obs;
+
   // 멤버별 캐시
   final Map<String, _MemberVideoCache> _cache = {};
+
+  // 그룹별 최신 영상 캐시
+  final Map<String, _MemberVideoCache> _groupCache = {};
 
   // 현재 그룹의 채널 ID 맵
   Map<String, String> get currentChannelIds {
@@ -102,6 +109,7 @@ class YouTubeController extends GetxController {
   void _onGroupChanged() {
     selectedMemberKey.value = '';
     loadVideos();
+    loadGroupLatestVideos();
   }
 
   /// 멤버 선택
@@ -160,5 +168,54 @@ class YouTubeController extends GetxController {
   @override
   Future<void> refresh() async {
     await loadVideos(forceRefresh: true);
+  }
+
+  /// 홈 대시보드용: 그룹 전체 멤버의 최신 영상 로드 (최신순 상위 [limit]개)
+  Future<void> loadGroupLatestVideos({
+    bool forceRefresh = false,
+    int limit = 5,
+  }) async {
+    final group = _globalController.selectedGroup.value;
+    if (group.isEmpty) return;
+
+    // 캐시 확인
+    if (!forceRefresh &&
+        _groupCache.containsKey(group) &&
+        !_groupCache[group]!.isStale) {
+      groupLatestVideos.value = List.from(_groupCache[group]!.videos);
+      return;
+    }
+
+    try {
+      isGroupVideosLoading.value = true;
+
+      // 그룹 전체 멤버 RSS 병렬 조회 (실패한 채널은 빈 목록 처리)
+      final results = await Future.wait(
+        currentChannelIds.values.map(
+          (channelId) => _service
+              .getChannelVideos(channelId: channelId)
+              .catchError((_) => <YouTubeVideoModel>[]),
+        ),
+      );
+
+      // 병합 후 최신순 정렬
+      final merged = results.expand((videos) => videos).toList()
+        ..sort((a, b) {
+          final aDate = a.publishedAt ?? DateTime(2000);
+          final bDate = b.publishedAt ?? DateTime(2000);
+          return bDate.compareTo(aDate);
+        });
+
+      final latest = merged.take(limit).toList();
+      groupLatestVideos.value = latest;
+
+      // 캐시 저장
+      _groupCache[group] = _MemberVideoCache(
+        videos: List.from(latest),
+        lastFetched: DateTime.now(),
+      );
+    } finally {
+      isGroupVideosLoading.value = false;
+    }
   }
 }
