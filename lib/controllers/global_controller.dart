@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 
@@ -21,15 +22,15 @@ class GlobalController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // 주기적으로 라이브 상태 갱신
+    // 주기적으로 양쪽 그룹 라이브 상태 갱신 (통합 LIVE 화면 대응)
     _liveRefreshTimer = Timer.periodic(
       _liveRefreshInterval,
-      (_) => refreshLiveStatus(),
+      (_) => refreshAllLiveStatus(),
     );
 
     // 앱이 포그라운드로 복귀하면 즉시 갱신
     _lifecycleListener = AppLifecycleListener(
-      onResume: refreshLiveStatus,
+      onResume: refreshAllLiveStatus,
     );
   }
 
@@ -232,7 +233,19 @@ class GlobalController extends GetxController {
 
   /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체
   Future<void> refreshLiveStatus() async {
-    final group = selectedGroup.value;
+    await _refreshGroupLiveStatus(selectedGroup.value);
+  }
+
+  /// 양쪽 그룹(허니즈+아카시아)의 라이브 상태를 동시에 갱신 (통합 LIVE 화면용)
+  Future<void> refreshAllLiveStatus() async {
+    await Future.wait([
+      _refreshGroupLiveStatus('honeyz'),
+      _refreshGroupLiveStatus('acaxia'),
+    ]);
+  }
+
+  /// 지정한 그룹의 라이브 상태를 새로 조회해서 교체
+  Future<void> _refreshGroupLiveStatus(String group) async {
     if (group != 'honeyz' && group != 'acaxia') return;
 
     final broadcastIDList =
@@ -249,5 +262,45 @@ class GlobalController extends GetxController {
       for (final result in results)
         result ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
     ];
+  }
+
+  /// 두 그룹을 통합한 현재 방송 중(LIVE) 멤버 목록.
+  /// 시청자 수 내림차순으로 정렬되며, isLive인 멤버만 포함한다.
+  List<LiveMemberEntry> get liveMembersAcrossGroups {
+    final entries = <LiveMemberEntry>[];
+
+    void collect(
+      String group,
+      List<LiveCheckModel> statuses,
+      List<String> names,
+      List<String> assets,
+      List<String> ids,
+    ) {
+      // 리스트 길이가 어긋날 수 있으므로 최소 길이까지만 안전하게 순회
+      final count = [statuses.length, names.length, assets.length, ids.length]
+          .reduce((a, b) => a < b ? a : b);
+      for (int i = 0; i < count; i++) {
+        if (statuses[i].isLive) {
+          entries.add(LiveMemberEntry(
+            group: group,
+            memberName: names[i],
+            assetPath: 'assets/$group/${assets[i]}_profile.png',
+            broadcastId: ids[i],
+            status: statuses[i],
+          ));
+        }
+      }
+    }
+
+    collect('honeyz', honeyzliveCheckList, honeyzNameList, honeyzAssetName,
+        honeyzBrodcastIDList);
+    collect('acaxia', acaxialiveCheckList, acaxiaNameList, acaxiaAssetName,
+        acaxiaBrodcastIDList);
+
+    // 시청자 수 내림차순 (null은 0으로 취급해 뒤로)
+    entries.sort((a, b) => (b.status.concurrentUserCount ?? 0)
+        .compareTo(a.status.concurrentUserCount ?? 0));
+
+    return entries;
   }
 }

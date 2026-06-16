@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -103,6 +104,27 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   icon: Icons.podcasts_rounded,
                   title: '지금 방송 중',
                   color: liveRed,
+                  trailing: GestureDetector(
+                    onTap: () => context.push('/livePage'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '전체보기',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: Colors.grey[500],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
