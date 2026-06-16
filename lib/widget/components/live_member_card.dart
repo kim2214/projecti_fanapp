@@ -6,11 +6,13 @@ import 'package:projecti_fan_app/model/live_member_entry.dart';
 class LiveMemberCard extends StatelessWidget {
   final LiveMemberEntry entry;
   final VoidCallback onTap;
+  final bool isFavorite;
 
   const LiveMemberCard({
     super.key,
     required this.entry,
     required this.onTap,
+    this.isFavorite = false,
   });
 
   // 그룹별 테마 컬러 (앱 전역에서 쓰는 값과 동일)
@@ -18,11 +20,14 @@ class LiveMemberCard extends StatelessWidget {
   static const Color acaxiaColor = Color(0xFFCCD1F9);
   static const Color liveRed = Color(0xFFFF3B30);
   static const Color textPrimary = Color(0xFF1A3A4A);
+  static const Color favoriteAmber = Color(0xFFFFB300);
 
   @override
   Widget build(BuildContext context) {
     final status = entry.status;
     final groupColor = entry.isHoneyz ? honeyzColor : acaxiaColor;
+    final borderColor =
+        isFavorite ? favoriteAmber.withAlpha(160) : liveRed.withAlpha(60);
 
     return GestureDetector(
       onTap: onTap,
@@ -32,10 +37,11 @@ class LiveMemberCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: liveRed.withAlpha(60), width: 1.5),
+          border: Border.all(
+              color: borderColor, width: isFavorite ? 2 : 1.5),
           boxShadow: [
             BoxShadow(
-              color: liveRed.withAlpha(20),
+              color: (isFavorite ? favoriteAmber : liveRed).withAlpha(20),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -66,6 +72,11 @@ class LiveMemberCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          if (isFavorite) ...[
+                            const Icon(Icons.star_rounded,
+                                size: 18, color: favoriteAmber),
+                            const SizedBox(width: 4),
+                          ],
                           Flexible(
                             child: Text(
                               entry.memberName,

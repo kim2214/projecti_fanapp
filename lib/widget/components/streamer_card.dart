@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 
@@ -185,8 +187,47 @@ class StreamerCard extends StatelessWidget {
                   ),
                 ),
               ),
+            // 최애(즐겨찾기) 토글 버튼
+            Positioned(
+              top: 8,
+              right: 8,
+              child: _buildFavoriteButton(),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFavoriteButton() {
+    final favorites = Get.find<FavoritesController>();
+    final group = isHoneyz ? 'honeyz' : 'acaxia';
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => favorites.toggle(group, assetName),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withAlpha(220),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(25),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Obx(() {
+          final isFav = favorites.isFavorite(group, assetName);
+          return Icon(
+            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 20,
+            color: isFav ? const Color(0xFFFFB300) : Colors.grey[400],
+          );
+        }),
       ),
     );
   }

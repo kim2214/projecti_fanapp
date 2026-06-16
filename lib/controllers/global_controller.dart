@@ -283,6 +283,7 @@ class GlobalController extends GetxController {
         if (statuses[i].isLive) {
           entries.add(LiveMemberEntry(
             group: group,
+            memberKey: assets[i],
             memberName: names[i],
             assetPath: 'assets/$group/${assets[i]}_profile.png',
             broadcastId: ids[i],

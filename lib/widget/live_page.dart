@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +17,7 @@ class LivePageWidget extends StatefulWidget {
 
 class _LivePageWidgetState extends State<LivePageWidget> {
   final GlobalController _globalController = Get.find<GlobalController>();
+  final FavoritesController _favorites = Get.find<FavoritesController>();
 
   // 첫 진입 시 초기 폴링 진행 여부
   final RxBool _initialLoading = true.obs;
@@ -74,7 +76,14 @@ class _LivePageWidgetState extends State<LivePageWidget> {
               _buildAppBar(context),
               Expanded(
                 child: Obx(() {
-                  final liveMembers = _globalController.liveMembersAcrossGroups;
+                  // 시청자순 정렬된 통합 목록을 받아 최애 멤버를 맨 위로 재배치
+                  final base = _globalController.liveMembersAcrossGroups;
+                  final liveMembers = [
+                    ...base.where(
+                        (e) => _favorites.isFavorite(e.group, e.memberKey)),
+                    ...base.where(
+                        (e) => !_favorites.isFavorite(e.group, e.memberKey)),
+                  ];
 
                   // 첫 폴링 중이고 아직 데이터가 없으면 로딩 표시
                   if (_initialLoading.value && liveMembers.isEmpty) {
@@ -110,6 +119,8 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                                   final entry = liveMembers[index];
                                   return LiveMemberCard(
                                     entry: entry,
+                                    isFavorite: _favorites.isFavorite(
+                                        entry.group, entry.memberKey),
                                     onTap: () =>
                                         _openChzzkLive(entry.broadcastId),
                                   );

@@ -6,6 +6,9 @@ class LiveMemberEntry {
   /// 소속 그룹 ('honeyz' | 'acaxia')
   final String group;
 
+  /// 멤버 키 (예: 'ohwayo') — 즐겨찾기 식별용
+  final String memberKey;
+
   /// 표시용 멤버 이름 (예: '오화요')
   final String memberName;
 
@@ -20,6 +23,7 @@ class LiveMemberEntry {
 
   const LiveMemberEntry({
     required this.group,
+    required this.memberKey,
     required this.memberName,
     required this.assetPath,
     required this.broadcastId,
