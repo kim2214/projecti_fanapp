@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -20,10 +21,6 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   final GlobalController _globalController = Get.find<GlobalController>();
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color honeyzColorDark = Color(0xFFE84A75);
-  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
   late final List<Widget> _pages = [
     HomeDashboardWidget(onNavigateToTab: _onNavTap),
@@ -73,8 +70,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   Widget build(BuildContext context) {
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
-      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
+      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Scaffold(
         backgroundColor: Colors.white,
@@ -99,7 +96,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back_rounded,
-          color: Color(0xFF1A3A4A),
+          color: AppColors.textPrimary,
         ),
         onPressed: () => context.pop(),
       ),
@@ -132,7 +129,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A3A4A),
+              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -160,13 +157,13 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
           _buildGroupToggle(
             isSelected: isHoneyz,
             label: '허니즈',
-            color: honeyzColor,
+            color: AppColors.honeyz,
             onTap: () => _switchGroup('honeyz'),
           ),
           _buildGroupToggle(
             isSelected: !isHoneyz,
             label: '아카시아',
-            color: acaxiaColor,
+            color: AppColors.acaxia,
             onTap: () => _switchGroup('acaxia'),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -15,8 +16,6 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
   final globalController = Get.find<GlobalController>();
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
 
   // 로딩 상태
   bool _isLoadingHoneyz = false;
@@ -53,9 +52,9 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              honeyzColor.withAlpha(30),
+              AppColors.honeyz.withAlpha(30),
               Colors.white,
-              acaxiaColor.withAlpha(30),
+              AppColors.acaxia.withAlpha(30),
             ],
             stops: const [0.0, 0.5, 1.0],
           ),
@@ -70,7 +69,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(
-                        color: honeyzColor,
+                        color: AppColors.honeyz,
                         strokeWidth: 3,
                       ),
                       const SizedBox(height: 20),
@@ -136,7 +135,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                     name: '허니즈',
                     subtitle: 'HONEYZ',
                     description: '달콤한 매력의 버츄얼 아이돌',
-                    color: honeyzColor,
+                    color: AppColors.honeyz,
                     logoAsset: 'assets/honeyz_logo.png',
                     isLoading: _isLoadingHoneyz,
                   ),
@@ -149,7 +148,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                     name: '아카시아',
                     subtitle: 'ACAXIA',
                     description: '신비로운 매력의 버츄얼 아이돌',
-                    color: acaxiaColor,
+                    color: AppColors.acaxia,
                     logoAsset: 'assets/acaxia_logo.png',
                     isLoading: _isLoadingAcaxia,
                   ),
@@ -182,7 +181,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         //     fontSize: 14,
         //     fontWeight: FontWeight.w700,
         //     letterSpacing: 2,
-        //     color: Color(0xFF1A3A4A),
+        //     color: AppColors.textPrimary,
         //   ),
         // ),
         // Container(
@@ -204,7 +203,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         //       Icon(
         //         Icons.calendar_month_rounded,
         //         size: 20,
-        //         color: honeyzColor,
+        //         color: AppColors.honeyz,
         //       ),
         //       const SizedBox(width: 8),
         //       const Text(
@@ -213,7 +212,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         //           fontSize: 14,
         //           fontWeight: FontWeight.w700,
         //           letterSpacing: 2,
-        //           color: Color(0xFF1A3A4A),
+        //           color: AppColors.textPrimary,
         //         ),
         //       ),
         //     ],
@@ -226,7 +225,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A3A4A),
+            color: AppColors.textPrimary,
             letterSpacing: -0.5,
           ),
         ),

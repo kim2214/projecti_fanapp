@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -16,10 +17,6 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
   final GlobalController _globalController = Get.find<GlobalController>();
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color honeyzColorDark = Color(0xFFE84A75);
-  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
   // 로딩 상태 관리 (Rx로 변경하여 Obx에서 감지)
   final RxBool _isLoading = true.obs;
@@ -100,8 +97,8 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
 
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
-      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
+      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Container(
         decoration: BoxDecoration(
@@ -281,7 +278,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A3A4A),
+                        color: AppColors.textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -319,7 +316,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 12),

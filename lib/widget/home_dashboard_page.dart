@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -25,11 +26,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   final YouTubeController _youtubeController = Get.find<YouTubeController>();
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color honeyzColorDark = Color(0xFFE84A75);
-  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
-  static const Color liveRed = Color(0xFFFF3B30);
 
   Worker? _groupChangeWorker;
 
@@ -76,8 +72,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
-      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
+      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Container(
         decoration: BoxDecoration(
@@ -106,7 +102,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 child: _buildSectionTitle(
                   icon: Icons.podcasts_rounded,
                   title: '지금 방송 중',
-                  color: liveRed,
+                  color: AppColors.live,
                   trailing: GestureDetector(
                     onTap: () => context.push('/livePage'),
                     child: Row(
@@ -240,7 +236,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -270,7 +266,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A3A4A),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -389,10 +385,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: liveRed.withAlpha(60), width: 1.5),
+          border: Border.all(color: AppColors.live.withAlpha(60), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: liveRed.withAlpha(25),
+              color: AppColors.live.withAlpha(25),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -408,7 +404,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: liveRed, width: 2),
+                    border: Border.all(color: AppColors.live, width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 22,
@@ -426,7 +422,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A3A4A),
+                          color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -450,7 +446,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: liveRed,
+                    color: AppColors.live,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
@@ -473,7 +469,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A3A4A),
+                  color: AppColors.textPrimary,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -527,7 +523,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   // ---------------- 다가오는 생일 ----------------
 
-  static const Color birthdayAmber = Color(0xFFFFA000);
 
   Widget _buildBirthdaySection(Color themeColor, Color themeColorDark) {
     final group = _globalController.selectedGroup.value;
@@ -544,7 +539,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         _buildSectionTitle(
           icon: Icons.cake_rounded,
           title: '다가오는 생일',
-          color: birthdayAmber,
+          color: AppColors.birthday,
         ),
         SizedBox(
           height: 92,
@@ -571,13 +566,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: entry.isToday
-              ? birthdayAmber.withAlpha(160)
+              ? AppColors.birthday.withAlpha(160)
               : themeColor.withAlpha(50),
           width: entry.isToday ? 2 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: (entry.isToday ? birthdayAmber : themeColor).withAlpha(25),
+            color: (entry.isToday ? AppColors.birthday : themeColor).withAlpha(25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -601,7 +596,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -626,7 +621,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   Widget _buildDdayChip(BirthdayEntry entry, Color themeColorDark) {
-    final bg = entry.isToday ? birthdayAmber : themeColorDark.withAlpha(30);
+    final bg = entry.isToday ? AppColors.birthday : themeColorDark.withAlpha(30);
     final fg = entry.isToday ? Colors.white : themeColorDark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

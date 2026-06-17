@@ -1,5 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -11,14 +12,12 @@ class ScheduleDetail extends StatelessWidget {
   const ScheduleDetail({super.key, required this.imageURL, required this.name});
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
 
   @override
   Widget build(BuildContext context) {
     final globalController = Get.find<GlobalController>();
     final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
+    final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -194,7 +193,7 @@ class ScheduleDetail extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
@@ -22,10 +23,6 @@ class _LivePageWidgetState extends State<LivePageWidget> {
   // 첫 진입 시 초기 폴링 진행 여부
   final RxBool _initialLoading = true.obs;
 
-  static const Color liveRed = Color(0xFFFF3B30);
-  static const Color textPrimary = Color(0xFF1A3A4A);
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
 
   @override
   void initState() {
@@ -63,9 +60,9 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              liveRed.withAlpha(20),
+              AppColors.live.withAlpha(20),
               Colors.white,
-              acaxiaColor.withAlpha(20),
+              AppColors.acaxia.withAlpha(20),
             ],
             stops: const [0.0, 0.4, 1.0],
           ),
@@ -89,14 +86,14 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                   if (_initialLoading.value && liveMembers.isEmpty) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: liveRed,
+                        color: AppColors.live,
                         strokeWidth: 3,
                       ),
                     );
                   }
 
                   return RefreshIndicator(
-                    color: liveRed,
+                    color: AppColors.live,
                     onRefresh: _onRefresh,
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -165,7 +162,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
-                color: liveRed,
+                color: AppColors.live,
                 size: 22,
               ),
             ),
@@ -180,7 +177,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
@@ -198,13 +195,13 @@ class _LivePageWidgetState extends State<LivePageWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: liveRed.withAlpha(30),
+              color: AppColors.live.withAlpha(30),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.podcasts_rounded, size: 14, color: liveRed),
+                Icon(Icons.podcasts_rounded, size: 14, color: AppColors.live),
                 SizedBox(width: 6),
                 Text(
                   'LIVE',
@@ -212,7 +209,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
-                    color: liveRed,
+                    color: AppColors.live,
                   ),
                 ),
               ],
@@ -231,7 +228,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
           Icon(
             count > 0 ? Icons.fiber_manual_record : Icons.nightlight_round,
             size: 16,
-            color: count > 0 ? liveRed : Colors.grey[400],
+            color: count > 0 ? AppColors.live : Colors.grey[400],
           ),
           const SizedBox(width: 8),
           Text(
@@ -239,7 +236,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: textPrimary,
+              color: AppColors.textPrimary,
             ),
           ),
           const Spacer(),
@@ -264,7 +261,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
           Icon(
             Icons.nightlight_round,
             size: 48,
-            color: honeyzColor.withAlpha(120),
+            color: AppColors.honeyz.withAlpha(120),
           ),
           const SizedBox(height: 14),
           Text(

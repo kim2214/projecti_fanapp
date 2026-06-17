@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
@@ -107,7 +108,7 @@ class StreamerCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A3A4A),
+                                color: AppColors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -234,7 +235,7 @@ class StreamerCard extends StatelessWidget {
           return Icon(
             isFav ? Icons.star_rounded : Icons.star_outline_rounded,
             size: 20,
-            color: isFav ? const Color(0xFFFFB300) : Colors.grey[400],
+            color: isFav ? AppColors.favorite : Colors.grey[400],
           );
         }),
       ),
@@ -243,7 +244,7 @@ class StreamerCard extends StatelessWidget {
 
   Widget _buildBirthdayBadge(int days) {
     final isToday = days == 0;
-    const amber = Color(0xFFFFA000);
+    const amber = AppColors.birthday;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

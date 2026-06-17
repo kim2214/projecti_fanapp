@@ -1,5 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -14,10 +15,6 @@ class SchedulePageWidget extends StatefulWidget {
 class _SchedulePageWidgetState extends State<SchedulePageWidget>
     with AutomaticKeepAliveClientMixin {
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color honeyzColorDark = Color(0xFFE84A75);
-  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +23,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
     return Obx(() {
       final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
-      final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
+      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
       final scheduleList = isHoneyz
           ? globalController.honeyzScheduleList
           : globalController.acaxiaScheduleList;
@@ -162,7 +159,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A3A4A),
+                        color: AppColors.textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -200,7 +197,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 12),

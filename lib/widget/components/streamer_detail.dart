@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -11,17 +12,13 @@ class StreamerDetail extends StatelessWidget {
   const StreamerDetail({super.key, required this.pjiMember});
 
   // 그룹별 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color honeyzColorDark = Color(0xFFE84A75);
-  static const Color acaxiaColorDark = Color(0xFFB8BEF0);
 
   @override
   Widget build(BuildContext context) {
     final globalController = Get.find<GlobalController>();
     final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final themeColor = isHoneyz ? honeyzColor : acaxiaColor;
-    final themeColorDark = isHoneyz ? honeyzColorDark : acaxiaColorDark;
+    final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+    final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -84,7 +81,7 @@ class StreamerDetail extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A3A4A),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -186,7 +183,7 @@ class StreamerDetail extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -252,7 +249,7 @@ class StreamerDetail extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3A4A),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -319,7 +316,7 @@ class StreamerDetail extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A3A4A),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,8 +12,6 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   // 테마 컬러
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
 
   late AnimationController _fadeController;
   late AnimationController _scaleController;
@@ -91,9 +90,9 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              honeyzColor.withAlpha(40),
+              AppColors.honeyz.withAlpha(40),
               Colors.white,
-              acaxiaColor.withAlpha(50),
+              AppColors.acaxia.withAlpha(50),
             ],
             stops: const [0.0, 0.5, 1.0],
           ),
@@ -144,12 +143,12 @@ class _SplashScreenState extends State<SplashScreen>
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: honeyzColor.withAlpha(40),
+                    color: AppColors.honeyz.withAlpha(40),
                     blurRadius: 30,
                     offset: const Offset(-10, 10),
                   ),
                   BoxShadow(
-                    color: acaxiaColor.withAlpha(60),
+                    color: AppColors.acaxia.withAlpha(60),
                     blurRadius: 30,
                     offset: const Offset(10, 10),
                   ),
@@ -172,9 +171,9 @@ class _SplashScreenState extends State<SplashScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildGroupBadge('HONEYZ', honeyzColor),
+              _buildGroupBadge('HONEYZ', AppColors.honeyz),
               const SizedBox(width: 12),
-              _buildGroupBadge('ACAXIA', acaxiaColor),
+              _buildGroupBadge('ACAXIA', AppColors.acaxia),
             ],
           ),
           const SizedBox(height: 24),
@@ -184,7 +183,7 @@ class _SplashScreenState extends State<SplashScreen>
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A3A4A),
+              color: AppColors.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
@@ -208,7 +207,7 @@ class _SplashScreenState extends State<SplashScreen>
                 Icon(
                   Icons.favorite_rounded,
                   size: 16,
-                  color: honeyzColor,
+                  color: AppColors.honeyz,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -267,7 +266,7 @@ class _SplashScreenState extends State<SplashScreen>
             width: 160,
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(honeyzColor),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.honeyz),
               minHeight: 3,
               borderRadius: BorderRadius.circular(2),
             ),

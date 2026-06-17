@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
 
 /// 통합 LIVE 화면용 세로 풀폭 카드.
@@ -16,18 +17,14 @@ class LiveMemberCard extends StatelessWidget {
   });
 
   // 그룹별 테마 컬러 (앱 전역에서 쓰는 값과 동일)
-  static const Color honeyzColor = Color(0xFFFF5E88);
-  static const Color acaxiaColor = Color(0xFFCCD1F9);
-  static const Color liveRed = Color(0xFFFF3B30);
-  static const Color textPrimary = Color(0xFF1A3A4A);
-  static const Color favoriteAmber = Color(0xFFFFB300);
 
   @override
   Widget build(BuildContext context) {
     final status = entry.status;
-    final groupColor = entry.isHoneyz ? honeyzColor : acaxiaColor;
-    final borderColor =
-        isFavorite ? favoriteAmber.withAlpha(160) : liveRed.withAlpha(60);
+    final groupColor = entry.isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+    final borderColor = isFavorite
+        ? AppColors.favorite.withAlpha(160)
+        : AppColors.live.withAlpha(60);
 
     return GestureDetector(
       onTap: onTap,
@@ -37,11 +34,11 @@ class LiveMemberCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: borderColor, width: isFavorite ? 2 : 1.5),
+          border: Border.all(color: borderColor, width: isFavorite ? 2 : 1.5),
           boxShadow: [
             BoxShadow(
-              color: (isFavorite ? favoriteAmber : liveRed).withAlpha(20),
+              color: (isFavorite ? AppColors.favorite : AppColors.live)
+                  .withAlpha(20),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -57,7 +54,7 @@ class LiveMemberCard extends StatelessWidget {
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: liveRed, width: 2),
+                    border: Border.all(color: AppColors.live, width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 26,
@@ -74,7 +71,7 @@ class LiveMemberCard extends StatelessWidget {
                         children: [
                           if (isFavorite) ...[
                             const Icon(Icons.star_rounded,
-                                size: 18, color: favoriteAmber),
+                                size: 18, color: AppColors.favorite),
                             const SizedBox(width: 4),
                           ],
                           Flexible(
@@ -83,7 +80,7 @@ class LiveMemberCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
-                                color: textPrimary,
+                                color: AppColors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -114,7 +111,7 @@ class LiveMemberCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: liveRed,
+                    color: AppColors.live,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Row(
@@ -144,7 +141,7 @@ class LiveMemberCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: textPrimary,
+                  color: AppColors.textPrimary,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -156,7 +153,8 @@ class LiveMemberCard extends StatelessWidget {
             Row(
               children: [
                 if (status.viewerCountText.isNotEmpty) ...[
-                  Icon(Icons.visibility_rounded, size: 14, color: Colors.grey[500]),
+                  Icon(Icons.visibility_rounded,
+                      size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 4),
                   Text(
                     status.viewerCountText,
@@ -169,7 +167,8 @@ class LiveMemberCard extends StatelessWidget {
                   const SizedBox(width: 14),
                 ],
                 if (status.uptime.isNotEmpty) ...[
-                  Icon(Icons.schedule_rounded, size: 14, color: Colors.grey[500]),
+                  Icon(Icons.schedule_rounded,
+                      size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 4),
                   Text(
                     status.uptime,
@@ -212,7 +211,7 @@ class LiveMemberCard extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isHoneyz ? const Color(0xFFE84A75) : const Color(0xFF8A90D8),
+          color: isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaText,
         ),
       ),
     );
