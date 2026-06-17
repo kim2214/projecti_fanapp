@@ -21,7 +21,7 @@ class StreamerDetail extends StatelessWidget {
     final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
           // 커스텀 앱바
@@ -30,11 +30,12 @@ class StreamerDetail extends StatelessWidget {
           ),
           // 프로필 섹션
           SliverToBoxAdapter(
-            child: _buildProfileSection(isHoneyz, themeColor, themeColorDark),
+            child:
+                _buildProfileSection(context, isHoneyz, themeColor, themeColorDark),
           ),
           // SNS 링크 섹션
           SliverToBoxAdapter(
-            child: _buildSocialSection(themeColor, themeColorDark),
+            child: _buildSocialSection(context, themeColor, themeColorDark),
           ),
           // 하단 여백
           const SliverToBoxAdapter(
@@ -57,7 +58,7 @@ class StreamerDetail extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.surface,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
@@ -78,10 +79,10 @@ class StreamerDetail extends StatelessWidget {
             Expanded(
               child: Text(
                 '멤버 프로필',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: context.textMain,
                 ),
               ),
             ),
@@ -107,12 +108,12 @@ class StreamerDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileSection(
-      bool isHoneyz, Color themeColor, Color themeColorDark) {
+  Widget _buildProfileSection(BuildContext context, bool isHoneyz,
+      Color themeColor, Color themeColorDark) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -180,10 +181,10 @@ class StreamerDetail extends StatelessWidget {
                 // 이름
                 Text(
                   pjiMember.name ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -192,7 +193,7 @@ class StreamerDetail extends StatelessWidget {
                   '${isHoneyz ? "허니즈" : "아카시아"} 소속',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: context.textSub,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -204,7 +205,8 @@ class StreamerDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialSection(Color themeColor, Color themeColorDark) {
+  Widget _buildSocialSection(
+      BuildContext context, Color themeColor, Color themeColorDark) {
     final socialLinks = [
       SocialLink(
         name: '치지직',
@@ -244,28 +246,30 @@ class StreamerDetail extends StatelessWidget {
                   color: themeColor,
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'SNS & 채널',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                 ),
               ],
             ),
           ),
-          ...socialLinks.map((link) => _buildSocialCard(link, themeColor)),
+          ...socialLinks
+              .map((link) => _buildSocialCard(context, link, themeColor)),
         ],
       ),
     );
   }
 
-  Widget _buildSocialCard(SocialLink link, Color themeColor) {
+  Widget _buildSocialCard(
+      BuildContext context, SocialLink link, Color themeColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -313,10 +317,10 @@ class StreamerDetail extends StatelessWidget {
                     children: [
                       Text(
                         link.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: context.textMain,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -324,7 +328,7 @@ class StreamerDetail extends StatelessWidget {
                         link.description,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[500],
+                          color: context.textFaint,
                         ),
                       ),
                     ],

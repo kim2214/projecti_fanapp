@@ -53,7 +53,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
             end: Alignment.bottomRight,
             colors: [
               AppColors.honeyz.withAlpha(30),
-              Colors.white,
+              context.bg,
               AppColors.acaxia.withAlpha(30),
             ],
             stops: const [0.0, 0.5, 1.0],
@@ -76,7 +76,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                       Text(
                         '데이터를 불러오는 중...',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: context.textSub,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -92,14 +92,14 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                       Icon(
                         Icons.error_outline_rounded,
                         size: 48,
-                        color: Colors.grey[400],
+                        color: context.textFaint,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         '오류가 발생했습니다',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey[600],
+                          color: context.textSub,
                         ),
                       ),
                     ],
@@ -161,7 +161,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
           Text(
             '그룹 선택시 스케줄 확인 및 앱 기능 사용이 가능합니다.',
             style: TextStyle(
-              color: Colors.grey[500],
+              color: context.textFaint,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -181,7 +181,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         //     fontSize: 14,
         //     fontWeight: FontWeight.w700,
         //     letterSpacing: 2,
-        //     color: AppColors.textPrimary,
+        //     color: context.textMain,
         //   ),
         // ),
         // Container(
@@ -212,7 +212,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         //           fontSize: 14,
         //           fontWeight: FontWeight.w700,
         //           letterSpacing: 2,
-        //           color: AppColors.textPrimary,
+        //           color: context.textMain,
         //         ),
         //       ),
         //     ],
@@ -220,12 +220,12 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         // ),
 
         const SizedBox(height: 16),
-        const Text(
+        Text(
           '그룹 선택',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: context.textMain,
             letterSpacing: -0.5,
           ),
         ),

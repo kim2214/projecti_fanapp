@@ -3,6 +3,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/home_dashboard_page.dart';
 import 'package:projecti_fan_app/widget/youtube_page.dart';
@@ -19,6 +20,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
   final GlobalController _globalController = Get.find<GlobalController>();
+  final ThemeController _themeController = Get.find<ThemeController>();
 
   // 그룹별 테마 컬러
 
@@ -74,7 +76,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: context.bg,
         appBar: _buildAppBar(isHoneyz, themeColor, themeColorDark),
         body: PageView(
           controller: _pageController,
@@ -89,14 +91,14 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   PreferredSizeWidget _buildAppBar(
       bool isHoneyz, Color themeColor, Color themeColorDark) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: context.bg,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
       leading: IconButton(
-        icon: const Icon(
+        icon: Icon(
           Icons.arrow_back_rounded,
-          color: AppColors.textPrimary,
+          color: context.textMain,
         ),
         onPressed: () => context.pop(),
       ),
@@ -104,8 +106,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: themeColor.withAlpha(30),
               borderRadius: BorderRadius.circular(8),
@@ -124,17 +126,24 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            isHoneyz ? '허니즈' : '아카시아',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+          Flexible(
+            child: Text(
+              isHoneyz ? '허니즈' : '아카시아',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: context.textMain,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
+      titleSpacing: 0,
       actions: [
+        // 테마 모드 토글 (system → light → dark)
+        _buildThemeToggle(),
         // 그룹 전환 버튼
         Padding(
           padding: const EdgeInsets.only(right: 12),
@@ -144,10 +153,23 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     );
   }
 
+  Widget _buildThemeToggle() {
+    return Obx(
+      () => IconButton(
+        icon: Icon(_themeController.icon, color: context.textSub),
+        tooltip: '테마 변경',
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(),
+        padding: const EdgeInsets.all(8),
+        onPressed: _themeController.cycle,
+      ),
+    );
+  }
+
   Widget _buildGroupSwitcher(bool isHoneyz, Color themeColor) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(4),
@@ -181,7 +203,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? color : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
@@ -191,7 +213,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey[600],
+            color: isSelected ? Colors.white : context.textSub,
           ),
         ),
       ),
@@ -201,7 +223,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   Widget _buildBottomNav(Color themeColor, Color themeColorDark) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surface,
         boxShadow: [
           BoxShadow(
             color: themeColor.withAlpha(20),
@@ -259,7 +281,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
             Icon(
               item.icon,
               size: 22,
-              color: isSelected ? themeColorDark : Colors.grey[400],
+              color: isSelected ? themeColorDark : context.textFaint,
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),

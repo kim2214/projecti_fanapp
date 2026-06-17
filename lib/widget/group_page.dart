@@ -98,7 +98,8 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
       final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColorDark =
+          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Container(
         decoration: BoxDecoration(
@@ -107,7 +108,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
             end: Alignment.bottomCenter,
             colors: [
               themeColor.withAlpha(30),
-              Colors.white,
+              context.bg,
               themeColor.withAlpha(15),
             ],
             stops: const [0.0, 0.4, 1.0],
@@ -137,7 +138,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
               '멤버 정보를 불러오는 중...',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: context.textFaint,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -275,10 +276,10 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                     const SizedBox(height: 8),
                     Text(
                       isHoneyz ? '허니즈' : '아카시아',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.textMain,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -292,7 +293,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -313,17 +314,17 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                 const SizedBox(width: 8),
                 Text(
                   '멤버 $memberCount명',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   width: 1,
                   height: 16,
-                  color: Colors.grey[300],
+                  color: context.divider,
                 ),
                 const SizedBox(width: 12),
                 Icon(
@@ -337,7 +338,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    color: context.textSub,
                   ),
                 ),
               ],

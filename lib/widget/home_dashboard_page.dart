@@ -82,7 +82,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             end: Alignment.bottomCenter,
             colors: [
               themeColor.withAlpha(30),
-              Colors.white,
+              context.bg,
               themeColor.withAlpha(15),
             ],
             stops: const [0.0, 0.4, 1.0],
@@ -113,13 +113,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[500],
+                            color: context.textFaint,
                           ),
                         ),
                         Icon(
                           Icons.chevron_right_rounded,
                           size: 18,
-                          color: Colors.grey[500],
+                          color: context.textFaint,
                         ),
                       ],
                     ),
@@ -153,13 +153,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[500],
+                            color: context.textFaint,
                           ),
                         ),
                         Icon(
                           Icons.chevron_right_rounded,
                           size: 18,
-                          color: Colors.grey[500],
+                          color: context.textFaint,
                         ),
                       ],
                     ),
@@ -233,10 +233,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 const SizedBox(height: 6),
                 Text(
                   isHoneyz ? '허니즈' : '아카시아',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -263,10 +263,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: context.textMain,
               ),
             ),
           ),
@@ -292,7 +292,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         height: 120,
         margin: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
@@ -315,7 +315,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         margin: const EdgeInsets.symmetric(horizontal: 20),
         padding: const EdgeInsets.symmetric(vertical: 28),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -338,7 +338,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[500],
+                color: context.textFaint,
               ),
             ),
           ],
@@ -383,7 +383,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         margin: const EdgeInsets.only(right: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.live.withAlpha(60), width: 1.5),
           boxShadow: [
@@ -419,10 +419,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                     children: [
                       Text(
                         memberName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: context.textMain,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -433,7 +433,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey[500],
+                            color: context.textFaint,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -466,10 +466,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             Expanded(
               child: Text(
                 status.liveTitle ?? '',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: context.textMain,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -482,28 +482,28 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               children: [
                 if (status.viewerCountText.isNotEmpty) ...[
                   Icon(Icons.visibility_rounded,
-                      size: 14, color: Colors.grey[500]),
+                      size: 14, color: context.textFaint),
                   const SizedBox(width: 4),
                   Text(
                     status.viewerCountText,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
+                      color: context.textSub,
                     ),
                   ),
                   const SizedBox(width: 12),
                 ],
                 if (status.uptime.isNotEmpty) ...[
                   Icon(Icons.schedule_rounded,
-                      size: 14, color: Colors.grey[500]),
+                      size: 14, color: context.textFaint),
                   const SizedBox(width: 4),
                   Text(
                     status.uptime,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      color: context.textSub,
                     ),
                   ),
                 ],
@@ -511,7 +511,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 12,
-                  color: Colors.grey[400],
+                  color: context.textFaint,
                 ),
               ],
             ),
@@ -562,7 +562,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: entry.isToday
@@ -593,10 +593,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               children: [
                 Text(
                   entry.memberName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -607,7 +607,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    color: context.textSub,
                   ),
                 ),
               ],
@@ -743,7 +743,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               '최신 영상을 불러올 수 없습니다',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey[500],
+                color: context.textFaint,
               ),
             ),
           ),

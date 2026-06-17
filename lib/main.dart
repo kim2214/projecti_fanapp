@@ -1,7 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
+import 'package:projecti_fan_app/theme/app_theme.dart';
 import 'package:projecti_fan_app/widget/audio_manager.dart';
 import 'package:projecti_fan_app/widget/splash_screen.dart';
 
@@ -10,6 +13,11 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   await AudioManager.initialize();
+
+  // 테마 모드를 첫 빌드 전에 선로딩 (플래시 방지)
+  final themeController = ThemeController();
+  await themeController.load();
+  Get.put(themeController, permanent: true);
 
   runApp(const MyApp());
 }
@@ -20,12 +28,14 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    final themeController = Get.find<ThemeController>();
+    return Obx(
+      () => MaterialApp.router(
+        routerConfig: router,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeController.themeMode.value,
       ),
     );
   }

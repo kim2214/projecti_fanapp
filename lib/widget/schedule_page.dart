@@ -38,7 +38,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
             end: Alignment.bottomCenter,
             colors: [
               themeColor.withAlpha(30),
-              Colors.white,
+              context.bg,
               themeColor.withAlpha(15),
             ],
             stops: const [0.0, 0.4, 1.0],
@@ -156,10 +156,10 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                     const SizedBox(height: 8),
                     Text(
                       isHoneyz ? '허니즈' : '아카시아',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.textMain,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -173,7 +173,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -194,17 +194,17 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 const SizedBox(width: 8),
                 Text(
                   '멤버 $memberCount명',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   width: 1,
                   height: 16,
-                  color: Colors.grey[300],
+                  color: context.divider,
                 ),
                 const SizedBox(width: 12),
                 Icon(
@@ -218,7 +218,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    color: context.textSub,
                   ),
                 ),
               ],
@@ -263,7 +263,7 @@ class ScheduleCard extends StatelessWidget {
           : null,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -400,7 +400,7 @@ class ScheduleCard extends StatelessWidget {
                                       '이미지를 불러올 수 없습니다',
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: Colors.grey[500],
+                                        color: context.textFaint,
                                       ),
                                     ),
                                   ],
@@ -435,7 +435,7 @@ class ScheduleCard extends StatelessWidget {
                           '금주 $memberName님은 방송이 없습니다',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[500],
+                            color: context.textFaint,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

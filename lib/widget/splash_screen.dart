@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
             end: Alignment.bottomRight,
             colors: [
               AppColors.honeyz.withAlpha(40),
-              Colors.white,
+              context.bg,
               AppColors.acaxia.withAlpha(50),
             ],
             stops: const [0.0, 0.5, 1.0],
@@ -178,12 +178,12 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           const SizedBox(height: 24),
           // 앱 타이틀
-          const Text(
+          Text(
             '프로젝트아이',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: context.textMain,
               letterSpacing: -0.5,
             ),
           ),
@@ -191,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surface,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -215,7 +215,7 @@ class _SplashScreenState extends State<SplashScreen>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: context.textSub,
                   ),
                 ),
               ],
@@ -276,7 +276,7 @@ class _SplashScreenState extends State<SplashScreen>
             '로딩 중...',
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[500],
+              color: context.textFaint,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -296,7 +296,7 @@ class _SplashScreenState extends State<SplashScreen>
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 2,
-              color: Colors.grey[400],
+              color: context.textFaint,
             ),
           ),
           const SizedBox(height: 8),
@@ -304,7 +304,7 @@ class _SplashScreenState extends State<SplashScreen>
             'Copyright © 2025 kimdev0821',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[400],
+              color: context.textFaint,
             ),
           ),
         ],

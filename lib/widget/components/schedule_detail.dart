@@ -20,7 +20,7 @@ class ScheduleDetail extends StatelessWidget {
     final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -31,7 +31,7 @@ class ScheduleDetail extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.surface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -71,7 +71,7 @@ class ScheduleDetail extends StatelessWidget {
                                   '스케줄을 불러오는 중...',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[500],
+                                    color: context.textFaint,
                                   ),
                                 ),
                               ],
@@ -85,14 +85,14 @@ class ScheduleDetail extends StatelessWidget {
                                 Icon(
                                   Icons.image_not_supported_rounded,
                                   size: 48,
-                                  color: Colors.grey[400],
+                                  color: context.textFaint,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   '이미지를 불러올 수 없습니다',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey[500],
+                                    color: context.textFaint,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -133,14 +133,14 @@ class ScheduleDetail extends StatelessWidget {
                   Icon(
                     Icons.pinch_rounded,
                     size: 18,
-                    color: Colors.grey[400],
+                    color: context.textFaint,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '핀치하여 확대/축소',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[400],
+                      color: context.textFaint,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -165,7 +165,7 @@ class ScheduleDetail extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surface,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
@@ -190,17 +190,17 @@ class ScheduleDetail extends StatelessWidget {
               children: [
                 Text(
                   name ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                 ),
                 Text(
                   '주간 스케줄',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: context.textFaint,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

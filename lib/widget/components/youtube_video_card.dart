@@ -2,6 +2,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/audio_common.dart';
 
 class YouTubeVideoCard extends StatelessWidget {
@@ -32,7 +33,7 @@ class YouTubeVideoCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AudioTheme.surface.withAlpha(220),
+            color: context.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: AudioTheme.primary.withAlpha(30),
@@ -49,10 +50,10 @@ class YouTubeVideoCard extends StatelessWidget {
           child: Row(
             children: [
               // 썸네일 (16:9 비율)
-              _buildThumbnail(),
+              _buildThumbnail(context),
               const SizedBox(width: 14),
               // 비디오 정보
-              Expanded(child: _buildVideoInfo()),
+              Expanded(child: _buildVideoInfo(context)),
               // YouTube 재생 버튼
               _buildPlayButton(),
             ],
@@ -62,7 +63,7 @@ class YouTubeVideoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail() {
+  Widget _buildThumbnail(BuildContext context) {
     return Container(
       width: 120,
       height: 68, // 16:9 비율 (120 / 16 * 9 = 67.5)
@@ -89,7 +90,7 @@ class YouTubeVideoCard extends StatelessWidget {
                 switch (state.extendedImageLoadState) {
                   case LoadState.loading:
                     return Container(
-                      color: AudioTheme.surfaceTint,
+                      color: context.surfaceAlt,
                       child: const Center(
                         child: SizedBox(
                           width: 20,
@@ -103,7 +104,7 @@ class YouTubeVideoCard extends StatelessWidget {
                     );
                   case LoadState.failed:
                     return Container(
-                      color: AudioTheme.surfaceTint,
+                      color: context.surfaceAlt,
                       child: const Icon(
                         Icons.play_circle_outline_rounded,
                         color: youtubeRed,
@@ -144,7 +145,7 @@ class YouTubeVideoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildVideoInfo() {
+  Widget _buildVideoInfo(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -152,10 +153,10 @@ class YouTubeVideoCard extends StatelessWidget {
         // 제목
         Text(
           video.title ?? 'Unknown Title',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AudioTheme.textPrimary,
+            color: context.textMain,
             letterSpacing: -0.3,
             height: 1.3,
           ),
@@ -190,9 +191,9 @@ class YouTubeVideoCard extends StatelessWidget {
             Expanded(
               child: Text(
                 video.channelTitle ?? '',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AudioTheme.textSecondary,
+                  color: context.textSub,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,

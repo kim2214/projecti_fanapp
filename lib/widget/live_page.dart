@@ -53,7 +53,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.bg,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -61,7 +61,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             end: Alignment.bottomCenter,
             colors: [
               AppColors.live.withAlpha(20),
-              Colors.white,
+              context.bg,
               AppColors.acaxia.withAlpha(20),
             ],
             stops: const [0.0, 0.4, 1.0],
@@ -150,7 +150,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surface,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
@@ -168,7 +168,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -177,14 +177,14 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.textMain,
                   ),
                 ),
                 Text(
                   '지금 방송 중인 모든 멤버',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: context.textSub,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -228,15 +228,15 @@ class _LivePageWidgetState extends State<LivePageWidget> {
           Icon(
             count > 0 ? Icons.fiber_manual_record : Icons.nightlight_round,
             size: 16,
-            color: count > 0 ? AppColors.live : Colors.grey[400],
+            color: count > 0 ? AppColors.live : context.textFaint,
           ),
           const SizedBox(width: 8),
           Text(
             count > 0 ? '지금 $count명 방송 중' : '방송 중인 멤버 없음',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: context.textMain,
             ),
           ),
           const Spacer(),
@@ -244,7 +244,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             '당겨서 새로고침',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[400],
+              color: context.textFaint,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -269,7 +269,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[500],
+              color: context.textFaint,
             ),
           ),
           const SizedBox(height: 6),
@@ -277,7 +277,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             '방송이 시작되면 여기에 표시됩니다',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[400],
+              color: context.textFaint,
             ),
           ),
         ],

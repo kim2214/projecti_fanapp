@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
@@ -58,17 +59,20 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     super.build(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AudioTheme.backgroundLight,
-            AudioTheme.backgroundMid,
-            AudioTheme.background,
-          ],
-          stops: [0.0, 0.5, 1.0],
-        ),
+      decoration: BoxDecoration(
+        color: context.isDark ? context.bg : null,
+        gradient: context.isDark
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AudioTheme.backgroundLight,
+                  AudioTheme.backgroundMid,
+                  AudioTheme.background,
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
       ),
       child: Obx(() => _buildContent()),
     );
@@ -225,19 +229,19 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
               children: [
                 Text(
                   memberName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AudioTheme.textPrimary,
+                    color: context.textMain,
                     letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${isHoneyz ? "허니즈" : "아카시아"} YouTube',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AudioTheme.textSecondary,
+                    color: context.textSub,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -277,7 +281,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? youtubeRed : AudioTheme.surface,
+                  color: isSelected ? youtubeRed : context.surface,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
                     color: isSelected ? youtubeRed : youtubeRed.withAlpha(50),
@@ -305,7 +309,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                       member.name,
                       style: TextStyle(
                         color:
-                            isSelected ? Colors.white : AudioTheme.textPrimary,
+                            isSelected ? Colors.white : context.textMain,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -326,7 +330,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AudioTheme.surfaceTint,
+          color: context.surfaceAlt,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -340,10 +344,10 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
             const SizedBox(width: 6),
             Text(
               '${youtubeController.videoList.length}개 영상',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AudioTheme.textPrimary,
+                color: context.textMain,
               ),
             ),
           ],
@@ -368,31 +372,31 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AudioTheme.surfaceTint,
+                      color: context.surfaceAlt,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.error_outline_rounded,
                       size: 50,
-                      color: AudioTheme.textSecondary.withAlpha(100),
+                      color: context.textSub.withAlpha(100),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     '오류가 발생했습니다',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AudioTheme.textPrimary,
+                      color: context.textMain,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     youtubeController.errorMessage.value,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AudioTheme.textSecondary,
+                      color: context.textSub,
                     ),
                   ),
                   const SizedBox(height: 24),

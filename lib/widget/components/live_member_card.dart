@@ -32,7 +32,7 @@ class LiveMemberCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: borderColor, width: isFavorite ? 2 : 1.5),
           boxShadow: [
@@ -77,10 +77,10 @@ class LiveMemberCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               entry.memberName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: context.textMain,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -97,7 +97,7 @@ class LiveMemberCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey[500],
+                            color: context.textFaint,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -138,10 +138,10 @@ class LiveMemberCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 status.liveTitle!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: context.textMain,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -154,28 +154,28 @@ class LiveMemberCard extends StatelessWidget {
               children: [
                 if (status.viewerCountText.isNotEmpty) ...[
                   Icon(Icons.visibility_rounded,
-                      size: 14, color: Colors.grey[500]),
+                      size: 14, color: context.textFaint),
                   const SizedBox(width: 4),
                   Text(
                     status.viewerCountText,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
+                      color: context.textSub,
                     ),
                   ),
                   const SizedBox(width: 14),
                 ],
                 if (status.uptime.isNotEmpty) ...[
                   Icon(Icons.schedule_rounded,
-                      size: 14, color: Colors.grey[500]),
+                      size: 14, color: context.textFaint),
                   const SizedBox(width: 4),
                   Text(
                     status.uptime,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      color: context.textSub,
                     ),
                   ),
                 ],
@@ -185,12 +185,12 @@ class LiveMemberCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[500],
+                    color: context.textFaint,
                   ),
                 ),
                 const SizedBox(width: 2),
                 Icon(Icons.arrow_forward_ios_rounded,
-                    size: 11, color: Colors.grey[400]),
+                    size: 11, color: context.textFaint),
               ],
             ),
           ],

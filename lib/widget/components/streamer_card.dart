@@ -40,7 +40,7 @@ class StreamerCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -91,7 +91,7 @@ class StreamerCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.surface,
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -105,10 +105,10 @@ class StreamerCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               memberName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: context.textMain,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
