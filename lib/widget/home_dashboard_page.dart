@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
@@ -48,10 +49,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   Future<void> _loadData() async {
-    // 라이브 상태 (캐시 있으면 그대로) + 그룹 최신 영상
+    // 라이브 상태 (캐시 있으면 그대로) + 그룹 최신 영상 + 멤버(생일) 데이터
     await Future.wait([
       _globalController.liveCheck(),
       _youtubeController.loadGroupLatestVideos(),
+      _globalController.loadStreamerFireStore(),
     ]);
   }
 
@@ -59,6 +61,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     await Future.wait([
       _globalController.refreshLiveStatus(),
       _youtubeController.loadGroupLatestVideos(forceRefresh: true),
+      _globalController.loadStreamerFireStore(forceRefresh: true),
     ]);
   }
 
@@ -129,6 +132,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               ),
               SliverToBoxAdapter(
                 child: _buildLiveSection(isHoneyz, themeColor, themeColorDark),
+              ),
+              // 다가오는 생일 (데이터 없으면 통째로 생략)
+              SliverToBoxAdapter(
+                child: _buildBirthdaySection(themeColor, themeColorDark),
               ),
               // 주간 스케줄 바로가기
               SliverToBoxAdapter(
@@ -513,6 +520,126 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------- 다가오는 생일 ----------------
+
+  static const Color birthdayAmber = Color(0xFFFFA000);
+
+  Widget _buildBirthdaySection(Color themeColor, Color themeColorDark) {
+    final group = _globalController.selectedGroup.value;
+    final birthdays = _globalController.upcomingBirthdays(group);
+
+    // 생일 데이터가 없으면 섹션 통째로 생략
+    if (birthdays.isEmpty) return const SizedBox.shrink();
+
+    final items = birthdays.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionTitle(
+          icon: Icons.cake_rounded,
+          title: '다가오는 생일',
+          color: birthdayAmber,
+        ),
+        SizedBox(
+          height: 92,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: items.length,
+            itemBuilder: (context, i) =>
+                _buildBirthdayCard(items[i], themeColor, themeColorDark),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBirthdayCard(
+      BirthdayEntry entry, Color themeColor, Color themeColorDark) {
+    return Container(
+      width: 230,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: entry.isToday
+              ? birthdayAmber.withAlpha(160)
+              : themeColor.withAlpha(50),
+          width: entry.isToday ? 2 : 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (entry.isToday ? birthdayAmber : themeColor).withAlpha(25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: themeColor.withAlpha(30),
+            backgroundImage: AssetImage(entry.assetPath),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  entry.memberName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A3A4A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  entry.dateLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildDdayChip(entry, themeColorDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDdayChip(BirthdayEntry entry, Color themeColorDark) {
+    final bg = entry.isToday ? birthdayAmber : themeColorDark.withAlpha(30);
+    final fg = entry.isToday ? Colors.white : themeColorDark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        entry.isToday ? '오늘 🎂' : 'D-${entry.daysUntil}',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: fg,
         ),
       ),
     );

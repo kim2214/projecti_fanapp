@@ -30,6 +30,8 @@ class StreamerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLive = status.status == 'OPEN';
+    final birthdayDays = streamer.daysUntilBirthday;
+    final showBirthday = birthdayDays != null && birthdayDays <= 7;
 
     return GestureDetector(
       onTap: () {
@@ -193,6 +195,13 @@ class StreamerCard extends StatelessWidget {
               right: 8,
               child: _buildFavoriteButton(),
             ),
+            // 생일 임박 배지 (7일 이내)
+            if (showBirthday)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: _buildBirthdayBadge(birthdayDays),
+              ),
           ],
         ),
       ),
@@ -228,6 +237,40 @@ class StreamerCard extends StatelessWidget {
             color: isFav ? const Color(0xFFFFB300) : Colors.grey[400],
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildBirthdayBadge(int days) {
+    final isToday = days == 0;
+    const amber = Color(0xFFFFA000);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: amber,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cake_rounded, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            isToday ? '오늘' : 'D-$days',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

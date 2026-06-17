@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/model/member.dart';
@@ -309,6 +310,31 @@ class GlobalController extends GetxController {
     entries.sort((a, b) => (b.status.concurrentUserCount ?? 0)
         .compareTo(a.status.concurrentUserCount ?? 0));
 
+    return entries;
+  }
+
+  /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
+  /// Member(이름/에셋)와 StreamerModel(생일)을 인덱스로 매칭한다.
+  List<BirthdayEntry> upcomingBirthdays(String group) {
+    final members = membersOf(group);
+    final streamers = group == 'honeyz' ? honeyz : acaxia;
+    final count =
+        members.length < streamers.length ? members.length : streamers.length;
+
+    final entries = <BirthdayEntry>[];
+    for (int i = 0; i < count; i++) {
+      final days = streamers[i].daysUntilBirthday;
+      final label = streamers[i].birthdayLabel;
+      if (days == null || label == null) continue;
+      entries.add(BirthdayEntry(
+        memberName: members[i].name,
+        assetPath: members[i].profileAssetPath,
+        daysUntil: days,
+        dateLabel: label,
+      ));
+    }
+
+    entries.sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
     return entries;
   }
 }
