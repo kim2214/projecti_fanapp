@@ -31,9 +31,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
       final scheduleList = isHoneyz
           ? globalController.honeyzScheduleList
           : globalController.acaxiaScheduleList;
-      final nameList = isHoneyz
-          ? globalController.honeyzNameList
-          : globalController.acaxiaNameList;
+      final members =
+          globalController.membersOf(globalController.selectedGroup.value);
 
       return Container(
         decoration: BoxDecoration(
@@ -69,7 +68,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                         padding: const EdgeInsets.only(bottom: 16),
                         child: ScheduleCard(
                           imageURL: scheduleList[index].scheduleURL ?? '',
-                          memberName: nameList[index],
+                          memberName: index < members.length
+                              ? members[index].name
+                              : '',
                           index: index,
                           themeColor: themeColor,
                           themeColorDark: themeColorDark,
@@ -91,12 +92,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
   /// 당겨서 새로고침 - 스케줄을 다시 불러옴
   Future<void> _onRefresh(
       GlobalController globalController, bool isHoneyz) async {
-    await globalController.loadScheduleFireStore(
-      sequence: isHoneyz
-          ? globalController.honeyzSequence
-          : globalController.acaxiaSequence,
-      forceRefresh: true,
-    );
+    await globalController.loadScheduleFireStore(forceRefresh: true);
   }
 
   Widget _buildHeader(

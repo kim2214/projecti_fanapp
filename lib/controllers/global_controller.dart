@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 
@@ -53,76 +54,90 @@ class GlobalController extends GetxController {
   RxList<LiveCheckModel> honeyzliveCheckList = <LiveCheckModel>[].obs;
   RxList<LiveCheckModel> acaxialiveCheckList = <LiveCheckModel>[].obs;
 
-  List<String> honeyzSequence = [
-    "honeychurros",
-    "ayauke",
-    "damyui",
-    "ddddragon",
-    "ohwayo",
-    "mangnae",
+  // 멤버 정적 카탈로그 — 멤버 1명의 모든 메타데이터를 Member 객체 하나로 묶는다.
+  // (기존 *Sequence/*NameList/*AssetName/*BrodcastIDList 병렬 리스트를 대체)
+  static const List<Member> honeyzMembers = [
+    Member(
+        key: 'honeychurros',
+        name: '허니츄러스',
+        group: 'honeyz',
+        chzzkBroadcastId: 'c0d9723cbb75dc223c6aa8a9d4f56002',
+        youtubeChannelId: 'UCkQFRBUPh5mcF1kca4f_DvQ'),
+    Member(
+        key: 'ayauke',
+        name: '아야',
+        group: 'honeyz',
+        chzzkBroadcastId: 'abe8aa82baf3d3ef54ad8468ee73e7fc',
+        youtubeChannelId: 'UCZcjMonq-hln97npqkYdHjQ'),
+    Member(
+        key: 'damyui',
+        name: '담유이',
+        group: 'honeyz',
+        chzzkBroadcastId: 'b82e8bc2505e37156b2d1140ba1fc05c',
+        youtubeChannelId: 'UC_XRkKvydFB_wX1dlr7OHrg'),
+    Member(
+        key: 'ddddragon',
+        name: '디디디용',
+        group: 'honeyz',
+        chzzkBroadcastId: '798e100206987b59805cfb75f927e965',
+        youtubeChannelId: 'UCmNurVU0rTyYqU4W4N0Mbgg'),
+    Member(
+        key: 'ohwayo',
+        name: '오화요',
+        group: 'honeyz',
+        chzzkBroadcastId: '65a53076fe1a39636082dd6dba8b8a4b',
+        youtubeChannelId: 'UC1RdgfinRXTboGZLZ4xG5Aw'),
+    Member(
+        key: 'mangnae',
+        name: '망내',
+        group: 'honeyz',
+        chzzkBroadcastId: 'bd07973b6021d72512240c01a386d5c9',
+        youtubeChannelId: 'UCicn6yqObjHrCKWkKL70ALg'),
   ];
 
-  List<String> acaxiaSequence = [
-    "popopopo",
-    "violetaMone",
-    "blaireRose",
-    "hasiyo",
-    "ryushiho",
+  static const List<Member> acaxiaMembers = [
+    Member(
+        key: 'popopopo',
+        name: '포포포포',
+        group: 'acaxia',
+        chzzkBroadcastId: '3e3781d3bd20dadc2f6f6d5d30091195',
+        youtubeChannelId: 'UCXE5gQZ5WIbtT6FJtG2g5ag'),
+    Member(
+        key: 'violetaMone',
+        name: '비올레타 모네',
+        group: 'acaxia',
+        chzzkBroadcastId: '5c897b3e639045ca6e314bbaff991f73',
+        youtubeChannelId: 'UC0dF0Yr7PVddxuIHp_xsFZg'),
+    Member(
+        key: 'blaireRose',
+        name: '블레어 로즈',
+        group: 'acaxia',
+        chzzkBroadcastId: 'dae2de8eaa005a59163f2e4c045e1aa1',
+        youtubeChannelId: 'UC4RqkMZg4xRy0gWizubvPLw'),
+    Member(
+        key: 'hasiyo',
+        name: '하시요',
+        group: 'acaxia',
+        chzzkBroadcastId: 'b33c957eac9335d38e4043c3dca97675',
+        youtubeChannelId: 'UCkmb3uZxHAx10m7QR8XJSpQ'),
+    Member(
+        key: 'ryushiho',
+        name: '류시호',
+        group: 'acaxia',
+        chzzkBroadcastId: 'f36320c432d9f06095ce2cfbbf681c26',
+        youtubeChannelId: 'UC-9fPSlVjMqG3zwbRT2XhXA'),
   ];
 
-  List<String> honeyzNameList = [
-    "허니츄러스",
-    "아야",
-    "담유이",
-    "디디디용",
-    "오화요",
-    "망내",
-  ];
+  /// 그룹별 멤버 목록
+  List<Member> membersOf(String group) =>
+      group == 'honeyz' ? honeyzMembers : acaxiaMembers;
 
-  List<String> acaxiaNameList = [
-    "포포포포",
-    "비올레타 모네",
-    "블레어 로즈",
-    "하시요",
-    "류시호",
-  ];
-
-  List<String> honeyzAssetName = [
-    "honeychurros",
-    "ayauke",
-    "damyui",
-    "ddddragon",
-    "ohwayo",
-    "mangnae"
-  ];
-
-  List<String> acaxiaAssetName = [
-    "popopopo",
-    "violetaMone",
-    "blaireRose",
-    "hasiyo",
-    "ryushiho",
-  ];
-
-  List<String> honeyzBrodcastIDList = [
-    "c0d9723cbb75dc223c6aa8a9d4f56002",
-    "abe8aa82baf3d3ef54ad8468ee73e7fc",
-    "b82e8bc2505e37156b2d1140ba1fc05c",
-    "798e100206987b59805cfb75f927e965",
-    "65a53076fe1a39636082dd6dba8b8a4b",
-    "bd07973b6021d72512240c01a386d5c9",
-  ];
-
-  List<String> acaxiaBrodcastIDList = [
-    "3e3781d3bd20dadc2f6f6d5d30091195",
-    "5c897b3e639045ca6e314bbaff991f73",
-    "dae2de8eaa005a59163f2e4c045e1aa1",
-    "b33c957eac9335d38e4043c3dca97675",
-    "f36320c432d9f06095ce2cfbbf681c26",
-  ];
+  /// 두 그룹 합본 (통합 LIVE 등)
+  List<Member> get allMembers => [...honeyzMembers, ...acaxiaMembers];
 
   Future<List<ScheduleModel>> loadScheduleFireStore(
-      {required List<String> sequence, bool forceRefresh = false}) async {
+      {bool forceRefresh = false}) async {
+    final sequence = membersOf(selectedGroup.value).map((m) => m.key).toList();
     if (selectedGroup.value == 'honeyz') {
       if (forceRefresh || honeyzScheduleList.isEmpty) {
         QuerySnapshot<Map<String, dynamic>> snapshot =
@@ -168,9 +183,9 @@ class GlobalController extends GetxController {
             await _fireStore.collection("honeyz").get();
 
         final List<StreamerModel> loaded = [];
-        for (int i = 0; i < honeyzSequence.length; i++) {
+        for (final member in honeyzMembers) {
           for (var snapshot in snapshot.docs) {
-            if (honeyzSequence[i] == snapshot.id) {
+            if (member.key == snapshot.id) {
               loaded.add(StreamerModel.fromJson(snapshot.data()));
             }
           }
@@ -184,9 +199,9 @@ class GlobalController extends GetxController {
             await _fireStore.collection("acaxia").get();
 
         final List<StreamerModel> loaded = [];
-        for (int i = 0; i < acaxiaSequence.length; i++) {
+        for (final member in acaxiaMembers) {
           for (var snapshot in snapshot.docs) {
-            if (acaxiaSequence[i] == snapshot.id) {
+            if (member.key == snapshot.id) {
               loaded.add(StreamerModel.fromJson(snapshot.data()));
             }
           }
@@ -248,13 +263,11 @@ class GlobalController extends GetxController {
   Future<void> _refreshGroupLiveStatus(String group) async {
     if (group != 'honeyz' && group != 'acaxia') return;
 
-    final broadcastIDList =
-        group == 'honeyz' ? honeyzBrodcastIDList : acaxiaBrodcastIDList;
     final liveCheckList =
         group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
 
     final results = await Future.wait(
-      broadcastIDList.map((id) => _fetchLiveStatus(id)),
+      membersOf(group).map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
     // 멤버 순서와 인덱스가 어긋나지 않도록 실패한 항목은 기본값으로 채움
@@ -269,34 +282,28 @@ class GlobalController extends GetxController {
   List<LiveMemberEntry> get liveMembersAcrossGroups {
     final entries = <LiveMemberEntry>[];
 
-    void collect(
-      String group,
-      List<LiveCheckModel> statuses,
-      List<String> names,
-      List<String> assets,
-      List<String> ids,
-    ) {
-      // 리스트 길이가 어긋날 수 있으므로 최소 길이까지만 안전하게 순회
-      final count = [statuses.length, names.length, assets.length, ids.length]
-          .reduce((a, b) => a < b ? a : b);
+    void collect(List<Member> members, List<LiveCheckModel> statuses) {
+      // 폴링 전이면 statuses가 비어 있을 수 있으므로 최소 길이까지만 안전하게 순회
+      final count = members.length < statuses.length
+          ? members.length
+          : statuses.length;
       for (int i = 0; i < count; i++) {
         if (statuses[i].isLive) {
+          final member = members[i];
           entries.add(LiveMemberEntry(
-            group: group,
-            memberKey: assets[i],
-            memberName: names[i],
-            assetPath: 'assets/$group/${assets[i]}_profile.png',
-            broadcastId: ids[i],
+            group: member.group,
+            memberKey: member.key,
+            memberName: member.name,
+            assetPath: member.profileAssetPath,
+            broadcastId: member.chzzkBroadcastId,
             status: statuses[i],
           ));
         }
       }
     }
 
-    collect('honeyz', honeyzliveCheckList, honeyzNameList, honeyzAssetName,
-        honeyzBrodcastIDList);
-    collect('acaxia', acaxialiveCheckList, acaxiaNameList, acaxiaAssetName,
-        acaxiaBrodcastIDList);
+    collect(honeyzMembers, honeyzliveCheckList);
+    collect(acaxiaMembers, acaxialiveCheckList);
 
     // 시청자 수 내림차순 (null은 0으로 취급해 뒤로)
     entries.sort((a, b) => (b.status.concurrentUserCount ?? 0)

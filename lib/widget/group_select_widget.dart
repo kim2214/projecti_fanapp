@@ -26,9 +26,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
     if (group == 'honeyz') {
       setState(() => _isLoadingHoneyz = true);
       globalController.selectedGroup.value = 'honeyz';
-      final schedule = await globalController.loadScheduleFireStore(
-        sequence: globalController.honeyzSequence,
-      );
+      final schedule = await globalController.loadScheduleFireStore();
       if (!mounted) return;
       if (schedule.isNotEmpty) {
         context.push('/baseScreen');
@@ -37,9 +35,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
     } else {
       setState(() => _isLoadingAcaxia = true);
       globalController.selectedGroup.value = 'acaxia';
-      final schedule = await globalController.loadScheduleFireStore(
-        sequence: globalController.acaxiaSequence,
-      );
+      final schedule = await globalController.loadScheduleFireStore();
       if (!mounted) return;
       if (schedule.isNotEmpty) {
         context.push('/baseScreen');

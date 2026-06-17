@@ -179,12 +179,11 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
 
   Widget _buildHeader() {
     final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final memberKeys = youtubeController.currentMemberKeys;
-    final memberNames = youtubeController.currentMemberNames;
+    final members = youtubeController.currentMembers;
     final selectedKey = youtubeController.effectiveSelectedMemberKey;
-    final selectedIndex = memberKeys.indexOf(selectedKey);
+    final selectedIndex = members.indexWhere((m) => m.key == selectedKey);
     final memberName =
-        selectedIndex >= 0 ? memberNames[selectedIndex] : 'YouTube';
+        selectedIndex >= 0 ? members[selectedIndex].name : 'YouTube';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
@@ -251,27 +250,24 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   }
 
   Widget _buildMemberSelector() {
-    final memberKeys = youtubeController.currentMemberKeys;
-    final memberNames = youtubeController.currentMemberNames;
-    final assetNames = youtubeController.currentAssetNames;
+    final members = youtubeController.currentMembers;
     final selectedKey = youtubeController.effectiveSelectedMemberKey;
-    final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final groupFolder = isHoneyz ? 'honeyz' : 'acaxia';
 
     return SizedBox(
       height: 56,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: memberKeys.length,
+        itemCount: members.length,
         itemBuilder: (context, index) {
-          final isSelected = memberKeys[index] == selectedKey;
+          final member = members[index];
+          final isSelected = member.key == selectedKey;
 
           return Padding(
             padding: const EdgeInsets.only(right: 10),
             child: GestureDetector(
               onTap: () {
-                youtubeController.selectMember(memberKeys[index]);
+                youtubeController.selectMember(member.key);
                 if (_scrollController.hasClients) {
                   _scrollController.jumpTo(0);
                 }
@@ -302,13 +298,11 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                   children: [
                     CircleAvatar(
                       radius: 14,
-                      backgroundImage: AssetImage(
-                        'assets/$groupFolder/${assetNames[index]}_profile.png',
-                      ),
+                      backgroundImage: AssetImage(member.profileAssetPath),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      memberNames[index],
+                      member.name,
                       style: TextStyle(
                         color:
                             isSelected ? Colors.white : AudioTheme.textPrimary,

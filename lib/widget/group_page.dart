@@ -158,12 +158,8 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     final liveStatusList = isHoneyz
         ? _globalController.honeyzliveCheckList
         : _globalController.acaxialiveCheckList;
-    final assetNames = isHoneyz
-        ? _globalController.honeyzAssetName
-        : _globalController.acaxiaAssetName;
-    final nameList = isHoneyz
-        ? _globalController.honeyzNameList
-        : _globalController.acaxiaNameList;
+    final catalog =
+        _globalController.membersOf(_globalController.selectedGroup.value);
 
     // 라이브 체크 데이터가 없을 경우를 위한 기본값
     final defaultLiveStatus = LiveCheckModel(status: 'CLOSE', liveTitle: null);
@@ -192,7 +188,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   // 인덱스 범위 체크
-                  if (index >= members.length) {
+                  if (index >= members.length || index >= catalog.length) {
                     return const SizedBox.shrink();
                   }
                   // 라이브 상태 데이터가 없으면 기본값 사용
@@ -203,8 +199,8 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                     index: index,
                     streamer: members[index],
                     status: status,
-                    assetName: assetNames[index],
-                    memberName: nameList[index],
+                    assetName: catalog[index].assetName,
+                    memberName: catalog[index].name,
                     themeColor: themeColor,
                     themeColorDark: themeColorDark,
                     isHoneyz: isHoneyz,

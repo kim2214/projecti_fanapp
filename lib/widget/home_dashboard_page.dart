@@ -280,16 +280,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     final liveStatusList = isHoneyz
         ? _globalController.honeyzliveCheckList
         : _globalController.acaxialiveCheckList;
-    final nameList = isHoneyz
-        ? _globalController.honeyzNameList
-        : _globalController.acaxiaNameList;
-    final assetNames = isHoneyz
-        ? _globalController.honeyzAssetName
-        : _globalController.acaxiaAssetName;
-    final broadcastIds = isHoneyz
-        ? _globalController.honeyzBrodcastIDList
-        : _globalController.acaxiaBrodcastIDList;
-    final assetFolder = isHoneyz ? 'honeyz' : 'acaxia';
+    final members =
+        _globalController.membersOf(_globalController.selectedGroup.value);
 
     // 아직 라이브 상태를 불러오는 중
     if (liveStatusList.isEmpty) {
@@ -311,7 +303,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
     // 방송 중인 멤버 인덱스
     final liveIndexes = [
-      for (int i = 0; i < liveStatusList.length; i++)
+      for (int i = 0; i < liveStatusList.length && i < members.length; i++)
         if (liveStatusList[i].isLive) i
     ];
 
@@ -359,11 +351,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         itemCount: liveIndexes.length,
         itemBuilder: (context, i) {
           final index = liveIndexes[i];
+          final member = members[index];
           return _buildLiveCard(
             status: liveStatusList[index],
-            memberName: nameList[index],
-            assetPath: 'assets/$assetFolder/${assetNames[index]}_profile.png',
-            broadcastId: broadcastIds[index],
+            memberName: member.name,
+            assetPath: member.profileAssetPath,
+            broadcastId: member.chzzkBroadcastId,
             themeColor: themeColor,
             themeColorDark: themeColorDark,
           );

@@ -53,12 +53,9 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
 
   Future<void> _switchGroup(String group) async {
     _globalController.selectedGroup.value = group;
-    final sequence = group == 'honeyz'
-        ? _globalController.honeyzSequence
-        : _globalController.acaxiaSequence;
 
     // 스케줄 데이터만 로드 (멤버/라이브체크는 GroupPageWidget에서 처리)
-    await _globalController.loadScheduleFireStore(sequence: sequence);
+    await _globalController.loadScheduleFireStore();
 
     // 홈 페이지로 이동
     if (_currentIndex != 0) {
