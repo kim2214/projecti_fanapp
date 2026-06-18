@@ -36,7 +36,9 @@ class StreamerCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        context.push('/streamerDetail', extra: streamer);
+        final group = isHoneyz ? 'honeyz' : 'acaxia';
+        context.push('/streamerDetail?group=$group&key=$assetName',
+            extra: streamer);
       },
       child: Container(
         decoration: BoxDecoration(
