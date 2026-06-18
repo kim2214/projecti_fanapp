@@ -1,46 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/model/youtube_video_model.dart';
+import 'package:projecti_fan_app/services/youtube_service.dart';
+import 'package:projecti_fan_app/theme/app_colors.dart';
+import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class StreamerDetail extends StatelessWidget {
+class StreamerDetail extends StatefulWidget {
   final StreamerModel pjiMember;
+  final String group;
+  final String memberKey;
 
-  const StreamerDetail({super.key, required this.pjiMember});
+  const StreamerDetail({
+    super.key,
+    required this.pjiMember,
+    required this.group,
+    required this.memberKey,
+  });
 
-  // 그룹별 테마 컬러
+  @override
+  State<StreamerDetail> createState() => _StreamerDetailState();
+}
+
+class _StreamerDetailState extends State<StreamerDetail> {
+  final GlobalController _global = Get.find<GlobalController>();
+  final FavoritesController _favorites = Get.find<FavoritesController>();
+
+  Member? _member;
+  int _memberIndex = -1;
+  Future<List<YouTubeVideoModel>>? _videosFuture;
+
+  bool get _isHoneyz => widget.group == 'honeyz';
+
+  @override
+  void initState() {
+    super.initState();
+    final members = _global.membersOf(widget.group);
+    _memberIndex = members.indexWhere((m) => m.key == widget.memberKey);
+    if (_memberIndex >= 0) {
+      _member = members[_memberIndex];
+      _videosFuture = YouTubeService.instance
+          .getChannelVideos(channelId: _member!.youtubeChannelId);
+    }
+  }
+
+  Future<void> _openChzzkLive(String broadcastId) async {
+    final uri = Uri.parse('https://chzzk.naver.com/live/$broadcastId');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  /// 이 멤버의 현재 라이브 상태 (없으면 null)
+  LiveCheckModel? get _liveStatus {
+    final list =
+        _isHoneyz ? _global.honeyzliveCheckList : _global.acaxialiveCheckList;
+    if (_memberIndex < 0 || _memberIndex >= list.length) return null;
+    return list[_memberIndex];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final globalController = Get.find<GlobalController>();
-    final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-    final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+    final themeColor = AppColors.group(_isHoneyz);
+    final themeColorDark = AppColors.groupDark(_isHoneyz);
 
     return Scaffold(
       backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
-          // 커스텀 앱바
+          SliverToBoxAdapter(child: _buildAppBar(context, themeColor)),
           SliverToBoxAdapter(
-            child: _buildAppBar(context, themeColor),
+            child: _buildProfileSection(context, themeColor, themeColorDark),
           ),
-          // 프로필 섹션
+          // 실시간 LIVE 상태 (방송 중일 때만)
           SliverToBoxAdapter(
-            child:
-                _buildProfileSection(context, isHoneyz, themeColor, themeColorDark),
+            child: _buildLiveSection(context, themeColor),
           ),
-          // SNS 링크 섹션
+          // SNS 링크
           SliverToBoxAdapter(
             child: _buildSocialSection(context, themeColor, themeColorDark),
           ),
-          // 하단 여백
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 50),
+          // 최신 YouTube 영상
+          SliverToBoxAdapter(
+            child: _buildVideosSection(context, themeColor),
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 50)),
         ],
       ),
     );
@@ -86,30 +134,49 @@ class StreamerDetail extends StatelessWidget {
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: themeColor.withAlpha(30),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'PROFILE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                  color: themeColor,
-                ),
-              ),
-            ),
+            // 최애 토글
+            _buildFavoriteButton(themeColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, bool isHoneyz,
-      Color themeColor, Color themeColorDark) {
+  Widget _buildFavoriteButton(Color themeColor) {
+    if (widget.memberKey.isEmpty) return const SizedBox.shrink();
+    return Obx(() {
+      final isFav = _favorites.isFavorite(widget.group, widget.memberKey);
+      return GestureDetector(
+        onTap: () => _favorites.toggle(widget.group, widget.memberKey),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: context.surface,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+            color: isFav ? AppColors.favorite : context.textFaint,
+            size: 24,
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildProfileSection(
+      BuildContext context, Color themeColor, Color themeColorDark) {
+    final birthdayLabel = widget.pjiMember.birthdayLabel;
+    final days = widget.pjiMember.daysUntilBirthday;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       decoration: BoxDecoration(
@@ -125,7 +192,6 @@ class StreamerDetail extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 프로필 이미지
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
@@ -145,14 +211,13 @@ class StreamerDetail extends StatelessWidget {
                 ),
               ),
               child: Image.asset(
-                isHoneyz
-                    ? 'assets/honeyz/${pjiMember.profileName}_profile.png'
-                    : 'assets/acaxia/${pjiMember.profileName}_profile.png',
+                _isHoneyz
+                    ? 'assets/honeyz/${widget.pjiMember.profileName}_profile.png'
+                    : 'assets/acaxia/${widget.pjiMember.profileName}_profile.png',
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // 이름 및 정보
           Container(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -168,7 +233,7 @@ class StreamerDetail extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isHoneyz ? 'HONEYZ' : 'ACAXIA',
+                    _isHoneyz ? 'HONEYZ' : 'ACAXIA',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -178,9 +243,8 @@ class StreamerDetail extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // 이름
                 Text(
-                  pjiMember.name ?? '',
+                  widget.pjiMember.name ?? '',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -190,13 +254,18 @@ class StreamerDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${isHoneyz ? "허니즈" : "아카시아"} 소속',
+                  '${_isHoneyz ? "허니즈" : "아카시아"} 소속',
                   style: TextStyle(
                     fontSize: 14,
                     color: context.textSub,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                // 생일 D-day 칩 (설정된 경우만)
+                if (birthdayLabel != null && days != null) ...[
+                  const SizedBox(height: 14),
+                  _buildBirthdayChip(birthdayLabel, days),
+                ],
               ],
             ),
           ),
@@ -205,27 +274,181 @@ class StreamerDetail extends StatelessWidget {
     );
   }
 
+  Widget _buildBirthdayChip(String label, int days) {
+    final isToday = days == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.birthday.withAlpha(isToday ? 255 : 30),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cake_rounded,
+            size: 16,
+            color: isToday ? Colors.white : AppColors.birthday,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isToday ? '오늘 생일! 🎂' : '$label · D-$days',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isToday ? Colors.white : AppColors.birthday,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- 실시간 LIVE ----------------
+
+  Widget _buildLiveSection(BuildContext context, Color themeColor) {
+    return Obx(() {
+      final status = _liveStatus;
+      if (status == null || !status.isLive) return const SizedBox.shrink();
+
+      return GestureDetector(
+        onTap: () {
+          if (_member != null) _openChzzkLive(_member!.chzzkBroadcastId);
+        },
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: context.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.live.withAlpha(70), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.live.withAlpha(25),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.live,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, size: 6, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'LIVE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '치지직에서 보기',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: context.textFaint,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 11, color: context.textFaint),
+                ],
+              ),
+              if (status.liveTitle?.isNotEmpty == true) ...[
+                const SizedBox(height: 12),
+                Text(
+                  status.liveTitle!,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: context.textMain,
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (status.viewerCountText.isNotEmpty) ...[
+                    Icon(Icons.visibility_rounded,
+                        size: 14, color: context.textFaint),
+                    const SizedBox(width: 4),
+                    Text(
+                      status.viewerCountText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: context.textSub,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                  ],
+                  if (status.uptime.isNotEmpty) ...[
+                    Icon(Icons.schedule_rounded,
+                        size: 14, color: context.textFaint),
+                    const SizedBox(width: 4),
+                    Text(
+                      status.uptime,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: context.textSub,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  // ---------------- SNS ----------------
+
   Widget _buildSocialSection(
       BuildContext context, Color themeColor, Color themeColorDark) {
     final socialLinks = [
       SocialLink(
         name: '치지직',
         icon: 'assets/icons/chzzk_icon.png',
-        url: pjiMember.chzzk,
+        url: widget.pjiMember.chzzk,
         color: const Color(0xFF00FFA3),
         description: '라이브 방송 시청',
       ),
       SocialLink(
         name: 'YouTube',
         icon: 'assets/icons/youtube_icon.png',
-        url: pjiMember.youtube,
+        url: widget.pjiMember.youtube,
         color: const Color(0xFFFF0000),
         description: '영상 콘텐츠',
       ),
       SocialLink(
         name: 'X (Twitter)',
         icon: 'assets/icons/x_icon.png',
-        url: pjiMember.twitter,
+        url: widget.pjiMember.twitter,
         color: const Color(0xFF000000),
         description: '소식 및 업데이트',
       ),
@@ -240,11 +463,7 @@ class StreamerDetail extends StatelessWidget {
             padding: const EdgeInsets.only(left: 8, bottom: 16),
             child: Row(
               children: [
-                Icon(
-                  Icons.link_rounded,
-                  size: 20,
-                  color: themeColor,
-                ),
+                Icon(Icons.link_rounded, size: 20, color: themeColor),
                 const SizedBox(width: 8),
                 Text(
                   'SNS & 채널',
@@ -293,7 +512,6 @@ class StreamerDetail extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // 아이콘
                 Container(
                   width: 50,
                   height: 50,
@@ -303,14 +521,10 @@ class StreamerDetail extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Image.asset(
-                      link.icon,
-                      fit: BoxFit.contain,
-                    ),
+                    child: Image.asset(link.icon, fit: BoxFit.contain),
                   ),
                 ),
                 const SizedBox(width: 16),
-                // 텍스트
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +548,6 @@ class StreamerDetail extends StatelessWidget {
                     ],
                   ),
                 ),
-                // 화살표
                 Container(
                   width: 36,
                   height: 36,
@@ -352,6 +565,76 @@ class StreamerDetail extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ---------------- 최신 YouTube 영상 ----------------
+
+  Widget _buildVideosSection(BuildContext context, Color themeColor) {
+    if (_videosFuture == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.play_circle_fill_rounded,
+                    size: 20, color: Color(0xFFFF0000)),
+                const SizedBox(width: 8),
+                Text(
+                  '최신 영상',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: context.textMain,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FutureBuilder<List<YouTubeVideoModel>>(
+            future: _videosFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFF0000),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                );
+              }
+              final videos = snapshot.data ?? [];
+              if (snapshot.hasError || videos.isEmpty) {
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  child: Text(
+                    '최신 영상을 불러올 수 없습니다',
+                    style: TextStyle(fontSize: 13, color: context.textFaint),
+                  ),
+                );
+              }
+              final top = videos.take(3).toList();
+              return Column(
+                children: [
+                  for (int i = 0; i < top.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: YouTubeVideoCard(video: top[i], index: i),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }

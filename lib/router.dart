@@ -53,8 +53,13 @@ final router = GoRouter(
       path: '/streamerDetail',
       builder: (context, state) {
         final pjiMember = state.extra as StreamerModel;
-        return StreamerDetail(pjiMember: pjiMember);
-        // return StreamerDetail();
+        final group = state.uri.queryParameters['group'] ?? 'honeyz';
+        final memberKey = state.uri.queryParameters['key'] ?? '';
+        return StreamerDetail(
+          pjiMember: pjiMember,
+          group: group,
+          memberKey: memberKey,
+        );
       },
     ),
     GoRoute(
