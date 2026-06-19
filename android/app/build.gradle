@@ -62,7 +62,7 @@ android {
         applicationId "com.devkim.honeyz_fan_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 21
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion 35
         multiDexEnabled true
         versionCode flutterVersionCode.toInteger()
