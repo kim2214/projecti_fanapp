@@ -24,12 +24,13 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
     return Obx(() {
       final isHoneyz = globalController.selectedGroup.value == 'honeyz';
       final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors
+          .acaxiaDark;
       final scheduleList = isHoneyz
           ? globalController.honeyzScheduleList
           : globalController.acaxiaScheduleList;
       final members =
-          globalController.membersOf(globalController.selectedGroup.value);
+      globalController.membersOf(globalController.selectedGroup.value);
 
       return Container(
         decoration: BoxDecoration(
@@ -60,7 +61,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                        (context, index) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: ScheduleCard(
@@ -87,13 +88,13 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
   }
 
   /// 당겨서 새로고침 - 스케줄을 다시 불러옴
-  Future<void> _onRefresh(
-      GlobalController globalController, bool isHoneyz) async {
+  Future<void> _onRefresh(GlobalController globalController,
+      bool isHoneyz) async {
     await globalController.loadScheduleFireStore(forceRefresh: true);
   }
 
-  Widget _buildHeader(
-      bool isHoneyz, Color themeColor, Color themeColorDark, int memberCount) {
+  Widget _buildHeader(bool isHoneyz, Color themeColor, Color themeColorDark,
+      int memberCount) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
       child: Column(
@@ -258,8 +259,8 @@ class ScheduleCard extends StatelessWidget {
     return GestureDetector(
       onTap: hasSchedule
           ? () {
-              context.push('/scheduleDetail?url=$imageURL&name=$memberName');
-            }
+        context.push('/scheduleDetail?url=$imageURL&name=$memberName');
+      }
           : null,
       child: Container(
         decoration: BoxDecoration(
@@ -327,7 +328,7 @@ class ScheduleCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          hasSchedule ? '스케줄 등록됨' : '이번 주 스케줄 없음',
+                          hasSchedule ? '스케줄 등록됨' : '스케줄 등록 전',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.white.withAlpha(180),
@@ -356,92 +357,104 @@ class ScheduleCard extends StatelessWidget {
             // 스케줄 이미지
             hasSchedule
                 ? ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
-                    ),
-                    child: Container(
-                      color: themeColor.withAlpha(10),
-                      constraints: const BoxConstraints(
-                        minHeight: 200,
-                        maxHeight: 400,
-                      ),
-                      child: ExtendedImage.network(
-                        imageURL,
-                        fit: BoxFit.contain,
-                        cache: true,
-                        loadStateChanged: (ExtendedImageState state) {
-                          switch (state.extendedImageLoadState) {
-                            case LoadState.loading:
-                              return Container(
-                                height: 200,
-                                color: themeColor.withAlpha(15),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: themeColor,
-                                  ),
-                                ),
-                              );
-                            case LoadState.failed:
-                              return Container(
-                                height: 200,
-                                color: themeColor.withAlpha(15),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image_not_supported_rounded,
-                                      size: 40,
-                                      color: themeColor.withAlpha(150),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '이미지를 불러올 수 없습니다',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: context.textFaint,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            case LoadState.completed:
-                              return null;
-                          }
-                        },
-                      ),
-                    ),
-                  )
-                : Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: themeColor.withAlpha(15),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(20),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.event_busy_rounded,
-                          size: 36,
-                          color: themeColor.withAlpha(150),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '금주 $memberName님은 방송이 없습니다',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: context.textFaint,
-                            fontWeight: FontWeight.w500,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              child: Container(
+                color: themeColor.withAlpha(10),
+                constraints: const BoxConstraints(
+                  minHeight: 200,
+                  maxHeight: 400,
+                ),
+                child: ExtendedImage.network(
+                  imageURL,
+                  fit: BoxFit.contain,
+                  cache: true,
+                  loadStateChanged: (ExtendedImageState state) {
+                    switch (state.extendedImageLoadState) {
+                      case LoadState.loading:
+                        return Container(
+                          height: 200,
+                          color: themeColor.withAlpha(15),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: themeColor,
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      case LoadState.failed:
+                        return Container(
+                          height: 200,
+                          color: themeColor.withAlpha(15),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.image_not_supported_rounded,
+                                size: 40,
+                                color: themeColor.withAlpha(150),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '이미지를 불러올 수 없습니다',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.textFaint,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      case LoadState.completed:
+                        return null;
+                    }
+                  },
+                ),
+              ),
+            )
+                : Container(
+              height: 150,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: themeColor.withAlpha(15),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 36,
+                    color: themeColor.withAlpha(150),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '이번 주 스케줄이\n아직 등록되지 않았어요',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: context.textFaint,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '스케줄이 올라오면 여기에 표시됩니다',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.textFaint,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
