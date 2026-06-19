@@ -1,8 +1,10 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/home_dashboard_page.dart';
@@ -21,6 +23,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   final PageController _pageController = PageController();
   final GlobalController _globalController = Get.find<GlobalController>();
   final ThemeController _themeController = Get.find<ThemeController>();
+  final NotificationController _notificationController =
+      Get.find<NotificationController>();
 
   // 그룹별 테마 컬러
 
@@ -142,6 +146,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       ),
       titleSpacing: 0,
       actions: [
+        // 알림 설정
+        _buildNotificationButton(),
         // 테마 모드 토글 (system → light → dark)
         _buildThemeToggle(),
         // 그룹 전환 버튼
@@ -150,6 +156,143 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
           child: _buildGroupSwitcher(isHoneyz, themeColor),
         ),
       ],
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    return IconButton(
+      icon: Icon(Icons.notifications_outlined, color: context.textSub),
+      tooltip: '알림 설정',
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(),
+      padding: const EdgeInsets.all(8),
+      onPressed: _showNotificationSettings,
+    );
+  }
+
+  void _showNotificationSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.notifications_rounded,
+                        size: 22, color: context.textMain),
+                    const SizedBox(width: 8),
+                    Text(
+                      '스케줄 알림',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: context.textMain,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '멤버 스케줄이 등록되면 알려드립니다.',
+                  style: TextStyle(fontSize: 13, color: context.textFaint),
+                ),
+                const SizedBox(height: 12),
+                Obx(() => SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.honeyz,
+                      title: Text('허니즈 스케줄 알림',
+                          style: TextStyle(color: context.textMain)),
+                      value:
+                          _notificationController.scheduleEnabled['honeyz'] ??
+                              true,
+                      onChanged: (v) => _notificationController
+                          .setScheduleEnabled('honeyz', v),
+                    )),
+                Obx(() => SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.acaxia,
+                      title: Text('아카시아 스케줄 알림',
+                          style: TextStyle(color: context.textMain)),
+                      value:
+                          _notificationController.scheduleEnabled['acaxia'] ??
+                              true,
+                      onChanged: (v) => _notificationController
+                          .setScheduleEnabled('acaxia', v),
+                    )),
+                const SizedBox(height: 8),
+                _buildBatteryHelp(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 알림이 안 오는 경우(주로 삼성 등 절전 정책) 배터리 설정으로 안내한다.
+  Widget _buildBatteryHelp() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.textFaint.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.help_outline_rounded,
+                  size: 18, color: context.textSub),
+              const SizedBox(width: 6),
+              Text(
+                '알림이 안 오나요?',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: context.textMain,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '앱을 완전히 종료하면 일부 기기(삼성 등)의 절전 기능이 알림을 막을 수 있어요. '
+            '아래에서 배터리 사용을 "제한 없음"으로 바꾸면 종료 상태에서도 알림을 받을 수 있습니다.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: context.textFaint,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () =>
+                  AppSettings.openAppSettings(type: AppSettingsType.settings),
+              icon: const Icon(Icons.battery_saver_rounded, size: 18),
+              label: const Text('배터리 설정 열기'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.textMain,
+                side: BorderSide(color: context.textFaint.withAlpha(80)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

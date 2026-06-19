@@ -53,5 +53,10 @@ app.*.map.json
 # Environment variables
 .env
 
+# Firebase Functions
+/functions/node_modules/
+firebase-debug.log
+.firebase/
+
 # Dependency lockfile (추적 제외 - flutter pub get 시 자동 갱신 노이즈 방지)
 /pubspec.lock
