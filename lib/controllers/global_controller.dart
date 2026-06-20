@@ -136,83 +136,66 @@ class GlobalController extends GetxController {
   /// 두 그룹 합본 (통합 LIVE 등)
   List<Member> get allMembers => [...honeyzMembers, ...acaxiaMembers];
 
+  /// 그룹별 스케줄 컬렉션 이름. (멤버/스트리머 컬렉션 이름은 그룹 이름과 동일)
+  static const Map<String, String> _scheduleCollection = {
+    'honeyz': 'schedule',
+    'acaxia': 'schedule_acaxia',
+  };
+
+  RxList<ScheduleModel> _scheduleCacheOf(String group) =>
+      group == 'honeyz' ? honeyzScheduleList : acaxiaScheduleList;
+  RxList<StreamerModel> _streamerCacheOf(String group) =>
+      group == 'honeyz' ? honeyz : acaxia;
+  RxList<LiveCheckModel> _liveCacheOf(String group) =>
+      group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
+
+  /// 컬렉션의 모든 문서를 문서 ID(= 멤버 key) 기준 Map으로 반환.
+  /// 멤버-문서 매칭을 O(n²) 중첩 루프 대신 O(1) 조회로 처리하기 위함.
+  Future<Map<String, Map<String, dynamic>>> _fetchDocsByKey(
+      String collection) async {
+    final snapshot = await _fireStore.collection(collection).get();
+    return {for (final doc in snapshot.docs) doc.id: doc.data()};
+  }
+
   Future<List<ScheduleModel>> loadScheduleFireStore(
       {bool forceRefresh = false}) async {
-    final sequence = membersOf(selectedGroup.value).map((m) => m.key).toList();
-    if (selectedGroup.value == 'honeyz') {
-      if (forceRefresh || honeyzScheduleList.isEmpty) {
-        QuerySnapshot<Map<String, dynamic>> snapshot =
-            await _fireStore.collection("schedule").get();
+    final group = selectedGroup.value;
+    final collection = _scheduleCollection[group];
+    if (collection == null) return [];
 
-        final List<ScheduleModel> loaded = [];
-        for (int i = 0; i < sequence.length; i++) {
-          for (var snapshot in snapshot.docs) {
-            if (sequence[i] == snapshot.id) {
-              loaded.add(ScheduleModel.fromJson(snapshot.data()));
-            }
-          }
-        }
-        honeyzScheduleList.value = loaded;
-      }
-      return honeyzScheduleList;
-    } else if (selectedGroup.value == 'acaxia') {
-      if (forceRefresh || acaxiaScheduleList.isEmpty) {
-        QuerySnapshot<Map<String, dynamic>> snapshot =
-            await _fireStore.collection("schedule_acaxia").get();
-
-        final List<ScheduleModel> loaded = [];
-        for (int i = 0; i < sequence.length; i++) {
-          for (var snapshot in snapshot.docs) {
-            if (sequence[i] == snapshot.id) {
-              loaded.add(ScheduleModel.fromJson(snapshot.data()));
-            }
-          }
-        }
-        acaxiaScheduleList.value = loaded;
-      }
-      return acaxiaScheduleList;
+    final cache = _scheduleCacheOf(group);
+    if (forceRefresh || cache.isEmpty) {
+      final docsByKey = await _fetchDocsByKey(collection);
+      // 카탈로그 순서대로, 문서가 있는 멤버만 (스케줄 미등록 멤버는 제외)
+      cache.value = [
+        for (final member in membersOf(group))
+          if (docsByKey[member.key] != null)
+            ScheduleModel.fromJson(docsByKey[member.key]!),
+      ];
     }
-
-    return [];
+    return cache;
   }
 
   Future<List<StreamerModel>> loadStreamerFireStore(
       {bool forceRefresh = false}) async {
-    if (selectedGroup.value == 'honeyz') {
-      if (forceRefresh || honeyz.isEmpty) {
-        QuerySnapshot<Map<String, dynamic>> snapshot =
-            await _fireStore.collection("honeyz").get();
+    final group = selectedGroup.value;
+    if (group != 'honeyz' && group != 'acaxia') return [];
 
-        final List<StreamerModel> loaded = [];
-        for (final member in honeyzMembers) {
-          for (var snapshot in snapshot.docs) {
-            if (member.key == snapshot.id) {
-              loaded.add(StreamerModel.fromJson(snapshot.data()));
-            }
-          }
-        }
-        honeyz.value = loaded;
-      }
-      return honeyz;
-    } else if (selectedGroup.value == 'acaxia') {
-      if (forceRefresh || acaxia.isEmpty) {
-        QuerySnapshot<Map<String, dynamic>> snapshot =
-            await _fireStore.collection("acaxia").get();
-
-        final List<StreamerModel> loaded = [];
-        for (final member in acaxiaMembers) {
-          for (var snapshot in snapshot.docs) {
-            if (member.key == snapshot.id) {
-              loaded.add(StreamerModel.fromJson(snapshot.data()));
-            }
-          }
-        }
-        acaxia.value = loaded;
-      }
-      return acaxia;
+    final cache = _streamerCacheOf(group);
+    if (forceRefresh || cache.isEmpty) {
+      // 스트리머 컬렉션 이름은 그룹 이름과 동일하다.
+      final docsByKey = await _fetchDocsByKey(group);
+      // 카탈로그(membersOf)와 순서·길이가 1:1 정렬되도록 key로 매칭한다.
+      // 문서가 없는 멤버는 빈 모델로 채워 인덱스 정렬을 보장한다 — UI는 이름/프로필을
+      // 카탈로그에서 가져오므로(group_page) 빈 모델도 안전하게 렌더된다.
+      cache.value = [
+        for (final member in membersOf(group))
+          docsByKey[member.key] != null
+              ? StreamerModel.fromJson(docsByKey[member.key]!)
+              : StreamerModel.empty(),
+      ];
     }
-
-    return [];
+    return cache;
   }
 
   Future<LiveCheckModel?> _fetchLiveStatus(String broadcastId) async {
@@ -232,19 +215,14 @@ class GlobalController extends GetxController {
   }
 
   Future<List<LiveCheckModel>> liveCheck({bool forceRefresh = false}) async {
-    if (selectedGroup.value == 'honeyz') {
-      if (forceRefresh || honeyzliveCheckList.isEmpty) {
-        await refreshLiveStatus();
-      }
-      return honeyzliveCheckList;
-    } else if (selectedGroup.value == 'acaxia') {
-      if (forceRefresh || acaxialiveCheckList.isEmpty) {
-        await refreshLiveStatus();
-      }
-      return acaxialiveCheckList;
-    }
+    final group = selectedGroup.value;
+    if (group != 'honeyz' && group != 'acaxia') return [];
 
-    return [];
+    final cache = _liveCacheOf(group);
+    if (forceRefresh || cache.isEmpty) {
+      await refreshLiveStatus();
+    }
+    return cache;
   }
 
   /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체
@@ -264,8 +242,7 @@ class GlobalController extends GetxController {
   Future<void> _refreshGroupLiveStatus(String group) async {
     if (group != 'honeyz' && group != 'acaxia') return;
 
-    final liveCheckList =
-        group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
+    final liveCheckList = _liveCacheOf(group);
 
     final results = await Future.wait(
       membersOf(group).map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),

@@ -16,6 +16,16 @@ class StreamerModel {
       required this.twitter,
       this.birthday});
 
+  /// Firestore 문서가 없는 멤버용 빈 모델.
+  /// 멤버 카탈로그와 1:1 인덱스 정렬을 유지하기 위한 플레이스홀더로 쓰인다.
+  factory StreamerModel.empty() => StreamerModel(
+        name: null,
+        profileName: null,
+        youtube: null,
+        chzzk: null,
+        twitter: null,
+      );
+
   factory StreamerModel.fromJson(Map<String, dynamic> json) {
     return StreamerModel(
       name: json["name"],

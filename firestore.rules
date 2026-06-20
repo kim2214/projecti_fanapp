@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// 팬앱은 Firestore 데이터를 "읽기 전용"으로만 사용한다.
+// 쓰기는 Firebase 콘솔 또는 Admin SDK(Cloud Functions)로만 수행되며,
+// Admin SDK는 보안 규칙을 우회하므로 클라이언트 쓰기를 전면 차단해도 동작에 지장이 없다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 멤버/그룹 프로필
+    match /honeyz/{memberKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /acaxia/{memberKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 스케줄 (Cloud Function 푸시 트리거 대상)
+    match /schedule/{memberKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /schedule_acaxia/{memberKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 음악
+    match /music/{trackId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 그 외 모든 경로는 기본 차단 (새 컬렉션은 명시적으로 허용할 것)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
