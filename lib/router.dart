@@ -1,8 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/bindings.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
-import 'package:projecti_fan_app/model/music_model.dart';
-import 'package:projecti_fan_app/widget/audio_widget.dart';
 import 'package:projecti_fan_app/widget/components/schedule_detail.dart';
 import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
 import 'package:projecti_fan_app/widget/group_select_widget.dart';
@@ -60,16 +58,6 @@ final router = GoRouter(
           group: group,
           memberKey: memberKey,
         );
-      },
-    ),
-    GoRoute(
-      path: '/audioPage',
-      builder: (context, state) {
-        final musicModel = state.extra as MusicModel;
-        return BackgroundAudioWidget(
-          musicModel: musicModel,
-        );
-        // return StreamerDetail();
       },
     ),
   ],

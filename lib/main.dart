@@ -7,7 +7,6 @@ import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
 import 'package:projecti_fan_app/theme/app_theme.dart';
-import 'package:projecti_fan_app/widget/audio_manager.dart';
 import 'package:projecti_fan_app/widget/splash_screen.dart';
 
 /// 백그라운드/종료 상태에서 FCM 메시지를 받을 때 실행되는 최상위 핸들러.
@@ -22,7 +21,6 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await AudioManager.initialize();
 
   // 테마 모드를 첫 빌드 전에 선로딩 (플래시 방지)
   final themeController = ThemeController();

@@ -44,9 +44,6 @@ class GlobalController extends GetxController {
   }
 
   RxString selectedGroup = ''.obs;
-  RxList<String> selectedMusicGroup = <String>['all', 'honeyz', 'acaxia'].obs;
-
-  RxString selectedMusicGroupString = 'all'.obs;
 
   RxList<ScheduleModel> honeyzScheduleList = <ScheduleModel>[].obs;
   RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;
