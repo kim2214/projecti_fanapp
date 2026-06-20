@@ -204,7 +204,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.favorite_rounded,
                   size: 16,
                   color: AppColors.honeyz,
@@ -266,7 +266,7 @@ class _SplashScreenState extends State<SplashScreen>
             width: 160,
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.honeyz),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.honeyz),
               minHeight: 3,
               borderRadius: BorderRadius.circular(2),
             ),

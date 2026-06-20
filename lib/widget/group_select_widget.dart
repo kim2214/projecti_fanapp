@@ -68,7 +68,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(
+                      const CircularProgressIndicator(
                         color: AppColors.honeyz,
                         strokeWidth: 3,
                       ),
@@ -268,7 +268,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         child: Stack(
           children: [
             // 배경 패턴
-            Positioned(
+            const Positioned(
               right: -30,
               bottom: -30,
               child: Opacity(

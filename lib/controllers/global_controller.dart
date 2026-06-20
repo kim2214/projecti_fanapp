@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
@@ -205,8 +206,18 @@ class GlobalController extends GetxController {
         final Map<String, dynamic> data = json.decode(decodedBody);
         return LiveCheckModel.fromJson(data['content']);
       }
-    } catch (_) {
-      // error handled silently
+      // 비공식 polling 엔드포인트라 응답 형식이 바뀌면 무증상 실패할 수 있어 기록한다.
+      developer.log(
+        'chzzk 라이브 상태 조회 실패 (HTTP ${response.statusCode}): $broadcastId',
+        name: 'GlobalController',
+      );
+    } catch (e, st) {
+      developer.log(
+        'chzzk 라이브 상태 조회 예외: $broadcastId',
+        name: 'GlobalController',
+        error: e,
+        stackTrace: st,
+      );
     }
     return null;
   }

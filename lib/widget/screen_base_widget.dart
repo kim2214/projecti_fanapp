@@ -208,7 +208,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                 const SizedBox(height: 12),
                 Obx(() => SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      activeColor: AppColors.honeyz,
+                      activeThumbColor: AppColors.honeyz,
                       title: Text('허니즈 스케줄 알림',
                           style: TextStyle(color: context.textMain)),
                       value:
@@ -219,7 +219,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                     )),
                 Obx(() => SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      activeColor: AppColors.acaxia,
+                      activeThumbColor: AppColors.acaxia,
                       title: Text('아카시아 스케줄 알림',
                           style: TextStyle(color: context.textMain)),
                       value:

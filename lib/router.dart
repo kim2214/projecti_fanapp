@@ -15,19 +15,19 @@ final router = GoRouter(
       path: '/',
       builder: (context, state) {
         BindingClass().dependencies();
-        return MyHomePage();
+        return const MyHomePage();
       },
     ),
     GoRoute(
       path: '/groupSelect',
       builder: (context, state) {
-        return GroupSelectWidget();
+        return const GroupSelectWidget();
       },
     ),
     GoRoute(
       path: '/baseScreen',
       builder: (context, state) {
-        return ScreenBaseWidget();
+        return const ScreenBaseWidget();
       },
     ),
     GoRoute(
