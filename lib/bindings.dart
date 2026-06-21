@@ -11,24 +11,3 @@ class BindingClass extends Bindings {
     Get.lazyPut(() => FavoritesController());
   }
 }
-
-// // Router에서 사용
-// final router = GoRouter(
-//   routes: [
-//     GoRoute(
-//       path: '/',
-//       builder: (context, state) {
-//         HomeBinding().dependencies();
-//         return MyHomePage();
-//       },
-//     ),
-//     GoRoute(
-//       path: '/groupSelect',
-//       builder: (context, state) {
-//         GroupSelectBinding().dependencies();
-//         return GroupSelectWidget();
-//       },
-//     ),
-//     // 나머지 라우트들...
-//   ],
-// );

@@ -1,30 +1,95 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// 순수 로직(외부 의존성 없는 모델 계산) 단위 테스트.
+// Firebase/GetX 초기화가 필요 없는 결정적 로직만 검증한다.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:projecti_fan_app/main.dart';
+import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/member.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('LiveCheckModel', () {
+    test('isLive는 status가 OPEN일 때만 true', () {
+      expect(LiveCheckModel(status: 'OPEN').isLive, isTrue);
+      expect(LiveCheckModel(status: 'CLOSE').isLive, isFalse);
+      expect(LiveCheckModel(status: null).isLive, isFalse);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('viewerCountText는 천 단위 콤마를 붙인다', () {
+      expect(LiveCheckModel(concurrentUserCount: 1384).viewerCountText,
+          '1,384명');
+      expect(LiveCheckModel(concurrentUserCount: 384).viewerCountText, '384명');
+      expect(LiveCheckModel(concurrentUserCount: 1000000).viewerCountText,
+          '1,000,000명');
+      expect(LiveCheckModel(concurrentUserCount: null).viewerCountText, '');
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('uptime은 openDate가 없거나 형식이 틀리면 빈 문자열', () {
+      expect(LiveCheckModel(openDate: null).uptime, '');
+      expect(LiveCheckModel(openDate: 'not-a-date').uptime, '');
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('fromJson 라운드트립', () {
+      final model = LiveCheckModel.fromJson({
+        'liveTitle': '테스트 방송',
+        'status': 'OPEN',
+        'concurrentUserCount': 42,
+      });
+      expect(model.liveTitle, '테스트 방송');
+      expect(model.isLive, isTrue);
+      expect(model.concurrentUserCount, 42);
+    });
+  });
+
+  group('StreamerModel 생일 계산', () {
+    test('birthdayLabel은 MM-DD를 한국어 라벨로 변환', () {
+      expect(_streamerWithBirthday('03-15').birthdayLabel, '3월 15일');
+      expect(_streamerWithBirthday('12-01').birthdayLabel, '12월 1일');
+    });
+
+    test('잘못된 형식의 생일은 null 처리', () {
+      expect(_streamerWithBirthday(null).birthdayLabel, isNull);
+      expect(_streamerWithBirthday('abc').birthdayLabel, isNull);
+      expect(_streamerWithBirthday('13-40').birthdayLabel, isNull); // 월/일 범위 초과
+      expect(_streamerWithBirthday('2024-03-15').birthdayLabel, isNull); // MM-DD 아님
+    });
+
+    test('daysUntilBirthday는 유효한 생일에 대해 0~366 범위', () {
+      final days = _streamerWithBirthday('06-15').daysUntilBirthday;
+      expect(days, isNotNull);
+      expect(days! >= 0 && days <= 366, isTrue);
+    });
+
+    test('생일 미설정이면 daysUntilBirthday는 null', () {
+      expect(StreamerModel.empty().daysUntilBirthday, isNull);
+      expect(StreamerModel.empty().birthdayLabel, isNull);
+    });
+  });
+
+  group('Member', () {
+    const member = Member(
+      key: 'ohwayo',
+      name: '오화요',
+      group: 'honeyz',
+      chzzkBroadcastId: 'abc123',
+      youtubeChannelId: 'UC123',
+    );
+
+    test('profileAssetPath는 그룹/키 기반 경로', () {
+      expect(member.profileAssetPath, 'assets/honeyz/ohwayo_profile.png');
+    });
+
+    test('isHoneyz / assetName', () {
+      expect(member.isHoneyz, isTrue);
+      expect(member.assetName, 'ohwayo');
+    });
   });
 }
+
+StreamerModel _streamerWithBirthday(String? birthday) => StreamerModel(
+      name: 'tester',
+      profileName: null,
+      youtube: null,
+      chzzk: null,
+      twitter: null,
+      birthday: birthday,
+    );
