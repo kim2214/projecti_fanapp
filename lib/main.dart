@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
@@ -19,6 +20,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Android 15(SDK 35)부터 강제되는 edge-to-edge를 모든 버전에서 켠다.
+  // (이전 버전과의 호환성을 위해 enableEdgeToEdge()를 호출하라는 권장사항 대응)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -27,12 +32,16 @@ void main() async {
   await themeController.load();
   Get.put(themeController, permanent: true);
 
-  // 푸시 알림 권한 요청 + 토픽 구독 동기화
+  // 푸시 알림 컨트롤러는 즉시 등록하되, 초기화(FCM 권한 요청·토픽 구독 등
+  // 네트워크 작업 포함)는 await하지 않는다. await하면 첫 프레임 전까지 runApp이
+  // 막혀 시작 시 검정화면 + ANR("응답 없음")이 발생한다.
   final notificationController = NotificationController();
-  await notificationController.init();
   Get.put(notificationController, permanent: true);
 
   runApp(const MyApp());
+
+  // 첫 프레임을 그린 뒤 백그라운드로 알림 초기화 진행.
+  notificationController.init();
 }
 
 class MyApp extends StatelessWidget {
@@ -49,6 +58,23 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: themeController.themeMode.value,
+        // edge-to-edge에서 시스템바를 투명 처리하고 아이콘 명암을 테마에 맞춘다.
+        // 색상 setter(deprecated) 대신 transparent + 아이콘 brightness만 지정.
+        builder: (context, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final iconBrightness = isDark ? Brightness.light : Brightness.dark;
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: iconBrightness,
+              statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+              systemNavigationBarColor: Colors.transparent,
+              systemNavigationBarIconBrightness: iconBrightness,
+              systemNavigationBarDividerColor: Colors.transparent,
+            ),
+            child: child!,
+          );
+        },
       ),
     );
   }

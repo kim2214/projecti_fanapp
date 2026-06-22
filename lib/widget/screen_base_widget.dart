@@ -77,7 +77,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
       final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColorDark =
+          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Scaffold(
         backgroundColor: context.bg,
@@ -208,7 +209,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                 const SizedBox(height: 12),
                 Obx(() => SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      activeThumbColor: AppColors.honeyz,
+                      activeColor: AppColors.honeyz,
                       title: Text('허니즈 스케줄 알림',
                           style: TextStyle(color: context.textMain)),
                       value:
@@ -219,7 +220,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                     )),
                 Obx(() => SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      activeThumbColor: AppColors.acaxia,
+                      activeColor: AppColors.acaxia,
                       title: Text('아카시아 스케줄 알림',
                           style: TextStyle(color: context.textMain)),
                       value:
