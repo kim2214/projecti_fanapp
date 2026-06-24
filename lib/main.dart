@@ -25,7 +25,14 @@ void main() async {
   // (이전 버전과의 호환성을 위해 enableEdgeToEdge()를 호출하라는 권장사항 대응)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+  // google-services Gradle 플러그인을 적용하면서 네이티브(FirebaseInitProvider)가
+  // 기본 앱을 자동 생성한다. 그 상태에서 옵션으로 다시 초기화하면 [core/duplicate-app]이
+  // 발생하므로, 이미 초기화돼 있으면 무시하고 기존 앱을 재사용한다.
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') rethrow;
+  }
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // Crashlytics: 디버그 빌드의 크래시는 수집하지 않아 리포트 오염을 막는다.
