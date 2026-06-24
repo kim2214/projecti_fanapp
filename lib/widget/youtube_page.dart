@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/widget/audio_common.dart';
+import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -163,18 +164,18 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
     );
   }
 
-  /// 로딩 중일 때도 멤버 셀렉터는 표시
+  /// 로딩 중일 때도 멤버 셀렉터는 표시하고, 본문은 스켈레톤으로 채운다.
   Widget _buildLoadingWithSelector() {
     return Column(
       children: [
         _buildHeader(),
         _buildMemberSelector(),
-        const Expanded(
-          child: Center(
-            child: CircularProgressIndicator(
-              color: youtubeRed,
-              strokeWidth: 3,
-            ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            itemCount: 6,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, __) => const VideoCardSkeleton(),
           ),
         ),
       ],

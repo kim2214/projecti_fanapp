@@ -15,6 +15,28 @@ class YouTubeVideoModel {
     this.publishedAt,
   });
 
+  /// 로컬 캐시 영속화용 직렬화 (shared_preferences)
+  Map<String, dynamic> toJson() => {
+        'videoId': videoId,
+        'title': title,
+        'description': description,
+        'thumbnailUrl': thumbnailUrl,
+        'channelTitle': channelTitle,
+        'publishedAt': publishedAt?.toIso8601String(),
+      };
+
+  factory YouTubeVideoModel.fromJson(Map<String, dynamic> json) =>
+      YouTubeVideoModel(
+        videoId: json['videoId'] as String?,
+        title: json['title'] as String?,
+        description: json['description'] as String?,
+        thumbnailUrl: json['thumbnailUrl'] as String?,
+        channelTitle: json['channelTitle'] as String?,
+        publishedAt: json['publishedAt'] != null
+            ? DateTime.tryParse(json['publishedAt'] as String)
+            : null,
+      );
+
   /// YouTube 앱/웹 URL 생성
   String get youtubeUrl => 'https://www.youtube.com/watch?v=$videoId';
 

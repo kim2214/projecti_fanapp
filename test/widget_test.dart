@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/model/youtube_video_model.dart';
 
 void main() {
   group('LiveCheckModel', () {
@@ -81,6 +82,35 @@ void main() {
     test('isHoneyz / assetName', () {
       expect(member.isHoneyz, isTrue);
       expect(member.assetName, 'ohwayo');
+    });
+  });
+
+  group('YouTubeVideoModel 캐시 직렬화', () {
+    test('toJson -> fromJson 라운드트립으로 모든 필드 보존', () {
+      final original = YouTubeVideoModel(
+        videoId: 'abc123',
+        title: '테스트 영상',
+        description: '설명',
+        thumbnailUrl: 'https://img/thumb.jpg',
+        channelTitle: '오화요',
+        publishedAt: DateTime.utc(2026, 6, 15, 9, 30),
+      );
+
+      final restored = YouTubeVideoModel.fromJson(original.toJson());
+
+      expect(restored.videoId, 'abc123');
+      expect(restored.title, '테스트 영상');
+      expect(restored.description, '설명');
+      expect(restored.thumbnailUrl, 'https://img/thumb.jpg');
+      expect(restored.channelTitle, '오화요');
+      expect(restored.publishedAt, DateTime.utc(2026, 6, 15, 9, 30));
+    });
+
+    test('publishedAt이 null이어도 안전하게 직렬화/복원', () {
+      final restored =
+          YouTubeVideoModel.fromJson(YouTubeVideoModel().toJson());
+      expect(restored.publishedAt, isNull);
+      expect(restored.videoId, isNull);
     });
   });
 }

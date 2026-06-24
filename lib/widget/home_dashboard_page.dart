@@ -6,6 +6,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -721,14 +722,15 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     final videos = _youtubeController.groupLatestVideos;
 
     if (_youtubeController.isGroupVideosLoading.value && videos.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFFFF0000),
-              strokeWidth: 2,
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: VideoCardSkeleton(),
             ),
+            childCount: 4,
           ),
         ),
       );
