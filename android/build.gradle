@@ -7,7 +7,8 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.1'
-        classpath 'com.google.gms:google-services:4.3.2'
+        // Crashlytics Gradle 플러그인 v3는 google-services 4.4.1 이상을 요구한다.
+        classpath 'com.google.gms:google-services:4.4.2'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }

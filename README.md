@@ -102,10 +102,29 @@ flutter run
 
 # 앱 빌드 (Android)
 flutter build apk
-
-# 앱 빌드 (iOS)
-flutter build ios
 ```
+
+---
+
+## 릴리스 빌드 & Crashlytics 심볼
+
+릴리스(AOT) 빌드에서는 Dart 스택트레이스의 함수명이 제거되어, Crashlytics에 올라온
+크래시가 메모리 오프셋만 보인다. `--split-debug-info`로 만든 심볼 파일이 있어야
+`flutter symbolize`로 원래 스택을 복원할 수 있다. (Crashlytics는 Dart 심볼을 자동
+해석하지 못한다.)
+
+```bash
+# 릴리스 빌드 (심볼을 release-symbols/<version>/ 에 보존)
+scripts/build_release.sh            # appbundle (Play Store)
+scripts/build_release.sh apk        # apk
+
+# Crashlytics 콘솔의 스택트레이스를 stack.txt로 저장한 뒤 복원
+scripts/symbolize.sh <version> stack.txt          # 예: 2.2.0+11
+scripts/symbolize.sh <version> stack.txt arm      # 32비트 기기면 arch 지정
+```
+
+> ⚠️ `release-symbols/<version>/` 폴더는 **릴리스마다 반드시 백업**한다(클라우드/아티팩트).
+> git에 커밋되지 않으며, 잃어버리면 그 버전에서 올라온 크래시는 복원할 수 없다.
 
 ---
 

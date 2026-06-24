@@ -35,6 +35,8 @@ migrate_working_dir/
 
 # Symbolication related
 app.*.symbols
+# 릴리스 Dart 심볼 (바이너리, 릴리스별 별도 백업 — 커밋하지 않음)
+/release-symbols/
 
 # Obfuscation related
 app.*.map.json
