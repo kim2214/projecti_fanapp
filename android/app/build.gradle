@@ -2,6 +2,9 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    // Firebase Crashlytics: google-services가 먼저 적용되어야 매핑 업로드가 동작한다.
+    id "com.google.gms.google-services"
+    id "com.google.firebase.crashlytics"
 }
 
 def localProperties = new Properties()

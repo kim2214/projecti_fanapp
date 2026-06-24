@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -25,6 +27,17 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Crashlytics: 디버그 빌드의 크래시는 수집하지 않아 리포트 오염을 막는다.
+  final crashlytics = FirebaseCrashlytics.instance;
+  await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+  // Flutter 프레임워크 에러와 그 밖의 비동기 에러를 모두 Crashlytics로 전달.
+  FlutterError.onError = crashlytics.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    crashlytics.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   // 테마 모드를 첫 빌드 전에 선로딩 (플래시 방지)
   final themeController = ThemeController();

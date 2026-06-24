@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -212,10 +214,17 @@ class GlobalController extends GetxController {
         final Map<String, dynamic> data = json.decode(decodedBody);
         return LiveCheckModel.fromJson(data['content']);
       }
-      // 비공식 polling 엔드포인트라 응답 형식이 바뀌면 무증상 실패할 수 있어 기록한다.
+      // 비공식 polling 엔드포인트라 응답 형식이 바뀌면 무증상 실패할 수 있다.
+      // HTTP 비정상 응답은 엔드포인트 계약이 바뀐 신호이므로 Crashlytics에 기록한다.
       developer.log(
         'chzzk 라이브 상태 조회 실패 (HTTP ${response.statusCode}): $broadcastId',
         name: 'GlobalController',
+      );
+      FirebaseCrashlytics.instance.recordError(
+        'chzzk live-status HTTP ${response.statusCode}',
+        null,
+        reason: 'chzzk 라이브 상태 엔드포인트 비정상 응답',
+        fatal: false,
       );
     } catch (e, st) {
       developer.log(
@@ -224,6 +233,19 @@ class GlobalController extends GetxController {
         error: e,
         stackTrace: st,
       );
+      // 일시적 연결 오류(타임아웃/소켓)는 노이즈이므로 제외하고, 응답 파싱 실패 등
+      // 엔드포인트 형식 변경을 시사하는 예외만 기록한다.
+      final isTransient = e is TimeoutException ||
+          e is SocketException ||
+          e is http.ClientException;
+      if (!isTransient) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'chzzk 라이브 상태 응답 파싱 실패 (형식 변경 가능성)',
+          fatal: false,
+        );
+      }
     }
     return null;
   }
