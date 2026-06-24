@@ -6,8 +6,7 @@ import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
 import 'package:projecti_fan_app/widget/group_select_widget.dart';
 import 'package:projecti_fan_app/widget/live_page.dart';
 import 'package:projecti_fan_app/widget/screen_base_widget.dart';
-
-import 'main.dart';
+import 'package:projecti_fan_app/widget/splash_screen.dart';
 
 final router = GoRouter(
   routes: [
@@ -15,7 +14,7 @@ final router = GoRouter(
       path: '/',
       builder: (context, state) {
         BindingClass().dependencies();
-        return const MyHomePage();
+        return const SplashScreen();
       },
     ),
     GoRoute(

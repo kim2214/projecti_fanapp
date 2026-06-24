@@ -10,6 +10,9 @@ class YouTubeService {
   static YouTubeService? _instance;
   static const String _feedBaseUrl = 'https://www.youtube.com/feeds/videos.xml';
 
+  /// 네트워크가 멈췄을 때 무한 대기하지 않도록 하는 요청 타임아웃.
+  static const Duration _requestTimeout = Duration(seconds: 8);
+
   YouTubeService._();
 
   static YouTubeService get instance {
@@ -26,7 +29,7 @@ class YouTubeService {
         queryParameters: {'channel_id': channelId},
       );
 
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(_requestTimeout);
 
       if (response.statusCode != 200) {
         throw YouTubeServiceException(

@@ -18,6 +18,10 @@ class GlobalController extends GetxController {
 
   // 라이브 상태 주기 갱신
   static const Duration _liveRefreshInterval = Duration(minutes: 2);
+
+  // 네트워크가 멈췄을 때 무한 대기하지 않도록 하는 요청 타임아웃.
+  // 2분마다 폴링되므로, 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을 방지한다.
+  static const Duration _requestTimeout = Duration(seconds: 8);
   Timer? _liveRefreshTimer;
   AppLifecycleListener? _lifecycleListener;
 
@@ -142,8 +146,10 @@ class GlobalController extends GetxController {
 
   RxList<ScheduleModel> _scheduleCacheOf(String group) =>
       group == 'honeyz' ? honeyzScheduleList : acaxiaScheduleList;
+
   RxList<StreamerModel> _streamerCacheOf(String group) =>
       group == 'honeyz' ? honeyz : acaxia;
+
   RxList<LiveCheckModel> _liveCacheOf(String group) =>
       group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
 
@@ -200,7 +206,7 @@ class GlobalController extends GetxController {
     final url = Uri.parse(
         'https://api.chzzk.naver.com/polling/v2/channels/$broadcastId/live-status');
     try {
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(_requestTimeout);
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = json.decode(decodedBody);
@@ -270,9 +276,8 @@ class GlobalController extends GetxController {
 
     void collect(List<Member> members, List<LiveCheckModel> statuses) {
       // 폴링 전이면 statuses가 비어 있을 수 있으므로 최소 길이까지만 안전하게 순회
-      final count = members.length < statuses.length
-          ? members.length
-          : statuses.length;
+      final count =
+          members.length < statuses.length ? members.length : statuses.length;
       for (int i = 0; i < count; i++) {
         if (statuses[i].isLive) {
           final member = members[i];
