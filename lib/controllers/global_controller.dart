@@ -16,7 +16,9 @@ import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 
 class GlobalController extends GetxController {
-  final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+  // 지연 초기화: 생성 시점에 Firebase에 접근하지 않으므로, 순수 로직(정렬/필터)
+  // 테스트에서 Firebase 초기화 없이 컨트롤러를 만들 수 있다. 첫 Firestore 호출 시 init.
+  late final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
 
   // 라이브 상태 주기 갱신
   static const Duration _liveRefreshInterval = Duration(minutes: 2);

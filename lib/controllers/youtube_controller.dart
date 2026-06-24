@@ -17,7 +17,12 @@ class _MemberVideoCache {
 }
 
 class YouTubeController extends GetxController {
-  final GlobalController _globalController = Get.find<GlobalController>();
+  // globalController는 테스트에서 주입할 수 있도록 생성자 파라미터로 받는다.
+  // 프로덕션(바인딩)은 인자 없이 생성하므로 기본값으로 기존 동작(Get.find)을 유지한다.
+  YouTubeController({GlobalController? globalController})
+      : _globalController = globalController ?? Get.find<GlobalController>();
+
+  final GlobalController _globalController;
   final YouTubeService _service = YouTubeService.instance;
 
   // 상태 변수들
