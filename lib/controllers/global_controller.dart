@@ -33,23 +33,46 @@ class GlobalController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // 주기적으로 양쪽 그룹 라이브 상태 갱신 (통합 LIVE 화면 대응)
-    _liveRefreshTimer = Timer.periodic(
-      _liveRefreshInterval,
-      (_) => refreshAllLiveStatus(),
-    );
+    // 포그라운드 상태에서 주기적으로 양쪽 그룹 라이브 상태 갱신 (통합 LIVE 화면 대응)
+    _startLiveRefreshTimer();
 
-    // 앱이 포그라운드로 복귀하면 즉시 갱신
+    // 백그라운드에서는 폴링을 멈추고, 복귀하면 즉시 갱신 후 폴링 재개한다.
+    // (백그라운드에서 2분 주기 폴링이 계속 돌면 배터리·네트워크만 낭비된다.)
     _lifecycleListener = AppLifecycleListener(
-      onResume: refreshAllLiveStatus,
+      onResume: _handleResume,
+      onPause: _handlePause,
     );
   }
 
   @override
   void onClose() {
-    _liveRefreshTimer?.cancel();
+    _stopLiveRefreshTimer();
     _lifecycleListener?.dispose();
     super.onClose();
+  }
+
+  void _startLiveRefreshTimer() {
+    _liveRefreshTimer?.cancel();
+    _liveRefreshTimer = Timer.periodic(
+      _liveRefreshInterval,
+      (_) => refreshAllLiveStatus(),
+    );
+  }
+
+  void _stopLiveRefreshTimer() {
+    _liveRefreshTimer?.cancel();
+    _liveRefreshTimer = null;
+  }
+
+  /// 포그라운드 복귀: 즉시 1회 갱신하고 주기 폴링을 재개한다.
+  void _handleResume() {
+    refreshAllLiveStatus();
+    _startLiveRefreshTimer();
+  }
+
+  /// 백그라운드 진입: 주기 폴링을 멈춰 자원 낭비를 막는다.
+  void _handlePause() {
+    _stopLiveRefreshTimer();
   }
 
   RxString selectedGroup = ''.obs;
