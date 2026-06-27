@@ -20,6 +20,45 @@ jobs:
           channel: stable
           cache: true
 
+      # Firebase 설정 파일은 키를 포함해 gitignore되어 저장소에 없다.
+      # analyze/test는 실제 Firebase 연결이 필요 없으므로 placeholder 스텁을 생성한다.
+      - name: Generate Firebase options stub
+        run: |
+          cat > lib/default_firebase_options.dart <<'EOF'
+          import 'package:firebase_core/firebase_core.dart';
+          import 'package:flutter/foundation.dart';
+
+          // CI 전용 스텁 — 실제 키는 gitignore된 로컬/배포 환경 파일에 있다.
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform {
+              switch (defaultTargetPlatform) {
+                case TargetPlatform.android:
+                  return android;
+                case TargetPlatform.iOS:
+                  return ios;
+                default:
+                  throw UnsupportedError('This platform is not supported');
+              }
+            }
+
+            static const FirebaseOptions android = FirebaseOptions(
+              apiKey: 'ci-stub',
+              appId: '1:0:android:0',
+              messagingSenderId: '0',
+              projectId: 'ci-stub',
+              storageBucket: 'ci-stub.appspot.com',
+            );
+
+            static const FirebaseOptions ios = FirebaseOptions(
+              apiKey: 'ci-stub',
+              appId: '1:0:ios:0',
+              messagingSenderId: '0',
+              projectId: 'ci-stub',
+              storageBucket: 'ci-stub.appspot.com',
+            );
+          }
+          EOF
+
       - name: Install dependencies
         run: flutter pub get
 
