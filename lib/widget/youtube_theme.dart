@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // 밝은 시안 테마 (#30bcec 기반) — YouTube 화면에서 사용
-class AudioTheme {
+class YouTubeTheme {
   // 메인 컬러
   static const Color primary = Color(0xFF30bcec);
   static const Color primaryLight = Color(0xFF7DD3F4);

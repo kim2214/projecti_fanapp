@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
-import 'package:projecti_fan_app/widget/audio_common.dart';
+import 'package:projecti_fan_app/widget/youtube_theme.dart';
 
 class YouTubeVideoCard extends StatelessWidget {
   final YouTubeVideoModel video;
@@ -36,12 +36,12 @@ class YouTubeVideoCard extends StatelessWidget {
             color: context.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AudioTheme.primary.withAlpha(30),
+              color: YouTubeTheme.primary.withAlpha(30),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AudioTheme.primary.withAlpha(15),
+                color: YouTubeTheme.primary.withAlpha(15),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

@@ -3,7 +3,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
-import 'package:projecti_fan_app/widget/audio_common.dart';
+import 'package:projecti_fan_app/widget/youtube_theme.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -68,9 +68,9 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AudioTheme.backgroundLight,
-                  AudioTheme.backgroundMid,
-                  AudioTheme.background,
+                  YouTubeTheme.backgroundLight,
+                  YouTubeTheme.backgroundMid,
+                  YouTubeTheme.background,
                 ],
                 stops: [0.0, 0.5, 1.0],
               ),

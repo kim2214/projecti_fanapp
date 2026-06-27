@@ -1,0 +1,35 @@
+name: CI
+
+# PR과 master 푸시에서 정적 분석·테스트를 자동 실행해 회귀를 막는다.
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 로컬 개발 환경(Flutter 3.44.2 stable / Dart 3.12.2)과 동일하게 고정한다.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.2
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 포맷 위반은 빌드 실패 대신 경고로만 남긴다 (스타일은 차단 사유가 아님).
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+        continue-on-error: true
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
