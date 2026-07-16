@@ -15,9 +15,11 @@ description: 멤버 또는 그룹을 추가/수정/삭제할 때 흩어진 동�
    - `key`: Firestore 문서 키이자 shared_preferences 최애 저장 키 (변경 시 기존 최애 데이터 무효화 주의)
    - `chzzkBroadcastId`: 치지직 채널 ID (라이브 폴링용)
    - `youtubeChannelId`: `UC...` 형식 (RSS 피드용)
-2. **`functions/index.js`** — `MEMBER_NAMES` 맵 (`key` → 표시 이름). 스케줄 푸시
-   알림 문구에 쓰인다. dart 카탈로그의 key/name과 **정확히 일치**해야 한다.
-   수정 후 Cloud Functions 재배포 필요: `firebase deploy --only functions`.
+2. **`functions/index.js`** — `MEMBER_CATALOG` 배열 (`key`/`name`/`group`/
+   `broadcastId`). 스케줄 푸시(`MEMBER_NAMES`는 여기서 파생)와 서버 라이브
+   폴링([[chzzk-live-polling]])이 함께 쓴다. dart 카탈로그의 key/name/group/
+   `chzzkBroadcastId`와 **정확히 일치**해야 한다. 수정 후 재배포 필요:
+   `firebase deploy --only functions`.
 3. **Firestore 데이터** — 멤버 프로필 문서(`honeyz/{key}` 또는 `acaxia/{key}`)와
    스케줄 문서(`schedule/{key}` 또는 `schedule_acaxia/{key}`). 콘솔/Admin SDK로
    추가. 자세한 스키마는 [[firestore-data]] 참고.

@@ -1,12 +1,17 @@
 ---
 name: chzzk-live-polling
-description: 치지직(CHZZK) 비공식 폴링 API로 멤버 라이브 상태를 가져오는 구조·주기·에러 처리·라이프사이클을 다룬다. "라이브 상태", "치지직 폴링", "방송 중 여부", "시청자 수", "통합 LIVE", "폴링 주기/타임아웃", "chzzk API 응답 변경" 관련 작업 시 사용.
+description: 치지직(CHZZK) 비공식 폴링 API로 멤버 라이브 상태를 가져오는 구조·주기·에러 처리·라이프사이클을 다룬다(클라 포그라운드 + 서버 폴링/라이브 푸시). "라이브 상태", "치지직 폴링", "방송 중 여부", "시청자 수", "통합 LIVE", "라이브 알림/푸시", "폴링 주기/타임아웃", "chzzk API 응답 변경" 관련 작업 시 사용.
 ---
 
 # 치지직(CHZZK) 라이브 폴링
 
-멤버별 실시간 방송 상태는 **치지직 비공식 polling 엔드포인트**를 주기적으로
-호출해 얻는다. 로직은 대부분 `lib/controllers/global_controller.dart`에 있다.
+멤버별 실시간 방송 상태는 **치지직 비공식 polling 엔드포인트**를 호출해 얻는다.
+폴링 경로가 **두 곳**이며 로직·에러 정책을 공유한다:
+
+- **클라 포그라운드 폴링** — `lib/controllers/global_controller.dart`.
+  화면에 보이는 라이브 현황 갱신용(2분 주기, 포그라운드만).
+- **서버 폴링** — `functions/index.js`의 `pollLiveStatus`(1분 주기 스케줄러).
+  백그라운드 라이브 감지 → 방송 시작 푸시. 아래 "서버 폴링" 절 참고.
 
 ## 엔드포인트
 
@@ -73,6 +78,34 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 
 `liveMembersAcrossGroups`: 양쪽 그룹에서 `isLive`인 멤버만 모아 **시청자 수
 내림차순**(null=0, 뒤로) 정렬. 최애 우선 노출은 화면단(live_page)에서 처리.
+
+## 서버 폴링 & 라이브 방송 시작 푸시
+
+`functions/index.js`의 `pollLiveStatus`(Cloud Scheduler, 1분, `asia-northeast3`,
+`maxInstances: 1`)가 백그라운드 라이브 감지를 담당한다. 멤버 정보는
+`MEMBER_CATALOG`에 있으며 dart 카탈로그와 동기화 필수([[add-member]]).
+
+- **상태 저장**: 집계 문서 `live_status/current`(멤버별 `status`/`liveTitle`/
+  `concurrentUserCount`/`openDate`/`lastNotifiedOpenDate`)에 **주기당 읽기1·쓰기1**.
+- **전이 감지**: 직전 `CLOSE`(또는 미기록) → `OPEN`일 때만 알림. **`openDate`를
+  방송 식별자**로 써서 상태가 흔들려도(플랩) 같은 방송엔 1회만 발송.
+- **실패 시 직전 상태 유지** → 거짓 CLOSE→OPEN 알림 방지 (에러 정책은 클라와 동일).
+- **발송**: 멤버별 토픽 `live_<memberKey>`, 채널 `live_channel`,
+  `data: {type:'live', broadcastId, memberKey}`.
+
+### 클라이언트 수신 (`notification_controller.dart`)
+
+- `live_channel` 채널 생성(스케줄과 분리).
+- 구독은 **최애 목록을 따라간다** — `FavoritesController`가 로드/토글 시
+  `syncLiveSubscriptions(keys)`를 호출, 영속 집합과 diff해 `live_<key>` 추가/해제.
+- 알림 탭 → `chzzk.naver.com/live/{broadcastId}` 이동 (포그라운드 로컬 알림은
+  payload, 백그라운드/종료는 `onMessageOpenedApp`/`getInitialMessage`).
+
+### 밴/차단 완화
+
+단일 egress IP 집중이 주 리스크. 주기 60초 이상 유지, 브라우저 UA 지정,
+429/403 시 백오프, 지속 실패 시 로그 알림. 서버가 막혀도 **클라 포그라운드
+폴링이 폴백**으로 남는다.
 
 ## 검증
 
