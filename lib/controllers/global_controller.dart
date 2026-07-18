@@ -87,10 +87,14 @@ class GlobalController extends GetxController {
 
   RxList<ScheduleModel> honeyzScheduleList = <ScheduleModel>[].obs;
   RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;
-  RxList<StreamerModel> honeyz = <StreamerModel>[].obs;
-  RxList<StreamerModel> acaxia = <StreamerModel>[].obs;
-  RxList<LiveCheckModel> honeyzliveCheckList = <LiveCheckModel>[].obs;
-  RxList<LiveCheckModel> acaxialiveCheckList = <LiveCheckModel>[].obs;
+
+  // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
+  // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
+  //  문서/조회 결과가 없는 멤버는 맵에 없을 뿐이며, 소비 측은 "없음 = 비방송"으로 다룬다.)
+  RxMap<String, StreamerModel> honeyz = <String, StreamerModel>{}.obs;
+  RxMap<String, StreamerModel> acaxia = <String, StreamerModel>{}.obs;
+  RxMap<String, LiveCheckModel> honeyzLiveStatus = <String, LiveCheckModel>{}.obs;
+  RxMap<String, LiveCheckModel> acaxiaLiveStatus = <String, LiveCheckModel>{}.obs;
 
   // 멤버 정적 카탈로그 — 멤버 1명의 모든 메타데이터를 Member 객체 하나로 묶는다.
   // (기존 *Sequence/*NameList/*AssetName/*BrodcastIDList 병렬 리스트를 대체)
@@ -182,11 +186,11 @@ class GlobalController extends GetxController {
   RxList<ScheduleModel> _scheduleCacheOf(String group) =>
       group == 'honeyz' ? honeyzScheduleList : acaxiaScheduleList;
 
-  RxList<StreamerModel> _streamerCacheOf(String group) =>
+  RxMap<String, StreamerModel> _streamerCacheOf(String group) =>
       group == 'honeyz' ? honeyz : acaxia;
 
-  RxList<LiveCheckModel> _liveCacheOf(String group) =>
-      group == 'honeyz' ? honeyzliveCheckList : acaxialiveCheckList;
+  RxMap<String, LiveCheckModel> _liveCacheOf(String group) =>
+      group == 'honeyz' ? honeyzLiveStatus : acaxiaLiveStatus;
 
   /// 컬렉션의 모든 문서를 문서 ID(= 멤버 key) 기준 Map으로 반환.
   /// 멤버-문서 매칭을 O(n²) 중첩 루프 대신 O(1) 조회로 처리하기 위함.
@@ -215,24 +219,22 @@ class GlobalController extends GetxController {
     return cache;
   }
 
-  Future<List<StreamerModel>> loadStreamerFireStore(
+  Future<Map<String, StreamerModel>> loadStreamerFireStore(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
-    if (group != 'honeyz' && group != 'acaxia') return [];
+    if (group != 'honeyz' && group != 'acaxia') return {};
 
     final cache = _streamerCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
       // 스트리머 컬렉션 이름은 그룹 이름과 동일하다.
       final docsByKey = await _fetchDocsByKey(group);
-      // 카탈로그(membersOf)와 순서·길이가 1:1 정렬되도록 key로 매칭한다.
-      // 문서가 없는 멤버는 빈 모델로 채워 인덱스 정렬을 보장한다 — UI는 이름/프로필을
-      // 카탈로그에서 가져오므로(group_page) 빈 모델도 안전하게 렌더된다.
-      cache.value = [
+      // member.key로 조회하는 맵으로 보관한다. 문서가 없는 멤버는 맵에 없을 뿐이며,
+      // UI는 이름/프로필을 카탈로그에서 가져오므로(group_page) 누락돼도 안전하다.
+      cache.value = {
         for (final member in membersOf(group))
-          docsByKey[member.key] != null
-              ? StreamerModel.fromJson(docsByKey[member.key]!)
-              : StreamerModel.empty(),
-      ];
+          if (docsByKey[member.key] != null)
+            member.key: StreamerModel.fromJson(docsByKey[member.key]!),
+      };
     }
     return cache;
   }
@@ -283,9 +285,10 @@ class GlobalController extends GetxController {
     return null;
   }
 
-  Future<List<LiveCheckModel>> liveCheck({bool forceRefresh = false}) async {
+  Future<Map<String, LiveCheckModel>> liveCheck(
+      {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
-    if (group != 'honeyz' && group != 'acaxia') return [];
+    if (group != 'honeyz' && group != 'acaxia') return {};
 
     final cache = _liveCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
@@ -332,8 +335,8 @@ class GlobalController extends GetxController {
 
       final members =
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
-      _liveCacheOf('honeyz').value = liveListFromAggregate('honeyz', members);
-      _liveCacheOf('acaxia').value = liveListFromAggregate('acaxia', members);
+      _liveCacheOf('honeyz').value = liveStatusFromAggregate('honeyz', members);
+      _liveCacheOf('acaxia').value = liveStatusFromAggregate('acaxia', members);
       return true;
     } catch (e, st) {
       // 일시적 오류 등은 조용히 폴백 (치지직 직접 폴링이 폴백으로 남는다).
@@ -347,37 +350,37 @@ class GlobalController extends GetxController {
     }
   }
 
-  /// 서버 집계 members 맵을 그룹별 라이브 상태 리스트로 변환한다.
-  /// 카탈로그(`membersOf`) 순서·길이와 1:1이 되도록, 문서에 없는 멤버는
-  /// `CLOSE` 기본값으로 채워 인덱스 정렬 불변식을 지킨다.
+  /// 서버 집계 members 맵을 `member.key → 상태` 맵으로 변환한다.
+  /// 문서에 없는(또는 형식이 맞지 않는) 멤버는 결과에 넣지 않는다 — 소비 측이
+  /// "없음 = 비방송"으로 다루므로 인덱스 정렬 불변식 없이도 안전하다.
   /// (Firestore 읽기와 분리된 순수 변환 — 테스트 대상)
   @visibleForTesting
-  List<LiveCheckModel> liveListFromAggregate(
+  Map<String, LiveCheckModel> liveStatusFromAggregate(
       String group, Map<String, dynamic> members) {
-    return [
+    return {
       for (final member in membersOf(group))
-        members[member.key] is Map
-            ? LiveCheckModel.fromJson(
-                (members[member.key] as Map).cast<String, dynamic>())
-            : LiveCheckModel(status: 'CLOSE', liveTitle: null),
-    ];
+        if (members[member.key] is Map)
+          member.key: LiveCheckModel.fromJson(
+              (members[member.key] as Map).cast<String, dynamic>()),
+    };
   }
 
-  /// 지정한 그룹의 라이브 상태를 새로 조회해서 교체
+  /// 지정한 그룹의 라이브 상태를 새로 조회해서 교체.
+  /// 조회에 실패한 멤버는 `CLOSE` 기본값으로 채운다 — 폴링을 한 번이라도 시도하면
+  /// 맵이 비지 않아, UI가 "로딩 중(맵 비어있음)"과 "전원 비방송"을 구분할 수 있다.
   Future<void> _refreshGroupLiveStatus(String group) async {
     if (group != 'honeyz' && group != 'acaxia') return;
 
-    final liveCheckList = _liveCacheOf(group);
-
+    final members = membersOf(group);
     final results = await Future.wait(
-      membersOf(group).map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
+      members.map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
-    // 멤버 순서와 인덱스가 어긋나지 않도록 실패한 항목은 기본값으로 채움
-    liveCheckList.value = [
-      for (final result in results)
-        result ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
-    ];
+    _liveCacheOf(group).value = {
+      for (var i = 0; i < members.length; i++)
+        members[i].key:
+            results[i] ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
+    };
   }
 
   /// 두 그룹을 통합한 현재 방송 중(LIVE) 멤버 목록.
@@ -385,27 +388,25 @@ class GlobalController extends GetxController {
   List<LiveMemberEntry> get liveMembersAcrossGroups {
     final entries = <LiveMemberEntry>[];
 
-    void collect(List<Member> members, List<LiveCheckModel> statuses) {
-      // 폴링 전이면 statuses가 비어 있을 수 있으므로 최소 길이까지만 안전하게 순회
-      final count =
-          members.length < statuses.length ? members.length : statuses.length;
-      for (int i = 0; i < count; i++) {
-        if (statuses[i].isLive) {
-          final member = members[i];
+    void collect(
+        List<Member> members, Map<String, LiveCheckModel> statuses) {
+      for (final member in members) {
+        final status = statuses[member.key];
+        if (status != null && status.isLive) {
           entries.add(LiveMemberEntry(
             group: member.group,
             memberKey: member.key,
             memberName: member.name,
             assetPath: member.profileAssetPath,
             broadcastId: member.chzzkBroadcastId,
-            status: statuses[i],
+            status: status,
           ));
         }
       }
     }
 
-    collect(honeyzMembers, honeyzliveCheckList);
-    collect(acaxiaMembers, acaxialiveCheckList);
+    collect(honeyzMembers, honeyzLiveStatus);
+    collect(acaxiaMembers, acaxiaLiveStatus);
 
     // 시청자 수 내림차순 (null은 0으로 취급해 뒤로)
     entries.sort((a, b) => (b.status.concurrentUserCount ?? 0)
@@ -415,21 +416,20 @@ class GlobalController extends GetxController {
   }
 
   /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
-  /// Member(이름/에셋)와 StreamerModel(생일)을 인덱스로 매칭한다.
+  /// Member(이름/에셋)와 StreamerModel(생일)을 member.key로 매칭한다.
   List<BirthdayEntry> upcomingBirthdays(String group) {
-    final members = membersOf(group);
     final streamers = group == 'honeyz' ? honeyz : acaxia;
-    final count =
-        members.length < streamers.length ? members.length : streamers.length;
 
     final entries = <BirthdayEntry>[];
-    for (int i = 0; i < count; i++) {
-      final days = streamers[i].daysUntilBirthday;
-      final label = streamers[i].birthdayLabel;
+    for (final member in membersOf(group)) {
+      final streamer = streamers[member.key];
+      if (streamer == null) continue;
+      final days = streamer.daysUntilBirthday;
+      final label = streamer.birthdayLabel;
       if (days == null || label == null) continue;
       entries.add(BirthdayEntry(
-        memberName: members[i].name,
-        assetPath: members[i].profileAssetPath,
+        memberName: member.name,
+        assetPath: member.profileAssetPath,
         daysUntil: days,
         dateLabel: label,
       ));

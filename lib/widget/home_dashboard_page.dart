@@ -281,14 +281,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   Widget _buildLiveSection(
       bool isHoneyz, Color themeColor, Color themeColorDark) {
-    final liveStatusList = isHoneyz
-        ? _globalController.honeyzliveCheckList
-        : _globalController.acaxialiveCheckList;
+    final liveStatus = isHoneyz
+        ? _globalController.honeyzLiveStatus
+        : _globalController.acaxiaLiveStatus;
     final members =
         _globalController.membersOf(_globalController.selectedGroup.value);
 
-    // 아직 라이브 상태를 불러오는 중
-    if (liveStatusList.isEmpty) {
+    // 아직 라이브 상태를 불러오는 중 (폴링 전이면 맵이 비어 있음)
+    if (liveStatus.isEmpty) {
       return Container(
         height: 120,
         margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -305,13 +305,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       );
     }
 
-    // 방송 중인 멤버 인덱스
-    final liveIndexes = [
-      for (int i = 0; i < liveStatusList.length && i < members.length; i++)
-        if (liveStatusList[i].isLive) i
+    // 방송 중인 멤버 (카탈로그 순서, key로 상태 조회)
+    final liveMembers = [
+      for (final member in members)
+        if (liveStatus[member.key]?.isLive == true) member
     ];
 
-    if (liveIndexes.isEmpty) {
+    if (liveMembers.isEmpty) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
         padding: const EdgeInsets.symmetric(vertical: 28),
@@ -352,12 +352,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: liveIndexes.length,
+        itemCount: liveMembers.length,
         itemBuilder: (context, i) {
-          final index = liveIndexes[i];
-          final member = members[index];
+          final member = liveMembers[i];
           return _buildLiveCard(
-            status: liveStatusList[index],
+            status: liveStatus[member.key]!,
             memberName: member.name,
             assetPath: member.profileAssetPath,
             broadcastId: member.chzzkBroadcastId,

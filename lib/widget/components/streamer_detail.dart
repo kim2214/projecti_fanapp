@@ -57,10 +57,9 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
   LiveCheckModel? get _liveStatus {
-    final list =
-        _isHoneyz ? _global.honeyzliveCheckList : _global.acaxialiveCheckList;
-    if (_memberIndex < 0 || _memberIndex >= list.length) return null;
-    return list[_memberIndex];
+    final statuses =
+        _isHoneyz ? _global.honeyzLiveStatus : _global.acaxiaLiveStatus;
+    return statuses[widget.memberKey];
   }
 
   @override

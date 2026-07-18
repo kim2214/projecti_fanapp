@@ -3,6 +3,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/streamer_card.dart';
 
 class GroupPageWidget extends StatefulWidget {
@@ -151,16 +152,18 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
   }
 
   Widget _buildContent(bool isHoneyz, Color themeColor, Color themeColorDark) {
-    final members =
-        isHoneyz ? _globalController.honeyz : _globalController.acaxia;
-    final liveStatusList = isHoneyz
-        ? _globalController.honeyzliveCheckList
-        : _globalController.acaxialiveCheckList;
+    // 카탈로그(membersOf)가 순서·구성의 단일 소스. 프로필/라이브 상태는 key로 조회.
     final catalog =
         _globalController.membersOf(_globalController.selectedGroup.value);
+    final streamers =
+        isHoneyz ? _globalController.honeyz : _globalController.acaxia;
+    final liveStatus = isHoneyz
+        ? _globalController.honeyzLiveStatus
+        : _globalController.acaxiaLiveStatus;
 
-    // 라이브 체크 데이터가 없을 경우를 위한 기본값
+    // 데이터가 없는 멤버를 위한 기본값
     final defaultLiveStatus = LiveCheckModel(status: 'CLOSE', liveTitle: null);
+    final defaultStreamer = StreamerModel.empty();
 
     return RefreshIndicator(
       color: themeColorDark,
@@ -171,7 +174,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
           // 헤더
           SliverToBoxAdapter(
             child: _buildHeader(
-                isHoneyz, themeColor, themeColorDark, members.length),
+                isHoneyz, themeColor, themeColorDark, catalog.length),
           ),
           // 멤버 그리드
           SliverPadding(
@@ -185,26 +188,19 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  // 인덱스 범위 체크
-                  if (index >= members.length || index >= catalog.length) {
-                    return const SizedBox.shrink();
-                  }
-                  // 라이브 상태 데이터가 없으면 기본값 사용
-                  final status = index < liveStatusList.length
-                      ? liveStatusList[index]
-                      : defaultLiveStatus;
+                  final member = catalog[index];
                   return StreamerCard(
                     index: index,
-                    streamer: members[index],
-                    status: status,
-                    assetName: catalog[index].assetName,
-                    memberName: catalog[index].name,
+                    streamer: streamers[member.key] ?? defaultStreamer,
+                    status: liveStatus[member.key] ?? defaultLiveStatus,
+                    assetName: member.assetName,
+                    memberName: member.name,
                     themeColor: themeColor,
                     themeColorDark: themeColorDark,
                     isHoneyz: isHoneyz,
                   );
                 },
-                childCount: members.length,
+                childCount: catalog.length,
               ),
             ),
           ),

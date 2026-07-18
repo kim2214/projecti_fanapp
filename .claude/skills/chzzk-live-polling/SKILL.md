@@ -52,15 +52,21 @@ URL 형식 변경 시 함께 수정).
 - `refreshAllLiveStatus()` — 허니즈+아카시아 동시 (통합 LIVE 화면용).
 - `liveCheck({forceRefresh})` — 캐시 우선, 비었거나 강제 시 갱신.
 
-### 인덱스 정렬 불변식 (깨뜨리지 말 것)
+### key 기반 매칭 (member.key로 조회)
 
-라이브 상태 리스트는 **`membersOf(group)` 카탈로그와 순서·길이가 1:1**로 맞아야
-한다. UI가 인덱스로 멤버↔상태를 매칭하기 때문이다.
+라이브 상태는 `RxMap<String, LiveCheckModel>`(`honeyzLiveStatus`/`acaxiaLiveStatus`)에
+**`member.key` → 상태**로 보관한다. 카탈로그와 **인덱스로 페어링하지 않으므로**,
+멤버 추가·순서 변경에도 어긋나지 않는다. (스트리머 프로필도 동일하게
+`honeyz`/`acaxia` = `RxMap<String, StreamerModel>`.)
 
-- `_fetchLiveStatus`가 `null`을 반환해도 `_refreshGroupLiveStatus`가
-  `LiveCheckModel(status: 'CLOSE')` 기본값으로 채워 **인덱스가 밀리지 않게** 한다.
-- `liveMembersAcrossGroups`는 폴링 전 리스트가 비어 있을 수 있어
-  `min(members, statuses)` 길이까지만 안전하게 순회한다.
+- **소비 규칙**: 맵에 없는 멤버는 "비방송(CLOSE)"으로 다룬다
+  (`status?.isLive == true`인 멤버만 방송 중). `liveMembersAcrossGroups`·
+  홈 대시보드·`group_page`·`streamer_detail` 모두 카탈로그를 순회하며 key로 상태를 조회한다.
+- **직접 폴링**(`_refreshGroupLiveStatus`)은 조회 실패 멤버도 `CLOSE`로 채운다 —
+  폴링을 한 번이라도 시도하면 맵이 비지 않아, UI가 "로딩 중(맵 비어있음)"과
+  "전원 비방송"을 구분할 수 있다.
+- **서버 집계 변환**(`liveStatusFromAggregate`)은 문서에 있는 멤버만 맵에 넣는다
+  (없음 = 비방송). 순수 함수라 `test/global_controller_test.dart`에서 검증한다.
 
 ## 에러 처리 정책 (노이즈 vs 계약 변경 구분)
 
@@ -110,5 +116,5 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 ## 검증
 
 폴링/파싱 로직 수정 후 [[flutter-check]]로 테스트. 순수 파생 로직(정렬·필터·
-인덱스 페어링)은 `test/global_controller_test.dart`가 Firebase/네트워크 없이
-RxList에 값을 주입해 검증하므로, 여기 기대값도 함께 맞춘다.
+key 매칭·집계 변환)은 `test/global_controller_test.dart`가 Firebase/네트워크 없이
+`RxMap`에 값을 주입해 검증하므로, 여기 기대값도 함께 맞춘다.
