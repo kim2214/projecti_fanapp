@@ -30,8 +30,14 @@ class Member {
   /// 에셋 이름 (현재는 key와 동일)
   String get assetName => key;
 
+  /// 프로필 이미지 에셋 경로를 group/key로 만든다.
+  /// (Member 인스턴스가 없어도 group·key만 있으면 만들 수 있게 static 제공 —
+  ///  에셋 경로 규칙을 이 한 곳에 둔다.)
+  static String profileAssetPathOf(String group, String key) =>
+      'assets/$group/${key}_profile.png';
+
   /// 프로필 이미지 에셋 경로 (예: 'assets/honeyz/ohwayo_profile.png')
-  String get profileAssetPath => 'assets/$group/${key}_profile.png';
+  String get profileAssetPath => profileAssetPathOf(group, key);
 
   bool get isHoneyz => group == 'honeyz';
 

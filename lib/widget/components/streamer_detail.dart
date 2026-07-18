@@ -210,9 +210,9 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 ),
               ),
               child: Image.asset(
-                _isHoneyz
-                    ? 'assets/honeyz/${widget.pjiMember.profileName}_profile.png'
-                    : 'assets/acaxia/${widget.pjiMember.profileName}_profile.png',
+                // 에셋 경로는 카탈로그(group/key)에서 파생한다 — Firestore profileName에
+                // 의존하지 않아 필드 누락 시에도 이미지가 깨지지 않는다.
+                Member.profileAssetPathOf(widget.group, widget.memberKey),
                 fit: BoxFit.cover,
               ),
             ),

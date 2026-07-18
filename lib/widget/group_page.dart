@@ -190,7 +190,6 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                 (context, index) {
                   final member = catalog[index];
                   return StreamerCard(
-                    index: index,
                     streamer: streamers[member.key] ?? defaultStreamer,
                     status: liveStatus[member.key] ?? defaultLiveStatus,
                     assetName: member.assetName,

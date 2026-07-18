@@ -7,7 +7,6 @@ import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 
 class StreamerCard extends StatelessWidget {
-  final int index;
   final StreamerModel streamer;
   final LiveCheckModel status;
   final String assetName;
@@ -18,7 +17,6 @@ class StreamerCard extends StatelessWidget {
 
   const StreamerCard({
     super.key,
-    required this.index,
     required this.streamer,
     required this.status,
     required this.assetName,

@@ -40,7 +40,8 @@ class StreamerModel {
   Map<String, dynamic> toJson() {
     return {
       "name": name,
-      "profileName": profileName,
+      // fromJson과 동일한 키를 써서 라운드트립이 깨지지 않게 한다.
+      "profile_name": profileName,
       "youtube": youtube,
       "chzzk": chzzk,
       "twitter": twitter,
