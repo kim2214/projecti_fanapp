@@ -26,6 +26,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 서버(pollLiveStatus)가 1분 주기로 집계하는 라이브 상태. 클라는 읽기 전용으로
+    // 이 문서를 우선 사용해 치지직 직접 폴링을 대체한다(부하·차단 위험 감소, 더 신선).
+    // 쓰기는 Admin SDK(Cloud Function)만 하므로 클라 쓰기는 차단.
+    match /live_status/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // 그 외 모든 경로는 기본 차단 (새 컬렉션은 명시적으로 허용할 것)
     match /{document=**} {
       allow read, write: if false;

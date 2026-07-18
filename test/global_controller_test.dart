@@ -84,6 +84,53 @@ void main() {
     });
   });
 
+  group('liveListFromAggregate', () {
+    test('카탈로그 순서·길이와 1:1로 채워지고, 문서에 없는 멤버는 CLOSE', () {
+      final c = GlobalController();
+      // honeyz 6명 중 담유이(index 2)만 방송 중
+      final members = <String, dynamic>{
+        'damyui': {
+          'status': 'OPEN',
+          'liveTitle': '방송 제목',
+          'concurrentUserCount': 1234,
+          'liveCategoryValue': 'Just Chatting',
+          'openDate': '2026-07-18 20:00:00',
+        },
+      };
+
+      final result = c.liveListFromAggregate('honeyz', members);
+
+      // 길이는 항상 카탈로그(6명)와 동일해야 인덱스 정렬이 유지된다.
+      expect(result.length, GlobalController.honeyzMembers.length);
+      // index 2(담유이)만 OPEN, 나머지는 CLOSE
+      expect(result[2].isLive, isTrue);
+      expect(result[2].liveTitle, '방송 제목');
+      expect(result[2].concurrentUserCount, 1234);
+      expect(result[2].liveCategoryValue, 'Just Chatting');
+      for (var i = 0; i < result.length; i++) {
+        if (i != 2) expect(result[i].isLive, isFalse);
+      }
+    });
+
+    test('concurrentUserCount가 num(double)로 와도 int로 변환된다', () {
+      final c = GlobalController();
+      final members = <String, dynamic>{
+        'ayauke': {'status': 'OPEN', 'concurrentUserCount': 500.0},
+      };
+
+      final result = c.liveListFromAggregate('honeyz', members);
+      // 아야 = honeyz index 1
+      expect(result[1].concurrentUserCount, 500);
+    });
+
+    test('빈 맵이면 전원 CLOSE지만 길이는 카탈로그와 동일', () {
+      final c = GlobalController();
+      final result = c.liveListFromAggregate('acaxia', const {});
+      expect(result.length, GlobalController.acaxiaMembers.length);
+      expect(result.every((s) => !s.isLive), isTrue);
+    });
+  });
+
   group('upcomingBirthdays', () {
     test('생일 미설정 멤버는 제외하고, 설정된 멤버만 반환', () {
       final c = GlobalController();

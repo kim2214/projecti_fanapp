@@ -26,6 +26,14 @@ class GlobalController extends GetxController {
   // 네트워크가 멈췄을 때 무한 대기하지 않도록 하는 요청 타임아웃.
   // 2분마다 폴링되므로, 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을 방지한다.
   static const Duration _requestTimeout = Duration(seconds: 8);
+
+  // 서버(Cloud Function pollLiveStatus)가 1분 주기로 11명 상태를 집계하는 문서.
+  // 클라는 이 문서를 우선 읽어 치지직 직접 폴링(클라 수 × 11요청)을 대체한다.
+  static const String _liveStatusDocPath = 'live_status/current';
+
+  // 집계 문서가 이보다 오래되면(서버 폴링 중단 의심) 치지직 직접 폴링으로 폴백한다.
+  // 서버는 1분 주기라 정상이면 1분 미만이며, 몇 번 놓쳐도 견디도록 여유를 둔다.
+  static const Duration _serverStatusMaxAge = Duration(minutes: 5);
   Timer? _liveRefreshTimer;
   AppLifecycleListener? _lifecycleListener;
 
@@ -286,17 +294,73 @@ class GlobalController extends GetxController {
     return cache;
   }
 
-  /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체
+  /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체.
+  /// 서버 집계 문서는 양쪽 그룹을 한 번에 채우므로, 성공 시 그대로 반환하고
+  /// 실패(문서 없음/오래됨/오류) 시에만 선택 그룹을 직접 폴링한다.
   Future<void> refreshLiveStatus() async {
+    if (await _refreshFromServerAggregate()) return;
     await _refreshGroupLiveStatus(selectedGroup.value);
   }
 
-  /// 양쪽 그룹(허니즈+아카시아)의 라이브 상태를 동시에 갱신 (통합 LIVE 화면용)
+  /// 양쪽 그룹(허니즈+아카시아)의 라이브 상태를 동시에 갱신 (통합 LIVE 화면용).
+  /// 서버 집계 우선, 실패 시 두 그룹을 직접 폴링으로 폴백.
   Future<void> refreshAllLiveStatus() async {
+    if (await _refreshFromServerAggregate()) return;
     await Future.wait([
       _refreshGroupLiveStatus('honeyz'),
       _refreshGroupLiveStatus('acaxia'),
     ]);
+  }
+
+  /// 서버 집계 문서(`live_status/current`)에서 양쪽 그룹 상태를 채운다.
+  ///
+  /// 성공하면 true. 문서가 없거나(서버 미배포), 너무 오래됐거나(서버 폴링 중단),
+  /// 조회에 실패하면 false를 반환해 호출부가 치지직 직접 폴링으로 폴백하게 한다.
+  Future<bool> _refreshFromServerAggregate() async {
+    try {
+      final snapshot =
+          await _fireStore.doc(_liveStatusDocPath).get().timeout(_requestTimeout);
+      final data = snapshot.data();
+      if (data == null) return false;
+
+      // 서버 폴링이 멈췄으면(문서가 오래됨) 신선한 직접 폴링으로 폴백한다.
+      final updatedAt = data['updatedAt'];
+      if (updatedAt is Timestamp &&
+          DateTime.now().difference(updatedAt.toDate()) > _serverStatusMaxAge) {
+        return false;
+      }
+
+      final members =
+          (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
+      _liveCacheOf('honeyz').value = liveListFromAggregate('honeyz', members);
+      _liveCacheOf('acaxia').value = liveListFromAggregate('acaxia', members);
+      return true;
+    } catch (e, st) {
+      // 일시적 오류 등은 조용히 폴백 (치지직 직접 폴링이 폴백으로 남는다).
+      developer.log(
+        '서버 라이브 집계 조회 실패 → 치지직 직접 폴링으로 폴백',
+        name: 'GlobalController',
+        error: e,
+        stackTrace: st,
+      );
+      return false;
+    }
+  }
+
+  /// 서버 집계 members 맵을 그룹별 라이브 상태 리스트로 변환한다.
+  /// 카탈로그(`membersOf`) 순서·길이와 1:1이 되도록, 문서에 없는 멤버는
+  /// `CLOSE` 기본값으로 채워 인덱스 정렬 불변식을 지킨다.
+  /// (Firestore 읽기와 분리된 순수 변환 — 테스트 대상)
+  @visibleForTesting
+  List<LiveCheckModel> liveListFromAggregate(
+      String group, Map<String, dynamic> members) {
+    return [
+      for (final member in membersOf(group))
+        members[member.key] is Map
+            ? LiveCheckModel.fromJson(
+                (members[member.key] as Map).cast<String, dynamic>())
+            : LiveCheckModel(status: 'CLOSE', liveTitle: null),
+    ];
   }
 
   /// 지정한 그룹의 라이브 상태를 새로 조회해서 교체

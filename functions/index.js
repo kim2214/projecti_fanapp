@@ -116,6 +116,8 @@ async function fetchLiveStatus(broadcastId) {
       status: content.status ?? "CLOSE",
       liveTitle: content.liveTitle ?? null,
       concurrentUserCount: content.concurrentUserCount ?? null,
+      // 클라 홈 대시보드 라이브 카드가 카테고리를 표시하므로 함께 집계한다.
+      liveCategoryValue: content.liveCategoryValue ?? null,
       openDate: content.openDate ?? null,
     };
   } catch (e) {
@@ -166,6 +168,7 @@ exports.pollLiveStatus = onSchedule(
         status: r.status,
         liveTitle: r.liveTitle,
         concurrentUserCount: r.concurrentUserCount,
+        liveCategoryValue: r.liveCategoryValue,
         openDate: r.openDate,
         lastNotifiedOpenDate: shouldNotify ? r.openDate : (p.lastNotifiedOpenDate ?? null),
         updatedAt: FieldValue.serverTimestamp(),

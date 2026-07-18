@@ -17,11 +17,12 @@ class LiveCheckModel {
 
   factory LiveCheckModel.fromJson(Map<String, dynamic> json) {
     return LiveCheckModel(
-      liveTitle: json["liveTitle"],
-      status: json["status"],
-      concurrentUserCount: json["concurrentUserCount"],
-      liveCategoryValue: json["liveCategoryValue"],
-      openDate: json["openDate"],
+      liveTitle: json["liveTitle"] as String?,
+      status: json["status"] as String?,
+      // 치지직 JSON은 int지만 Firestore 집계 문서에서 오면 num일 수 있어 방어적으로 변환.
+      concurrentUserCount: (json["concurrentUserCount"] as num?)?.toInt(),
+      liveCategoryValue: json["liveCategoryValue"] as String?,
+      openDate: json["openDate"] as String?,
     );
   }
 
