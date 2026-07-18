@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:xml/xml.dart';
@@ -54,12 +55,7 @@ class YouTubeService {
 
         if (response.statusCode == 200) {
           // 한글 제목 깨짐 방지를 위해 bodyBytes를 UTF-8로 디코딩
-          final document = XmlDocument.parse(utf8.decode(response.bodyBytes));
-          return document
-              .findAllElements('entry')
-              .map(_parseEntry)
-              .where((video) => video.videoId != null)
-              .toList();
+          return parseFeed(utf8.decode(response.bodyBytes));
         }
         lastError = YouTubeServiceException(
             '영상 목록을 가져올 수 없습니다 (${response.statusCode})');
@@ -73,8 +69,21 @@ class YouTubeService {
     throw lastError;
   }
 
+  /// RSS 피드 XML(body 문자열)을 영상 목록으로 파싱한다.
+  /// 네트워크와 분리된 순수 파서 — videoId가 없는 엔트리는 제외한다.
+  /// (외부 피드 형식 변경이 가장 잘 터지는 지점이라 단위 테스트로 검증한다.)
+  @visibleForTesting
+  static List<YouTubeVideoModel> parseFeed(String xmlBody) {
+    final document = XmlDocument.parse(xmlBody);
+    return document
+        .findAllElements('entry')
+        .map(_parseEntry)
+        .where((video) => video.videoId != null)
+        .toList();
+  }
+
   /// RSS entry -> YouTubeVideoModel
-  YouTubeVideoModel _parseEntry(XmlElement entry) {
+  static YouTubeVideoModel _parseEntry(XmlElement entry) {
     final mediaGroup = entry.getElement('media:group');
     final published = entry.getElement('published')?.innerText;
 

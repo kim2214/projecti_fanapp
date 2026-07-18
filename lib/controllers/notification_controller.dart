@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -194,7 +195,7 @@ class NotificationController extends GetxController {
 
   Future<void> _openChzzkLive(String? broadcastId) async {
     if (broadcastId == null || broadcastId.isEmpty) return;
-    final uri = Uri.parse('https://chzzk.naver.com/live/$broadcastId');
+    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

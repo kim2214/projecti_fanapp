@@ -34,4 +34,13 @@ class Member {
   String get profileAssetPath => 'assets/$group/${key}_profile.png';
 
   bool get isHoneyz => group == 'honeyz';
+
+  /// 치지직 라이브 시청 페이지 URL을 broadcastId로 만든다.
+  /// (앱 여러 곳·알림 payload에서 broadcastId만 들고 있어 static으로 제공 —
+  ///  URL 형식이 바뀌면 이 한 곳만 고친다.)
+  static String liveUrlOf(String broadcastId) =>
+      'https://chzzk.naver.com/live/$broadcastId';
+
+  /// 이 멤버의 치지직 라이브 시청 URL
+  String get liveUrl => liveUrlOf(chzzkBroadcastId);
 }

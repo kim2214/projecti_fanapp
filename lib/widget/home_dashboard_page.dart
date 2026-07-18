@@ -6,6 +6,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -63,7 +64,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse('https://chzzk.naver.com/live/$broadcastId');
+    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

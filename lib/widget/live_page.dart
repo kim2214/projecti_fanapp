@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,7 +47,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
   }
 
   Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse('https://chzzk.naver.com/live/$broadcastId');
+    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

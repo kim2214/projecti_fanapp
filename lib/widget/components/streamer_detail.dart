@@ -51,7 +51,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
   }
 
   Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse('https://chzzk.naver.com/live/$broadcastId');
+    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

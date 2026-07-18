@@ -27,8 +27,9 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
   무증상 실패할 수 있어, 아래처럼 방어적으로 처리한다.
 
 라이브 시청 URL은 별도 규칙: `https://chzzk.naver.com/live/{broadcastId}`
-(카드 탭 시 `url_launcher`로 이동. `live_page.dart` 등 여러 곳에 중복되어 있으니
-URL 형식 변경 시 함께 수정).
+(카드 탭 시 `url_launcher`로 이동). 형식은 `Member.liveUrlOf(broadcastId)`
+(및 인스턴스 getter `member.liveUrl`) **한 곳에 단일화**되어 있으니, URL 형식이
+바뀌면 `lib/model/member.dart`만 고친다.
 
 ## 폴링 주기·타임아웃 (`GlobalController` 상수)
 
