@@ -57,7 +57,7 @@ class NotificationController extends GetxController {
     const initSettings = InitializationSettings(android: androidInit);
     // 포그라운드에서 우리가 직접 띄운 로컬 알림의 탭 콜백.
     await _localNoti.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: _onLocalNotificationTap,
     );
 
@@ -148,17 +148,16 @@ class NotificationController extends GetxController {
     final isLive = message.data['type'] == 'live';
     final channelId = isLive ? liveChannelId : scheduleChannelId;
     final channelName = isLive ? '라이브 알림' : '스케줄 알림';
-    final channelDesc = isLive
-        ? '최애 멤버가 방송을 시작하면 알려드립니다.'
-        : '멤버 스케줄이 등록되면 알려드립니다.';
+    final channelDesc =
+        isLive ? '최애 멤버가 방송을 시작하면 알려드립니다.' : '멤버 스케줄이 등록되면 알려드립니다.';
     // 라이브 알림은 탭 시 치지직으로 이동할 수 있게 broadcastId를 payload로 실는다.
     final payload = isLive ? message.data['broadcastId'] : null;
 
     _localNoti.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
+      id: notification.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
           channelName,
