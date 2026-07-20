@@ -72,3 +72,26 @@ jobs:
 
       - name: Run tests
         run: flutter test
+
+  # Cloud Functions(Node)는 Flutter 파이프라인이 못 잡는다 — 오타·미정의 참조가
+  # 배포/런타임에서야 드러나므로 eslint로 별도 검증한다. (functions/index.js는
+  # 유일한 백그라운드 라이브 감지 + 푸시 발송 경로)
+  functions-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cloud Functions 런타임(functions/package.json engines: node 22)과 맞춘다.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install functions deps
+        run: npm ci
+        working-directory: functions
+
+      - name: Lint functions
+        run: npm run lint
+        working-directory: functions
