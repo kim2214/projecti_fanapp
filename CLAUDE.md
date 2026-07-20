@@ -28,5 +28,5 @@ Project I(프로젝트아이) 비공식 팬앱 — Flutter + GetX + Firebase.
 - 멤버 정보는 여러 파일에 흩어져 있음. 한 곳만 고치면 조용히 깨짐 → `add-member`.
 - Firestore는 **클라이언트 읽기 전용**. 새 컬렉션은 `firestore.rules`에 명시 허용 → `firestore-data`.
 - 치지직은 **비공식 API** — 응답 형식 변경 대비 에러 처리 정책 준수 → `chzzk-live-polling`.
-- 커밋·PR 전 `flutter analyze` + `flutter test` (CI: Flutter 3.44.2) → `flutter-check`.
+- 커밋·PR 전 `flutter analyze` + `flutter test` (CI: Flutter 3.35.3) → `flutter-check`.
 - 음악 기능은 저작권 이슈로 제거됨. 다시 연결하지 않는다.

@@ -13,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 로컬 개발 환경(Flutter 3.44.2 stable / Dart 3.12.2)과 동일하게 고정한다.
+      # 로컬 개발 환경(Flutter 3.35.3 stable / Dart 3.9.2)과 동일하게 고정한다.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.2
+          flutter-version: 3.35.3
           channel: stable
           cache: true
 
