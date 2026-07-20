@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -60,7 +62,16 @@ void main() async {
   runApp(const MyApp());
 
   // 첫 프레임을 그린 뒤 백그라운드로 알림 초기화 진행.
-  notificationController.init();
+  // fire-and-forget이라 실패가 조용히 묻히거나 PlatformDispatcher를 통해 fatal
+  // 크래시로 오분류되지 않도록, 여기서 직접 잡아 non-fatal로 기록한다.
+  unawaited(notificationController.init().catchError((Object e, StackTrace st) {
+    crashlytics.recordError(
+      e,
+      st,
+      reason: '알림 초기화(NotificationController.init) 실패',
+      fatal: false,
+    );
+  }));
 }
 
 class MyApp extends StatelessWidget {
