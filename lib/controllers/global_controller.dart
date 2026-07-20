@@ -93,8 +93,10 @@ class GlobalController extends GetxController {
   //  문서/조회 결과가 없는 멤버는 맵에 없을 뿐이며, 소비 측은 "없음 = 비방송"으로 다룬다.)
   RxMap<String, StreamerModel> honeyz = <String, StreamerModel>{}.obs;
   RxMap<String, StreamerModel> acaxia = <String, StreamerModel>{}.obs;
-  RxMap<String, LiveCheckModel> honeyzLiveStatus = <String, LiveCheckModel>{}.obs;
-  RxMap<String, LiveCheckModel> acaxiaLiveStatus = <String, LiveCheckModel>{}.obs;
+  RxMap<String, LiveCheckModel> honeyzLiveStatus =
+      <String, LiveCheckModel>{}.obs;
+  RxMap<String, LiveCheckModel> acaxiaLiveStatus =
+      <String, LiveCheckModel>{}.obs;
 
   // 멤버 정적 카탈로그 — 멤버 1명의 모든 메타데이터를 Member 객체 하나로 묶는다.
   // (기존 *Sequence/*NameList/*AssetName/*BrodcastIDList 병렬 리스트를 대체)
@@ -321,15 +323,16 @@ class GlobalController extends GetxController {
   /// 조회에 실패하면 false를 반환해 호출부가 치지직 직접 폴링으로 폴백하게 한다.
   Future<bool> _refreshFromServerAggregate() async {
     try {
-      final snapshot =
-          await _fireStore.doc(_liveStatusDocPath).get().timeout(_requestTimeout);
+      final snapshot = await _fireStore
+          .doc(_liveStatusDocPath)
+          .get()
+          .timeout(_requestTimeout);
       final data = snapshot.data();
       if (data == null) return false;
 
       // 서버 폴링이 멈췄으면(문서가 오래됨) 신선한 직접 폴링으로 폴백한다.
-      final updatedAt = data['updatedAt'];
-      if (updatedAt is Timestamp &&
-          DateTime.now().difference(updatedAt.toDate()) > _serverStatusMaxAge) {
+      if (isAggregateStale(
+          data['updatedAt'], DateTime.now(), _serverStatusMaxAge)) {
         return false;
       }
 
@@ -348,6 +351,20 @@ class GlobalController extends GetxController {
       );
       return false;
     }
+  }
+
+  /// 서버 집계 문서(`live_status/current`)가 오래됐는지(stale) 판정한다.
+  /// [updatedAt]이 `Timestamp`이고 [now]와의 차이가 [maxAge]를 초과하면 true
+  /// (= 서버 폴링 중단 의심 → 호출부가 치지직 직접 폴링으로 폴백).
+  ///
+  /// updatedAt이 Timestamp가 아니면(null/누락/형식 오류) false를 반환한다 —
+  /// 현재는 이 경우를 "오래되지 않음"으로 보아 집계 데이터를 그대로 사용한다.
+  /// (Firestore 읽기와 분리된 순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static bool isAggregateStale(
+      Object? updatedAt, DateTime now, Duration maxAge) {
+    return updatedAt is Timestamp &&
+        now.difference(updatedAt.toDate()) > maxAge;
   }
 
   /// 서버 집계 members 맵을 `member.key → 상태` 맵으로 변환한다.
@@ -388,8 +405,7 @@ class GlobalController extends GetxController {
   List<LiveMemberEntry> get liveMembersAcrossGroups {
     final entries = <LiveMemberEntry>[];
 
-    void collect(
-        List<Member> members, Map<String, LiveCheckModel> statuses) {
+    void collect(List<Member> members, Map<String, LiveCheckModel> statuses) {
       for (final member in members) {
         final status = statuses[member.key];
         if (status != null && status.isLive) {

@@ -3,6 +3,7 @@
 // (_fireStore는 late final이라 Firestore 호출 전까지 초기화되지 않으므로,
 //  컨트롤러를 Firebase 초기화 없이 생성할 수 있다.)
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -38,8 +39,8 @@ void main() {
 
       final result = c.liveMembersAcrossGroups;
 
-      expect(result.map((e) => e.memberName).toList(),
-          ['담유이', '포포포포', '허니츄러스']);
+      expect(
+          result.map((e) => e.memberName).toList(), ['담유이', '포포포포', '허니츄러스']);
       expect(result.first.group, 'honeyz');
       expect(result[1].group, 'acaxia');
     });
@@ -168,6 +169,55 @@ void main() {
     test('스트리머 데이터가 없으면 빈 목록', () {
       final c = GlobalController();
       expect(c.upcomingBirthdays('honeyz'), isEmpty);
+    });
+  });
+
+  group('isAggregateStale (서버 집계 폴백 판정)', () {
+    // 기준 시각을 고정해 결정적으로 검증한다.
+    final now = DateTime(2026, 7, 20, 12, 0, 0);
+    const maxAge = Duration(minutes: 5);
+
+    Timestamp ago(Duration d) => Timestamp.fromDate(now.subtract(d));
+
+    test('maxAge 이내면 신선함 → stale 아님(false)', () {
+      expect(
+          GlobalController.isAggregateStale(
+              ago(const Duration(minutes: 1)), now, maxAge),
+          isFalse);
+    });
+
+    test('경계값(정확히 maxAge)은 초과가 아니므로 stale 아님(false)', () {
+      expect(
+          GlobalController.isAggregateStale(
+              ago(const Duration(minutes: 5)), now, maxAge),
+          isFalse);
+    });
+
+    test('maxAge를 초과하면 stale(true) → 직접 폴링 폴백', () {
+      expect(
+          GlobalController.isAggregateStale(
+              ago(const Duration(minutes: 5, seconds: 1)), now, maxAge),
+          isTrue);
+    });
+
+    test('미래 시각(음수 차이)은 stale 아님(false)', () {
+      expect(
+          GlobalController.isAggregateStale(
+              Timestamp.fromDate(now.add(const Duration(minutes: 10))),
+              now,
+              maxAge),
+          isFalse);
+    });
+
+    test('updatedAt이 null이면 stale 아님(false) — 현재 정책상 데이터 사용', () {
+      expect(GlobalController.isAggregateStale(null, now, maxAge), isFalse);
+    });
+
+    test('updatedAt이 Timestamp가 아니면(형식 오류) stale 아님(false)', () {
+      // 서버가 문자열 등 예상 밖 형식을 써도 크래시 없이 데이터 사용 경로로 간다.
+      expect(GlobalController.isAggregateStale('2026-07-20', now, maxAge),
+          isFalse);
+      expect(GlobalController.isAggregateStale(12345, now, maxAge), isFalse);
     });
   });
 }
