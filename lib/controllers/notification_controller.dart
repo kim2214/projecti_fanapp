@@ -35,6 +35,11 @@ class NotificationController extends GetxController {
 
   bool _initialized = false;
 
+  /// 포그라운드 로컬 알림 ID. `notification.hashCode`는 값이 겹치면 이전 알림을
+  /// 덮어써 조용히 사라질 수 있어, 매 알림마다 고유하도록 단조 증가시킨다.
+  /// (Android 알림 ID는 32비트 int — 세션 내 증가로 충분하다.)
+  int _foregroundNotiId = 0;
+
   /// main()에서 Firebase 초기화 직후 1회 호출.
   Future<void> init() async {
     if (_initialized) return;
@@ -154,7 +159,7 @@ class NotificationController extends GetxController {
     final payload = isLive ? message.data['broadcastId'] : null;
 
     _localNoti.show(
-      id: notification.hashCode,
+      id: _foregroundNotiId++,
       title: notification.title,
       body: notification.body,
       notificationDetails: NotificationDetails(
