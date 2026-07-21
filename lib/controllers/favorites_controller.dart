@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
+import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 최애 멤버(즐겨찾기)를 기기 로컬에 영속화하는 컨트롤러.
@@ -21,13 +22,20 @@ class FavoritesController extends GetxController {
   /// 최애 지정/해제 토글 후 영속화
   Future<void> toggle(String group, String key) async {
     final id = _id(group, key);
-    if (favoriteIds.contains(id)) {
-      favoriteIds.remove(id);
-    } else {
+    final added = !favoriteIds.contains(id);
+    if (added) {
       favoriteIds.add(id);
+    } else {
+      favoriteIds.remove(id);
     }
     await _save();
     _syncLiveTopics();
+
+    // 최애를 '새로 지정'한 순간은 명확한 만족 신호 → 리뷰 요청을 시도한다
+    // (실제 노출 여부·빈도는 ReviewController가 판정).
+    if (added && Get.isRegistered<ReviewController>()) {
+      Get.find<ReviewController>().maybeRequestReview();
+    }
   }
 
   Future<void> _load() async {

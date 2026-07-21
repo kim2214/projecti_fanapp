@@ -49,6 +49,9 @@ dependencies:
   get: ^4.7.2
   shared_preferences: ^2.2.2
 
+  # 인앱 스토어 리뷰 요청 (Android In-App Review / iOS SKStoreReviewController)
+  in_app_review: ^2.0.12
+
   # YouTube RSS 피드 파싱
   xml: ^6.5.0
 

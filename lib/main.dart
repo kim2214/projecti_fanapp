@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
+import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
@@ -59,7 +60,14 @@ void main() async {
   final notificationController = NotificationController();
   Get.put(notificationController, permanent: true);
 
+  // 인앱 리뷰: 실행 횟수·요청 간격을 판정해 적절한 순간에만 스토어 리뷰를 요청한다.
+  final reviewController = ReviewController();
+  Get.put(reviewController, permanent: true);
+
   runApp(const MyApp());
+
+  // 이번 실행을 누적 실행 횟수에 반영 (fire-and-forget — 첫 프레임을 막지 않는다).
+  unawaited(reviewController.registerAppLaunch());
 
   // 첫 프레임을 그린 뒤 백그라운드로 알림 초기화 진행.
   // fire-and-forget이라 실패가 조용히 묻히거나 PlatformDispatcher를 통해 fatal

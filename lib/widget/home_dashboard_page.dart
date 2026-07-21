@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/birthday_entry.dart';
+import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
@@ -38,6 +39,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     _groupChangeWorker = ever(_globalController.selectedGroup, (_) {
       _loadData();
     });
+
+    // 홈 대시보드 진입은 앱을 계속 쓰고 있다는 신호. 실행 횟수·요청 간격 조건을
+    // 만족할 때만 실제로 리뷰가 뜬다 (판정은 ReviewController가 소유).
+    if (Get.isRegistered<ReviewController>()) {
+      Get.find<ReviewController>().maybeRequestReview();
+    }
   }
 
   @override
