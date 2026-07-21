@@ -44,7 +44,9 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace "com.devkim.honeyz_fan_app"
     compileSdkVersion flutter.compileSdkVersion
-    ndkVersion "26.1.10909125"
+    // Firebase 등 플러그인들이 최소 NDK 27.0.12077973을 요구한다. NDK는 하위 호환이라
+    // 설치돼 있는 상위 버전(27.2.x)으로 지정해 요구치를 충족한다.
+    ndkVersion "27.2.12479018"
 
     compileOptions {
         coreLibraryDesugaringEnabled true
