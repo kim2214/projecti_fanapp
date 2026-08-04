@@ -196,10 +196,30 @@ class GlobalController extends GetxController {
 
   /// 컬렉션의 모든 문서를 문서 ID(= 멤버 key) 기준 Map으로 반환.
   /// 멤버-문서 매칭을 O(n²) 중첩 루프 대신 O(1) 조회로 처리하기 위함.
-  Future<Map<String, Map<String, dynamic>>> _fetchDocsByKey(
+  ///
+  /// 조회 실패(오프라인·unavailable 등) 시 null. 호출부는 캐시를 그대로 두고
+  /// 다음 호출에서 재시도한다 — 예외를 그대로 던지면 fire-and-forget 호출부
+  /// (initState·RefreshIndicator·onTap)에서 아무도 잡지 못해 fatal로 집계된다.
+  Future<Map<String, Map<String, dynamic>>?> _fetchDocsByKey(
       String collection) async {
-    final snapshot = await _fireStore.collection(collection).get();
-    return {for (final doc in snapshot.docs) doc.id: doc.data()};
+    try {
+      final snapshot = await _fireStore.collection(collection).get();
+      return {for (final doc in snapshot.docs) doc.id: doc.data()};
+    } catch (e, st) {
+      developer.log(
+        'Firestore 컬렉션 조회 실패: $collection',
+        name: 'GlobalController',
+        error: e,
+        stackTrace: st,
+      );
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'Firestore 컬렉션 조회 실패 ($collection)',
+        fatal: false,
+      );
+      return null;
+    }
   }
 
   Future<List<ScheduleModel>> loadScheduleFireStore(
@@ -211,12 +231,15 @@ class GlobalController extends GetxController {
     final cache = _scheduleCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
       final docsByKey = await _fetchDocsByKey(collection);
-      // 카탈로그 순서대로, 문서가 있는 멤버만 (스케줄 미등록 멤버는 제외)
-      cache.value = [
-        for (final member in membersOf(group))
-          if (docsByKey[member.key] != null)
-            ScheduleModel.fromJson(docsByKey[member.key]!),
-      ];
+      // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
+      if (docsByKey != null) {
+        // 카탈로그 순서대로, 문서가 있는 멤버만 (스케줄 미등록 멤버는 제외)
+        cache.value = [
+          for (final member in membersOf(group))
+            if (docsByKey[member.key] != null)
+              ScheduleModel.fromJson(docsByKey[member.key]!),
+        ];
+      }
     }
     return cache;
   }
@@ -230,13 +253,16 @@ class GlobalController extends GetxController {
     if (forceRefresh || cache.isEmpty) {
       // 스트리머 컬렉션 이름은 그룹 이름과 동일하다.
       final docsByKey = await _fetchDocsByKey(group);
-      // member.key로 조회하는 맵으로 보관한다. 문서가 없는 멤버는 맵에 없을 뿐이며,
-      // UI는 이름/프로필을 카탈로그에서 가져오므로(group_page) 누락돼도 안전하다.
-      cache.value = {
-        for (final member in membersOf(group))
-          if (docsByKey[member.key] != null)
-            member.key: StreamerModel.fromJson(docsByKey[member.key]!),
-      };
+      // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
+      if (docsByKey != null) {
+        // member.key로 조회하는 맵으로 보관한다. 문서가 없는 멤버는 맵에 없을 뿐이며,
+        // UI는 이름/프로필을 카탈로그에서 가져오므로(group_page) 누락돼도 안전하다.
+        cache.value = {
+          for (final member in membersOf(group))
+            if (docsByKey[member.key] != null)
+              member.key: StreamerModel.fromJson(docsByKey[member.key]!),
+        };
+      }
     }
     return cache;
   }

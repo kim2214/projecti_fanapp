@@ -38,15 +38,25 @@ class FavoritesController extends GetxController {
     }
   }
 
+  /// onInit에서 fire-and-forget으로 호출되므로 예외를 밖으로 흘리면
+  /// 아무도 잡지 못해 fatal로 집계된다. 최애 목록은 없어도 앱이 동작한다.
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    favoriteIds.value = prefs.getStringList(_prefsKey) ?? <String>[];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      favoriteIds.value = prefs.getStringList(_prefsKey) ?? <String>[];
+    } catch (_) {
+      // 못 읽으면 빈 목록으로 시작.
+    }
     _syncLiveTopics();
   }
 
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_prefsKey, favoriteIds.toList());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_prefsKey, favoriteIds.toList());
+    } catch (_) {
+      // 저장 실패는 무시 (이번 실행 동안은 메모리 목록이 유지된다).
+    }
   }
 
   /// 최애 목록('group:key')에서 멤버 key만 추출해 라이브 토픽 구독을 동기화한다.

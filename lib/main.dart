@@ -68,7 +68,17 @@ void main() async {
   runApp(const MyApp());
 
   // 이번 실행을 누적 실행 횟수에 반영 (fire-and-forget — 첫 프레임을 막지 않는다).
-  unawaited(reviewController.registerAppLaunch());
+  // init()과 마찬가지로 실패를 직접 잡아 fatal 오분류를 막는다.
+  unawaited(reviewController.registerAppLaunch().catchError(
+    (Object e, StackTrace st) {
+      crashlytics.recordError(
+        e,
+        st,
+        reason: '앱 실행 횟수 기록(registerAppLaunch) 실패',
+        fatal: false,
+      );
+    },
+  ));
 
   // 첫 프레임을 그린 뒤 백그라운드로 알림 초기화 진행.
   // fire-and-forget이라 실패가 조용히 묻히거나 PlatformDispatcher를 통해 fatal

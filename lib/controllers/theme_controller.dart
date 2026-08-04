@@ -9,9 +9,15 @@ class ThemeController extends GetxController {
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
 
   /// main()에서 첫 빌드 전에 호출해 저장된 모드를 선로딩한다.
+  /// runApp보다 먼저 await되므로, 여기서 던지면 앱이 아예 뜨지 못한다.
+  /// 읽기 실패는 기본값(system)으로 시작하면 그만이라 삼킨다.
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    themeMode.value = _fromString(prefs.getString(_prefsKey));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      themeMode.value = _fromString(prefs.getString(_prefsKey));
+    } catch (_) {
+      // 저장된 모드를 못 읽으면 기본값(system) 유지.
+    }
   }
 
   /// system → light → dark → system 순환
@@ -27,8 +33,13 @@ class ThemeController extends GetxController {
         themeMode.value = ThemeMode.system;
         break;
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, _toString(themeMode.value));
+    // 테마는 이미 메모리에서 바뀌었다. 영속화 실패로 크래시를 낼 이유는 없다.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, _toString(themeMode.value));
+    } catch (_) {
+      // 저장 실패는 무시 (이번 실행 동안은 선택한 모드가 유지된다).
+    }
   }
 
   /// 현재 모드를 나타내는 아이콘

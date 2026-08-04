@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
@@ -179,8 +180,16 @@ class NotificationController extends GetxController {
   /// 백그라운드/종료 상태에서 알림을 탭해 앱이 열렸을 때의 진입 처리.
   void _setupInteraction() {
     // 종료 상태에서 알림 탭으로 콜드 스타트한 경우
+    // onError를 붙이지 않으면 실패가 아무에게도 잡히지 않아 fatal로 집계된다.
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) _handleRemoteTap(message);
+    }).catchError((Object e, StackTrace st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: '알림 탭 콜드스타트 진입 메시지 조회 실패',
+        fatal: false,
+      );
     });
     // 백그라운드(앱은 살아있음)에서 알림 탭한 경우
     FirebaseMessaging.onMessageOpenedApp.listen(_handleRemoteTap);
