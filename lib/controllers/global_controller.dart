@@ -14,6 +14,7 @@ import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/utils/app_snackbar.dart';
 
 class GlobalController extends GetxController {
   // 지연 초기화: 생성 시점에 Firebase에 접근하지 않으므로, 순수 로직(정렬/필터)
@@ -222,6 +223,12 @@ class GlobalController extends GetxController {
     }
   }
 
+  /// 조회에 실패했고 화면에 보여줄 캐시도 없을 때만 사용자에게 알린다.
+  /// 캐시가 남아 있으면 화면은 멀쩡하므로(새로고침 실패 등) 조용히 넘어간다.
+  void _notifyLoadFailed() {
+    showAppSnackBar('데이터를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.');
+  }
+
   Future<List<ScheduleModel>> loadScheduleFireStore(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
@@ -239,6 +246,8 @@ class GlobalController extends GetxController {
             if (docsByKey[member.key] != null)
               ScheduleModel.fromJson(docsByKey[member.key]!),
         ];
+      } else if (cache.isEmpty) {
+        _notifyLoadFailed();
       }
     }
     return cache;
@@ -262,6 +271,8 @@ class GlobalController extends GetxController {
             if (docsByKey[member.key] != null)
               member.key: StreamerModel.fromJson(docsByKey[member.key]!),
         };
+      } else if (cache.isEmpty) {
+        _notifyLoadFailed();
       }
     }
     return cache;

@@ -63,6 +63,11 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
           child: FutureBuilder(
             future: globalController.loadStreamerFireStore(),
             builder: (BuildContext context, AsyncSnapshot snapshot) {
+              // hasError를 먼저 본다 — 에러일 때도 hasData는 false라, 순서가
+              // 뒤바뀌면 아래 오류 화면에 영영 도달하지 못하고 스피너에 갇힌다.
+              if (snapshot.hasError) {
+                return _buildLoadError(context);
+              }
               if (snapshot.hasData == false) {
                 return Center(
                   child: Column(
@@ -84,33 +89,35 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                     ],
                   ),
                 );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 48,
-                        color: context.textFaint,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '오류가 발생했습니다',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: context.textSub,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
               } else {
                 return _buildContent();
               }
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadError(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 48,
+            color: context.textFaint,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '오류가 발생했습니다',
+            style: TextStyle(
+              fontSize: 16,
+              color: context.textSub,
+            ),
+          ),
+        ],
       ),
     );
   }

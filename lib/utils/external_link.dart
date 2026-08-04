@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-/// MaterialApp.router에 연결되는 전역 ScaffoldMessenger 키.
-/// 위젯 context가 없는 곳(푸시 알림 탭 핸들러 등)에서도 스낵바를 띄우기 위해 사용한다.
-final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+import 'package:projecti_fan_app/utils/app_snackbar.dart';
 
 /// 외부 앱/브라우저로 URL을 연다.
 ///
@@ -16,17 +12,8 @@ Future<void> openExternalUrl(
 }) async {
   try {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) _showFailure(message);
+    if (!launched) showAppSnackBar(message);
   } catch (_) {
-    _showFailure(message);
+    showAppSnackBar(message);
   }
-}
-
-void _showFailure(String message) {
-  scaffoldMessengerKey.currentState?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
 }
