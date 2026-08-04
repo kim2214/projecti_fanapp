@@ -1,7 +1,7 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/youtube_theme.dart';
 
@@ -20,7 +20,7 @@ class YouTubeVideoCard extends StatelessWidget {
 
   Future<void> _openYouTube() async {
     final url = Uri.parse(video.youtubeUrl);
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    await openExternalUrl(url);
   }
 
   @override

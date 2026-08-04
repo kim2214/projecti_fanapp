@@ -13,6 +13,7 @@ import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
 import 'package:projecti_fan_app/theme/app_theme.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 /// 백그라운드/종료 상태에서 FCM 메시지를 받을 때 실행되는 최상위 핸들러.
 /// notification 페이로드가 있으면 시스템이 트레이에 자동 표시하므로 별도 처리 불필요.
@@ -92,6 +93,7 @@ class MyApp extends StatelessWidget {
     return Obx(
       () => MaterialApp.router(
         routerConfig: router,
+        scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

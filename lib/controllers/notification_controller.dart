@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 /// 푸시 알림(FCM) 권한·토픽 구독을 관리하고 설정을 기기에 영속화한다.
 ///
@@ -200,8 +200,6 @@ class NotificationController extends GetxController {
   Future<void> _openChzzkLive(String? broadcastId) async {
     if (broadcastId == null || broadcastId.isEmpty) return;
     final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    await openExternalUrl(uri);
   }
 }

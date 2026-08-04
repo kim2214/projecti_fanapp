@@ -10,7 +10,7 @@ import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 /// 홈 대시보드: 지금 방송 중 + 주간 스케줄 바로가기 + 최신 영상
 class HomeDashboardWidget extends StatefulWidget {
@@ -72,7 +72,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   Future<void> _openChzzkLive(String broadcastId) async {
     final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await openExternalUrl(uri);
   }
 
   @override

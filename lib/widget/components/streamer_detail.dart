@@ -10,7 +10,7 @@ import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/services/youtube_service.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 class StreamerDetail extends StatefulWidget {
   final StreamerModel pjiMember;
@@ -52,7 +52,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   Future<void> _openChzzkLive(String broadcastId) async {
     final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await openExternalUrl(uri);
   }
 
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
@@ -504,7 +504,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
           onTap: link.url != null && link.url!.isNotEmpty
               ? () async {
                   final uri = Uri.parse(link.url!);
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  await openExternalUrl(uri);
                 }
               : null,
           child: Padding(

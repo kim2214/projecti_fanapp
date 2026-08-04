@@ -6,7 +6,7 @@ import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/widget/youtube_theme.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 class YouTubePageWidget extends StatefulWidget {
   const YouTubePageWidget({super.key});
@@ -52,7 +52,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   Future<void> _openChannelPage() async {
     final url = youtubeController.currentChannelUrl;
     if (url == null) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    await openExternalUrl(Uri.parse(url));
   }
 
   @override

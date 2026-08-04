@@ -6,7 +6,7 @@ import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/utils/external_link.dart';
 
 /// 통합 LIVE 현황 화면.
 /// 그룹(허니즈/아카시아) 전환 없이 지금 방송 중인 모든 멤버를 한 화면에 보여준다.
@@ -48,7 +48,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
 
   Future<void> _openChzzkLive(String broadcastId) async {
     final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await openExternalUrl(uri);
   }
 
   @override
