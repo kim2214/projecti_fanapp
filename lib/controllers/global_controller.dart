@@ -208,6 +208,20 @@ class GlobalController extends GetxController {
       String collection) async {
     try {
       final snapshot = await _fireStore.collection(collection).get();
+
+      // 오프라인에서 로컬 캐시까지 비어 있으면 Firestore는 예외를 던지지 않고
+      // "빈 스냅샷"을 성공으로 돌려준다. 그대로 통과시키면 네트워크 실패가
+      // "데이터가 없음"으로 둔갑해, 캐시를 빈 값으로 덮어쓰고 사용자에게는
+      // 아무 안내도 못 한다. 서버에 닿지 못한 빈 결과는 실패로 취급한다.
+      // (문서가 있는 캐시 응답은 그대로 쓴다 — 오프라인에서도 화면이 보여야 한다.)
+      if (snapshot.docs.isEmpty && snapshot.metadata.isFromCache) {
+        developer.log(
+          'Firestore 컬렉션이 비어 있고 캐시 응답 → 오프라인으로 판단: $collection',
+          name: 'GlobalController',
+        );
+        return null;
+      }
+
       return {for (final doc in snapshot.docs) doc.id: doc.data()};
     } catch (e, st) {
       developer.log(
