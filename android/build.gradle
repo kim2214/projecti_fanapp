@@ -1,12 +1,13 @@
 buildscript {
-    ext.kotlin_version = '2.1.0'
+    // settings.gradle의 plugins 블록과 반드시 같은 버전을 유지한다 (양쪽에 선언됨).
+    ext.kotlin_version = '2.2.20'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'com.android.tools.build:gradle:8.11.1'
         // Crashlytics Gradle 플러그인 v3는 google-services 4.4.1 이상을 요구한다.
         classpath 'com.google.gms:google-services:4.4.2'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
