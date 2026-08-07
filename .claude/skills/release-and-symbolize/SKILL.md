@@ -21,9 +21,16 @@ description: 릴리스(AOT) 빌드를 만들고 Crashlytics용 Dart 심볼을 �
 ## 빌드
 
 ```bash
+flutter clean                       # 먼저 반드시 실행 (아래 이유)
 scripts/build_release.sh            # appbundle (Play Store, 기본)
 scripts/build_release.sh apk        # apk
 ```
+
+**`flutter clean`을 먼저 돌린다.** 증분 빌드에서는 AOT 산출물(`app.so`)이 새로
+생성돼도 `--split-debug-info` 심볼 파일은 갱신되지 않는 경우가 관측됐다
+(26.08.07, 2.3.1+13). 그러면 업로드하는 AAB와 보관하는 심볼이 서로 다른 빌드의
+것이 되어, 나중에 `symbolize.sh`가 엉뚱한 결과를 내거나 복원에 실패한다.
+clean 후 빌드해야 AAB와 심볼이 같은 빌드에서 나온 것임을 보장할 수 있다.
 
 버전을 올려야 하면 먼저 `pubspec.yaml`의 `version: X.Y.Z+build`를 수정한다
 (`X.Y.Z`=versionName, `build`=versionCode). Play Store 재업로드 시 build 번호는
@@ -45,5 +52,7 @@ scripts/symbolize.sh <version> stack.txt arm      # 32비트 기기면 arch 지�
 ## 체크리스트
 
 - [ ] `pubspec.yaml` version(특히 `+build`) 증가 확인
+- [ ] `flutter clean` 실행 (AAB와 심볼이 같은 빌드에서 나오도록)
 - [ ] `scripts/build_release.sh`로 빌드 (직접 flutter build 금지)
+- [ ] 빌드 후 `release-symbols/<version>/` 파일 타임스탬프가 이번 빌드 시각인지 확인
 - [ ] `release-symbols/<version>/` 백업 완료
