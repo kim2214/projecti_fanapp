@@ -38,11 +38,12 @@ final router = GoRouter(
     GoRoute(
       path: '/scheduleDetail',
       builder: (context, state) {
-        String url = state.uri.queryParameters['url']!;
-        String name = state.uri.queryParameters['name']!;
+        // 인자는 extra로 받는다 ([ScheduleDetailArgs] 참고). extra가 없는 진입
+        // (복원·딥링크)에서도 null 단언으로 죽지 않고 안내 화면을 보여준다.
+        final args = state.extra as ScheduleDetailArgs?;
         return ScheduleDetail(
-          imageURL: url,
-          name: name,
+          imageURL: args?.imageURL,
+          name: args?.name,
         );
       },
     ),

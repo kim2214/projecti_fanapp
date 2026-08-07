@@ -259,7 +259,10 @@ class ScheduleCard extends StatelessWidget {
     return GestureDetector(
       onTap: hasSchedule
           ? () {
-        context.push('/scheduleDetail?url=$imageURL&name=$memberName');
+        // URL을 쿼리 파라미터에 끼워넣지 않는다 — 다운로드 URL의 '?'/'&'가
+        // 파싱을 깨뜨려 상세 화면에서만 이미지가 실패한다.
+        context.push('/scheduleDetail',
+            extra: (imageURL: imageURL, name: memberName));
       }
           : null,
       child: Container(

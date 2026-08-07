@@ -5,6 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 
+/// 스케줄 상세 화면 인자.
+///
+/// 이미지 URL은 '?'/'&'를 포함할 수 있어(예: Storage의 `?alt=media&token=...`)
+/// 쿼리 파라미터로 넘기면 URL이 잘려 이미지를 못 불러온다. go_router의 extra로
+/// 통째로 전달해 인코딩 문제를 아예 없앤다.
+typedef ScheduleDetailArgs = ({String imageURL, String name});
+
 class ScheduleDetail extends StatelessWidget {
   final String? imageURL;
   final String? name;
@@ -43,84 +50,86 @@ class ScheduleDetail extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: ExtendedImage.network(
-                    imageURL!,
-                    fit: BoxFit.contain,
-                    mode: ExtendedImageMode.gesture,
-                    initGestureConfigHandler: (state) => GestureConfig(
-                      minScale: 1.0,
-                      maxScale: 5.0,
-                      speed: 1.0,
-                      initialScale: 1.0,
-                      inPageView: false,
-                    ),
-                    cache: true,
-                    loadStateChanged: (ExtendedImageState state) {
-                      switch (state.extendedImageLoadState) {
-                        case LoadState.loading:
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: themeColor,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  '스케줄을 불러오는 중...',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: context.textFaint,
+                  child: (imageURL == null || imageURL!.isEmpty)
+                      ? _buildUnavailable(context)
+                      : ExtendedImage.network(
+                          imageURL!,
+                          fit: BoxFit.contain,
+                          mode: ExtendedImageMode.gesture,
+                          initGestureConfigHandler: (state) => GestureConfig(
+                            minScale: 1.0,
+                            maxScale: 5.0,
+                            speed: 1.0,
+                            initialScale: 1.0,
+                            inPageView: false,
+                          ),
+                          cache: true,
+                          loadStateChanged: (ExtendedImageState state) {
+                            switch (state.extendedImageLoadState) {
+                              case LoadState.loading:
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: themeColor,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        '스케줄을 불러오는 중...',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: context.textFaint,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        case LoadState.failed:
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.image_not_supported_rounded,
-                                  size: 48,
-                                  color: context.textFaint,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  '이미지를 불러올 수 없습니다',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: context.textFaint,
+                                );
+                              case LoadState.failed:
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image_not_supported_rounded,
+                                        size: 48,
+                                        color: context.textFaint,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        '이미지를 불러올 수 없습니다',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: context.textFaint,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          state.reLoadImage();
+                                        },
+                                        icon: Icon(
+                                          Icons.refresh_rounded,
+                                          size: 18,
+                                          color: themeColor,
+                                        ),
+                                        label: Text(
+                                          '다시 시도',
+                                          style: TextStyle(
+                                            color: themeColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 16),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    state.reLoadImage();
-                                  },
-                                  icon: Icon(
-                                    Icons.refresh_rounded,
-                                    size: 18,
-                                    color: themeColor,
-                                  ),
-                                  label: Text(
-                                    '다시 시도',
-                                    style: TextStyle(
-                                      color: themeColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        case LoadState.completed:
-                          return null;
-                      }
-                    },
-                  ),
+                                );
+                              case LoadState.completed:
+                                return null;
+                            }
+                          },
+                        ),
                 ),
               ),
             ),
@@ -149,6 +158,30 @@ class ScheduleDetail extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 인자 없이 진입해(복원·딥링크) 보여줄 이미지가 없을 때의 화면.
+  Widget _buildUnavailable(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported_rounded,
+            size: 48,
+            color: context.textFaint,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '스케줄 정보를 불러올 수 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: context.textFaint,
+            ),
+          ),
+        ],
       ),
     );
   }
