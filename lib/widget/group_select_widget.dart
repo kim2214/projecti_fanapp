@@ -22,25 +22,24 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
   bool _isLoadingAcaxia = false;
 
   Future<void> _selectGroup(String group) async {
-    if (group == 'honeyz') {
-      setState(() => _isLoadingHoneyz = true);
-      globalController.selectedGroup.value = 'honeyz';
-      final schedule = await globalController.loadScheduleFireStore();
-      if (!mounted) return;
-      if (schedule.isNotEmpty) {
-        context.push('/baseScreen');
-      }
-      setState(() => _isLoadingHoneyz = false);
-    } else {
-      setState(() => _isLoadingAcaxia = true);
-      globalController.selectedGroup.value = 'acaxia';
-      final schedule = await globalController.loadScheduleFireStore();
-      if (!mounted) return;
-      if (schedule.isNotEmpty) {
-        context.push('/baseScreen');
-      }
-      setState(() => _isLoadingAcaxia = false);
-    }
+    setState(() {
+      _isLoadingHoneyz = group == 'honeyz';
+      _isLoadingAcaxia = group == 'acaxia';
+    });
+    globalController.selectedGroup.value = group;
+
+    // 스케줄을 미리 받아두되, 결과로 진입을 막지는 않는다. 멤버·라이브·영상은
+    // 스케줄과 무관하게 동작하며, 조회에 실패하면 GlobalController가 안내
+    // 스낵바를 띄운다. (예전엔 빈 결과면 아무 반응 없이 멈춰 오프라인에서
+    //  앱에 아예 들어갈 수 없었다.)
+    await globalController.loadScheduleFireStore();
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingHoneyz = false;
+      _isLoadingAcaxia = false;
+    });
+    context.push('/baseScreen');
   }
 
   @override
