@@ -42,19 +42,40 @@ class NotificationController extends GetxController {
   int _foregroundNotiId = 0;
 
   /// main()에서 Firebase 초기화 직후 1회 호출.
+  ///
+  /// 각 단계는 서로 독립적이다 — 앞 단계가 실패해도 뒤 단계는 진행한다.
+  /// (예전엔 한 단계가 던지면 나머지가 통째로 건너뛰어져, 권한 요청이 실패하면
+  ///  스케줄 토픽 구독까지 안 되고 그 실행 동안 알림을 받지 못했다.)
   Future<void> init() async {
     if (_initialized) return;
-    _initialized = true;
 
-    await _initLocalNotifications();
-    await _requestPermission();
-    await _loadAndApplySubscriptions();
+    await _step(_initLocalNotifications, '로컬 알림 채널 생성');
+    await _step(_requestPermission, 'FCM 권한 요청');
+    await _step(_loadAndApplySubscriptions, '스케줄 토픽 구독');
 
     // 포그라운드 수신 시 로컬 알림으로 직접 표시
     FirebaseMessaging.onMessage.listen(showForegroundMessage);
 
     // 알림 탭(백그라운드/종료 상태)으로 앱이 열렸을 때의 처리
     _setupInteraction();
+
+    // 모든 단계를 시도한 뒤에만 완료로 표시한다.
+    _initialized = true;
+  }
+
+  /// 초기화 한 단계를 실행하고, 실패는 non-fatal로만 기록한다.
+  /// 어느 단계에서 막혔는지 [label]로 구분할 수 있게 한다.
+  Future<void> _step(Future<void> Function() action, String label) async {
+    try {
+      await action();
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: '알림 초기화 실패: $label',
+        fatal: false,
+      );
+    }
   }
 
   Future<void> _initLocalNotifications() async {
