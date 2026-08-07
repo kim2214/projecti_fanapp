@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 
 LiveCheckModel _live({String status = 'CLOSE', int? viewers}) =>
@@ -133,6 +134,57 @@ void main() {
       };
       final result = c.liveStatusFromAggregate('honeyz', members);
       expect(result, isEmpty);
+    });
+  });
+
+  group('scheduleImageUrlsOf', () {
+    test('문서가 없는 멤버가 있어도 카탈로그와 길이·순서가 일치한다', () {
+      final c = GlobalController();
+      // honeyz 6명 중 아야(1번)·오화요(4번)만 스케줄 문서가 있다.
+      c.honeyzSchedules.value = {
+        'ayauke': ScheduleModel(scheduleURL: 'https://example.com/aya.png'),
+        'ohwayo': ScheduleModel(scheduleURL: 'https://example.com/ohwayo.png'),
+      };
+
+      final urls = c.scheduleImageUrlsOf('honeyz');
+
+      // 앞의 멤버가 빠져도 뒤 멤버들이 밀리지 않아야 한다.
+      expect(urls.length, GlobalController.honeyzMembers.length);
+      expect(urls, [
+        '',
+        'https://example.com/aya.png',
+        '',
+        '',
+        'https://example.com/ohwayo.png',
+        '',
+      ]);
+    });
+
+    test('scheduleURL이 null이면 빈 문자열 (미등록으로 표시)', () {
+      final c = GlobalController();
+      c.honeyzSchedules.value = {
+        'honeychurros': ScheduleModel(scheduleURL: null),
+      };
+
+      expect(c.scheduleImageUrlsOf('honeyz').first, '');
+    });
+
+    test('로드 전(빈 캐시)이면 전원 빈 문자열 — 크래시 없음', () {
+      final c = GlobalController();
+      final urls = c.scheduleImageUrlsOf('acaxia');
+
+      expect(urls.length, GlobalController.acaxiaMembers.length);
+      expect(urls.every((u) => u.isEmpty), isTrue);
+    });
+
+    test('다른 그룹의 멤버 key는 무시된다', () {
+      final c = GlobalController();
+      // honeyz 캐시에 acaxia 멤버 key를 넣어도 honeyz 결과에 새어들면 안 된다.
+      c.honeyzSchedules.value = {
+        'popopopo': ScheduleModel(scheduleURL: 'https://example.com/popo.png'),
+      };
+
+      expect(c.scheduleImageUrlsOf('honeyz').every((u) => u.isEmpty), isTrue);
     });
   });
 

@@ -86,8 +86,11 @@ class GlobalController extends GetxController {
 
   RxString selectedGroup = ''.obs;
 
-  RxList<ScheduleModel> honeyzScheduleList = <ScheduleModel>[].obs;
-  RxList<ScheduleModel> acaxiaScheduleList = <ScheduleModel>[].obs;
+  // 스케줄도 멤버 데이터와 동일하게 member.key로 조회하는 Map으로 보관한다.
+  // (리스트로 두면 문서가 없는 멤버가 빠지면서 카탈로그와 인덱스가 어긋나,
+  //  소비 측에서 다른 멤버의 스케줄에 엉뚱한 이름이 붙는다.)
+  RxMap<String, ScheduleModel> honeyzSchedules = <String, ScheduleModel>{}.obs;
+  RxMap<String, ScheduleModel> acaxiaSchedules = <String, ScheduleModel>{}.obs;
 
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
@@ -186,8 +189,8 @@ class GlobalController extends GetxController {
     'acaxia': 'schedule_acaxia',
   };
 
-  RxList<ScheduleModel> _scheduleCacheOf(String group) =>
-      group == 'honeyz' ? honeyzScheduleList : acaxiaScheduleList;
+  RxMap<String, ScheduleModel> _scheduleCacheOf(String group) =>
+      group == 'honeyz' ? honeyzSchedules : acaxiaSchedules;
 
   RxMap<String, StreamerModel> _streamerCacheOf(String group) =>
       group == 'honeyz' ? honeyz : acaxia;
@@ -229,23 +232,24 @@ class GlobalController extends GetxController {
     showAppSnackBar('데이터를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.');
   }
 
-  Future<List<ScheduleModel>> loadScheduleFireStore(
+  Future<Map<String, ScheduleModel>> loadScheduleFireStore(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
     final collection = _scheduleCollection[group];
-    if (collection == null) return [];
+    if (collection == null) return {};
 
     final cache = _scheduleCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
       final docsByKey = await _fetchDocsByKey(collection);
       // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
       if (docsByKey != null) {
-        // 카탈로그 순서대로, 문서가 있는 멤버만 (스케줄 미등록 멤버는 제외)
-        cache.value = [
+        // member.key로 조회하는 맵으로 보관한다. 문서가 없는 멤버는 맵에 없을 뿐이며,
+        // UI는 카탈로그를 순서·구성의 단일 소스로 삼아 "스케줄 등록 전"으로 표시한다.
+        cache.value = {
           for (final member in membersOf(group))
             if (docsByKey[member.key] != null)
-              ScheduleModel.fromJson(docsByKey[member.key]!),
-        ];
+              member.key: ScheduleModel.fromJson(docsByKey[member.key]!),
+        };
       } else if (cache.isEmpty) {
         _notifyLoadFailed();
       }
@@ -466,6 +470,19 @@ class GlobalController extends GetxController {
         .compareTo(a.status.concurrentUserCount ?? 0));
 
     return entries;
+  }
+
+  /// 지정 그룹의 카탈로그 순서대로 스케줄 이미지 URL을 나열한다.
+  /// 문서가 없거나 이미지가 비어 있는 멤버는 빈 문자열이 되므로, 결과 길이·순서가
+  /// 항상 `membersOf(group)`과 일치한다 — 소비 측이 인덱스로 멤버 이름과 짝지어도
+  /// 어긋나지 않는다. (문서 없는 멤버를 걸러낸 리스트를 쓰면 그 뒤 멤버들의 이름이
+  ///  한 칸씩 밀려 다른 멤버의 스케줄에 엉뚱한 이름이 붙는다.)
+  List<String> scheduleImageUrlsOf(String group) {
+    final cache = _scheduleCacheOf(group);
+    return [
+      for (final member in membersOf(group))
+        cache[member.key]?.scheduleURL ?? '',
+    ];
   }
 
   /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.

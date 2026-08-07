@@ -26,11 +26,12 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
       final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
       final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors
           .acaxiaDark;
-      final scheduleList = isHoneyz
-          ? globalController.honeyzScheduleList
-          : globalController.acaxiaScheduleList;
-      final members =
-      globalController.membersOf(globalController.selectedGroup.value);
+      final group = globalController.selectedGroup.value;
+      final members = globalController.membersOf(group);
+      // 카탈로그가 순서·구성의 단일 소스이고, URL은 같은 순서로 펼쳐져 온다.
+      // 지연 빌더(SliverChildBuilderDelegate) 안에서 읽으면 Obx가 스케줄 갱신을
+      // 감지하지 못하므로, 여기서 미리 읽어 의존성을 등록한다.
+      final scheduleUrls = globalController.scheduleImageUrlsOf(group);
 
       return Container(
         decoration: BoxDecoration(
@@ -54,7 +55,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
               // 헤더
               SliverToBoxAdapter(
                 child: _buildHeader(
-                    isHoneyz, themeColor, themeColorDark, scheduleList.length),
+                    isHoneyz, themeColor, themeColorDark, members.length),
               ),
               // 멤버 스케줄 리스트
               SliverPadding(
@@ -62,13 +63,12 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                         (context, index) {
+                      // 스케줄 문서가 없는 멤버는 빈 URL → "스케줄 등록 전"으로 표시된다.
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: ScheduleCard(
-                          imageURL: scheduleList[index].scheduleURL ?? '',
-                          memberName: index < members.length
-                              ? members[index].name
-                              : '',
+                          imageURL: scheduleUrls[index],
+                          memberName: members[index].name,
                           index: index,
                           themeColor: themeColor,
                           themeColorDark: themeColorDark,
@@ -76,7 +76,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                         ),
                       );
                     },
-                    childCount: scheduleList.length,
+                    childCount: members.length,
                   ),
                 ),
               ),
