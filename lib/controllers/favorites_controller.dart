@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
@@ -60,10 +63,25 @@ class FavoritesController extends GetxController {
   }
 
   /// 최애 목록('group:key')에서 멤버 key만 추출해 라이브 토픽 구독을 동기화한다.
+  ///
+  /// fire-and-forget이라 실패(오프라인 등 FCM 구독 오류)를 여기서 잡지 않으면
+  /// 아무도 잡지 못해 PlatformDispatcher를 통해 fatal 크래시로 오분류된다.
+  /// 구독 성공 시에만 집합이 영속되므로, 실패해도 다음 호출에서 다시 시도된다.
   void _syncLiveTopics() {
     if (!Get.isRegistered<NotificationController>()) return;
     final keys = favoriteIds.map((id) => id.split(':').last).toSet();
-    Get.find<NotificationController>().syncLiveSubscriptions(keys);
+    unawaited(
+      Get.find<NotificationController>()
+          .syncLiveSubscriptions(keys)
+          .catchError((Object e, StackTrace st) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: '라이브 알림 토픽 구독 동기화 실패',
+          fatal: false,
+        );
+      }),
+    );
   }
 
   @override
