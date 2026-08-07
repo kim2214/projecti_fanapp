@@ -41,7 +41,8 @@ dependencies:
   cloud_firestore: ^6.0.0
   firebase_messaging: ^16.0.0
   firebase_crashlytics: ^5.0.0
-  # 22.x는 Dart 3.10(Flutter 3.38+) 요구 → 현재 Flutter 3.35.3에서 가능한 최신 20.x 유지.
+  # 22.x는 Dart 3.10(Flutter 3.38+)을 요구해 예전엔 못 올렸으나, 현재 Flutter 3.44.8
+  # (Dart 3.12)로 제약이 풀렸다. 다만 22.x는 메이저 변경이라 별도 검증 후 올린다.
   flutter_local_notifications: ^20.1.0
   app_settings: ^6.0.0
   extended_image: ^10.0.0

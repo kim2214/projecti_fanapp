@@ -13,10 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 로컬 개발 환경(Flutter 3.35.3 stable / Dart 3.9.2)과 동일하게 고정한다.
+      # 로컬 개발 환경(Flutter 3.44.8 stable / Dart 3.12.2)과 동일하게 고정한다.
+      # 릴리스 빌드를 만드는 환경이 로컬이므로, 검증 기준도 거기에 맞춘다.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.35.3
+          flutter-version: 3.44.8
           channel: stable
           cache: true
 

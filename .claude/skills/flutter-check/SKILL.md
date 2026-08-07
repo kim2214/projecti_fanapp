@@ -16,7 +16,7 @@ flutter analyze       # 정적 분석 (lint 포함)
 flutter test          # 단위 테스트
 ```
 
-- CI 고정 버전: **Flutter 3.35.3 stable**. 로컬 버전이 다르면 분석 결과가
+- CI 고정 버전: **Flutter 3.44.8 stable**. 로컬 버전이 다르면 분석 결과가
   어긋날 수 있으니 `flutter --version`으로 확인.
 - lint 설정은 `analysis_options.yaml` — `prefer_const_*` 룰이 켜져 있어
   const 누락도 경고로 잡힌다. analyze 경고는 0으로 유지한다.
