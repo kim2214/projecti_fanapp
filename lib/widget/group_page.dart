@@ -124,8 +124,11 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     final members =
         isHoneyz ? _globalController.honeyz : _globalController.acaxia;
 
-    // 로딩 중이거나 멤버 데이터가 없는 경우만 로딩 표시
-    if (_isLoading.value || members.isEmpty) {
+    // 첫 로딩(보여줄 데이터가 아직 없음)일 때만 스피너를 띄운다.
+    // 조회에 실패해 members가 비어도 로딩이 끝나면 본문을 그린다 — 이름·프로필은
+    // 정적 카탈로그에서 오고 Firestore 값은 기본값으로 대체되므로 화면이 성립하며,
+    // 무엇보다 당겨서 새로고침(RefreshIndicator)에 도달할 수 있다.
+    if (_isLoading.value && members.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
