@@ -192,7 +192,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                         size: 22, color: context.textMain),
                     const SizedBox(width: 8),
                     Text(
-                      '스케줄 알림',
+                      '알림 설정',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -201,9 +201,46 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  '라이브 알림',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: context.textMain,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  '멤버 스케줄이 등록되면 알려드립니다.',
+                  '방송 시작 알림을 받을 범위입니다. 최애만 = 별(⭐)로 지정한 멤버.',
+                  style: TextStyle(fontSize: 13, color: context.textFaint),
+                ),
+                const SizedBox(height: 10),
+                Obx(() => SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(value: 'all', label: Text('전체 멤버')),
+                          ButtonSegment(value: 'favorites', label: Text('최애만')),
+                          ButtonSegment(value: 'off', label: Text('끄기')),
+                        ],
+                        selected: {_notificationController.liveMode.value},
+                        onSelectionChanged: (selection) =>
+                            _notificationController.setLiveMode(selection.first),
+                      ),
+                    )),
+                const SizedBox(height: 20),
+                Text(
+                  '스케줄 알림',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: context.textMain,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '멤버 스케줄 등록과 생일 소식을 알려드립니다.',
                   style: TextStyle(fontSize: 13, color: context.textFaint),
                 ),
                 const SizedBox(height: 12),

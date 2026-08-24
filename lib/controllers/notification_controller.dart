@@ -1,19 +1,26 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 
 /// 푸시 알림(FCM) 권한·토픽 구독을 관리하고 설정을 기기에 영속화한다.
 ///
-/// - 스케줄 알림: 그룹별 토픽(`schedule_honeyz`, `schedule_acaxia`). 그룹별 on/off, 기본 ON.
-/// - 라이브 알림: 최애 멤버별 토픽(`live_<memberKey>`). 서버 폴링(Cloud Function
-///   pollLiveStatus)이 CLOSE→OPEN 전이를 감지해 발송한다. 구독 대상은 최애 목록을
-///   따라가며, [FavoritesController]가 변경 시 [syncLiveSubscriptions]로 알려준다.
+/// - 스케줄 알림: 그룹별 토픽(`schedule_honeyz`, `schedule_acaxia`). 그룹별 on/off,
+///   기본 ON. 생일 푸시도 이 토픽으로 온다.
+/// - 라이브 알림: 멤버별 토픽(`live_<memberKey>`). 서버 폴링(Cloud Function
+///   pollLiveStatus)이 방송 시작을 감지해 발송한다. 구독 범위는 [liveMode]
+///   ('all' 전체 / 'favorites' 최애만(기본) / 'off' 끄기)가 정하고, 최애 목록이
+///   바뀌면 [FavoritesController]가 [syncLiveSubscriptions]로 알려준다.
 class NotificationController extends GetxController {
   static const String _prefsPrefix = 'noti_schedule_'; // + group
+
+  /// 라이브 알림 모드 영속화 키 ('all' | 'favorites' | 'off')
+  static const String _liveModePrefsKey = 'noti_live_mode';
 
   /// 안드로이드 알림 채널 ID — Cloud Function의 channelId와 반드시 일치해야 한다.
   static const String scheduleChannelId = 'schedule_channel';
@@ -33,6 +40,13 @@ class NotificationController extends GetxController {
     'honeyz': true,
     'acaxia': true,
   }.obs;
+
+  /// 라이브 알림 모드. 기본 'favorites'(최애만) — 기존 동작과 동일.
+  final RxString liveMode = 'favorites'.obs;
+  bool _liveModeLoaded = false;
+
+  /// 마지막으로 전달받은 최애 key 집합 — 모드 변경 시 재조정에 쓴다.
+  Set<String> _favoriteKeys = const {};
 
   bool _initialized = false;
 
@@ -146,25 +160,68 @@ class NotificationController extends GetxController {
     await prefs.setBool('$_prefsPrefix$group', enabled);
   }
 
-  /// 최애 멤버 목록에 맞춰 라이브 토픽(`live_<key>`) 구독을 동기화한다.
-  /// [FavoritesController]가 최애 로드/토글 후 호출한다.
-  ///
-  /// 영속된 구독 집합과 diff해 추가/해제할 토픽만 처리하므로, 중복 구독이나
-  /// 불필요한 네트워크 호출이 없다.
+  /// 최애 멤버 목록 변경을 반영한다. [FavoritesController]가 로드/토글 후 호출한다.
+  /// 실제 구독 대상은 [liveMode]에 따라 [desiredLiveTopics]가 정한다.
   Future<void> syncLiveSubscriptions(Set<String> favoriteKeys) async {
+    _favoriteKeys = favoriteKeys;
+    await _reconcileLiveTopics();
+  }
+
+  /// 라이브 알림 모드 변경 — 토픽 구독 재조정과 설정 저장을 함께 처리한다.
+  Future<void> setLiveMode(String mode) async {
+    if (mode != 'all' && mode != 'favorites' && mode != 'off') return;
+    liveMode.value = mode;
+    _liveModeLoaded = true; // 사용자가 방금 정한 값이 저장값보다 우선
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_liveModePrefsKey, mode);
+    await _reconcileLiveTopics();
+  }
+
+  /// 모드에 따른 라이브 알림 구독 대상 key 집합. (순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static Set<String> desiredLiveTopics(
+      String mode, Set<String> favoriteKeys, List<String> allKeys) {
+    switch (mode) {
+      case 'off':
+        return const {};
+      case 'all':
+        return allKeys.toSet();
+      default: // 'favorites' (기본)
+        return favoriteKeys;
+    }
+  }
+
+  static List<String> get _allMemberKeys => [
+        for (final m in GlobalController.honeyzMembers) m.key,
+        for (final m in GlobalController.acaxiaMembers) m.key,
+      ];
+
+  /// 원하는 구독 집합(모드×최애)과 영속된 실제 구독 집합을 diff해 추가/해제할
+  /// 토픽만 처리한다 — 중복 구독이나 불필요한 네트워크 호출이 없다.
+  Future<void> _reconcileLiveTopics() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 저장된 모드는 첫 재조정 시점에 지연 로드한다 — FavoritesController의
+    // 첫 동기화가 init()보다 먼저 도착해도 저장된 모드가 적용되게.
+    if (!_liveModeLoaded) {
+      final saved = prefs.getString(_liveModePrefsKey);
+      if (saved == 'all' || saved == 'favorites' || saved == 'off') {
+        liveMode.value = saved!;
+      }
+      _liveModeLoaded = true;
+    }
+
+    final desired =
+        desiredLiveTopics(liveMode.value, _favoriteKeys, _allMemberKeys);
     final current = (prefs.getStringList(_liveTopicsKey) ?? const []).toSet();
 
-    final toAdd = favoriteKeys.difference(current);
-    final toRemove = current.difference(favoriteKeys);
-
-    for (final key in toAdd) {
+    for (final key in desired.difference(current)) {
       await FirebaseMessaging.instance.subscribeToTopic('live_$key');
     }
-    for (final key in toRemove) {
+    for (final key in current.difference(desired)) {
       await FirebaseMessaging.instance.unsubscribeFromTopic('live_$key');
     }
-    await prefs.setStringList(_liveTopicsKey, favoriteKeys.toList());
+    await prefs.setStringList(_liveTopicsKey, desired.toList());
   }
 
   /// 포그라운드에서 받은 FCM 메시지를 로컬 알림으로 표시.
