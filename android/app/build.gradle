@@ -41,6 +41,17 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// key.properties 없이 릴리스를 빌드하면 조용히 debug 서명 산출물이 나온다
+// (Play 업로드 시점에야 실패가 드러남). 릴리스 태스크가 요청된 경우에만
+// 명시적으로 실패시킨다 — debug 빌드·CI(analyze/test)에는 영향 없음.
+gradle.taskGraph.whenReady { graph ->
+    if (!keystorePropertiesFile.exists()
+            && graph.allTasks.any { it.name.contains('Release') }) {
+        throw new GradleException(
+            "android/key.properties가 없습니다 — 릴리스 빌드에는 릴리스 서명이 필수입니다.")
+    }
+}
+
 android {
     namespace "com.devkim.honeyz_fan_app"
     // Play 정책: Android 16(API 36) 타겟 요구. Flutter 3.35 기본값(35)을 override.
@@ -85,9 +96,9 @@ android {
     }
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // key.properties가 없으면 위 taskGraph 가드가 릴리스 빌드를 실패시키므로,
+            // debug 서명으로 조용히 폴백하지 않는다.
+            signingConfig signingConfigs.release
         }
     }
 }
