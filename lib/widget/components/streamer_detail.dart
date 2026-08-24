@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
@@ -35,6 +36,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
   Member? _member;
   int _memberIndex = -1;
   Future<List<YouTubeVideoModel>>? _videosFuture;
+  Future<List<LiveSessionModel>>? _sessionsFuture;
 
   bool get _isHoneyz => widget.group == 'honeyz';
 
@@ -47,6 +49,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
       _member = members[_memberIndex];
       // 컨트롤러의 멤버별 캐시를 경유한다 — 프로필을 열 때마다 RSS 재조회 방지.
       _videosFuture = Get.find<YouTubeController>().videosFor(_member!);
+      _sessionsFuture = _global.fetchRecentSessions(widget.memberKey);
     }
   }
 
@@ -78,6 +81,10 @@ class _StreamerDetailState extends State<StreamerDetail> {
           // 실시간 LIVE 상태 (방송 중일 때만)
           SliverToBoxAdapter(
             child: _buildLiveSection(context, themeColor),
+          ),
+          // 지난 방송 (기록이 있을 때만)
+          SliverToBoxAdapter(
+            child: _buildHistorySection(context, themeColor),
           ),
           // SNS 링크
           SliverToBoxAdapter(
@@ -423,6 +430,131 @@ class _StreamerDetailState extends State<StreamerDetail> {
         ),
       );
     });
+  }
+
+  // ---------------- 지난 방송 ----------------
+
+  /// 서버가 기록한 최근 방송 세션 목록. 데이터가 없거나(신규 배포 직후·미방송
+  /// 멤버) 조회에 실패하면 섹션 자체를 숨긴다 — 보조 정보라 에러를 띄우지 않는다.
+  Widget _buildHistorySection(BuildContext context, Color themeColor) {
+    if (_sessionsFuture == null) return const SizedBox.shrink();
+
+    return FutureBuilder<List<LiveSessionModel>>(
+      future: _sessionsFuture,
+      builder: (context, snapshot) {
+        final sessions = snapshot.data ?? [];
+        if (sessions.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.history_rounded, size: 20, color: themeColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      '지난 방송',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textMain,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: context.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(8),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    for (int i = 0; i < sessions.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: context.textFaint.withAlpha(40),
+                        ),
+                      _buildSessionRow(context, sessions[i], themeColor),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSessionRow(
+      BuildContext context, LiveSessionModel session, Color themeColor) {
+    // "3시간 12분 · 최고 1,384명 · Just Chatting" — 없는 값은 항목째 생략.
+    final details = [
+      session.durationLabel,
+      session.peakViewerText,
+      session.liveCategoryValue ?? '',
+    ].where((s) => s.isNotEmpty).join(' · ');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              session.dateLabel,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: themeColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.liveTitle ?? '(제목 없음)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: context.textMain,
+                    height: 1.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (details.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    details,
+                    style: TextStyle(fontSize: 12, color: context.textFaint),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ---------------- SNS ----------------

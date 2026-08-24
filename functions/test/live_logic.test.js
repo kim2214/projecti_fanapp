@@ -86,6 +86,70 @@ test("nextMemberState: CLOSE 결과는 알림 없음", () => {
   assert.equal(next.lastNotifiedOpenDate, "d1");
 });
 
+test("nextMemberState: OPEN→CLOSE면 직전 세션을 ended로 반환", () => {
+  const { next, ended } = nextMemberState(
+    {
+      status: "OPEN",
+      openDate: "d1",
+      liveTitle: "제목",
+      liveCategoryValue: "cat",
+      peakConcurrentUserCount: 500,
+    },
+    { ok: true, status: "CLOSE", openDate: null }
+  );
+  assert.deepEqual(ended, {
+    openDate: "d1",
+    liveTitle: "제목",
+    liveCategoryValue: "cat",
+    peakConcurrentUserCount: 500,
+  });
+  assert.equal(next.peakConcurrentUserCount, null);
+});
+
+test("nextMemberState: OPEN인 채 openDate가 바뀌면(즉시 재시작) 직전 세션 종료 + 새 세션 알림", () => {
+  const { ended, notify, next } = nextMemberState(
+    { status: "OPEN", openDate: "d1", lastNotifiedOpenDate: "d1", peakConcurrentUserCount: 300 },
+    { ok: true, status: "OPEN", openDate: "d2", concurrentUserCount: 10 }
+  );
+  assert.equal(ended.openDate, "d1");
+  assert.equal(notify, true);
+  // 새 세션이므로 peak는 리셋되어 현재 시청자 수부터 다시 센다.
+  assert.equal(next.peakConcurrentUserCount, 10);
+});
+
+test("nextMemberState: 같은 세션이면 peak는 누적 최대", () => {
+  const { next, ended } = nextMemberState(
+    { status: "OPEN", openDate: "d1", peakConcurrentUserCount: 500 },
+    { ok: true, status: "OPEN", openDate: "d1", concurrentUserCount: 300 }
+  );
+  assert.equal(next.peakConcurrentUserCount, 500);
+  assert.equal(ended, null);
+});
+
+test("nextMemberState: openDate 없던 세션은 종료돼도 기록하지 않음", () => {
+  const { ended } = nextMemberState(
+    { status: "OPEN", openDate: null },
+    { ok: true, status: "CLOSE", openDate: null }
+  );
+  assert.equal(ended, null);
+});
+
+test("nextMemberState: peak 미기록(구버전 집계) 세션은 마지막 시청자 수로 폴백", () => {
+  const { ended } = nextMemberState(
+    { status: "OPEN", openDate: "d1", concurrentUserCount: 42 },
+    { ok: true, status: "CLOSE", openDate: null }
+  );
+  assert.equal(ended.peakConcurrentUserCount, 42);
+});
+
+test("nextMemberState: 조회 실패 시엔 종료로 판정하지 않음", () => {
+  const { ended } = nextMemberState(
+    { status: "OPEN", openDate: "d1" },
+    { ok: false }
+  );
+  assert.equal(ended, null);
+});
+
 test("isQuietHourSkip: 심야(KST 04–10시)는 3분 배수 분에만 폴링", () => {
   // UTC 20:01 = KST 05:01 → 심야, 분%3!=0 → skip
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 20, 1))), true);

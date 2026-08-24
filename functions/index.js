@@ -162,16 +162,18 @@ exports.pollLiveStatus = onSchedule(
       MEMBER_CATALOG.map(async (m) => ({ m, r: await fetchLiveStatus(m.broadcastId) }))
     );
 
-    // 다음 상태·알림 판정은 live_logic.nextMemberState(순수 함수, 테스트 대상).
+    // 다음 상태·알림·종료 판정은 live_logic.nextMemberState(순수 함수, 테스트 대상).
     const nextMembers = {};
     const toNotify = [];
+    const endedSessions = [];
     for (const { m, r } of results) {
-      const { next, notify } = nextMemberState(prev[m.key] || {}, r);
+      const { next, notify, ended } = nextMemberState(prev[m.key] || {}, r);
       // 성공 조회만 갱신 시각을 새로 찍는다 (실패는 직전 상태 그대로 유지).
       nextMembers[m.key] = r.ok
         ? { ...next, updatedAt: FieldValue.serverTimestamp() }
         : next;
       if (notify) toNotify.push({ m, r });
+      if (ended) endedSessions.push({ m, ended });
     }
 
     // 관측성: warn만으로는 폴링이 몇 시간 죽어도 아무도 모른다. 429/403과
@@ -212,6 +214,27 @@ exports.pollLiveStatus = onSchedule(
         nextMembers[m.key].lastNotifiedOpenDate = r.openDate;
       } catch (err) {
         console.error(`live push failed: ${m.key}`, err);
+      }
+    }
+
+    // 종료된 방송 세션을 live_history/{memberKey}/sessions/{id}에 기록한다
+    // (클라 멤버 프로필의 "지난 방송" 목록). 문서 ID를 openDate에서 파생해
+    // 재실행돼도 같은 세션이 중복 생성되지 않는다. 베스트 에포트 — 기록이
+    // 실패해도 집계 쓰기는 진행한다(다음 주기에 전이가 소진돼 그 세션만 유실).
+    for (const { m, ended } of endedSessions) {
+      try {
+        const sessionId = ended.openDate.replace(/\D/g, "");
+        await db.doc(`live_history/${m.key}/sessions/${sessionId}`).set({
+          liveTitle: ended.liveTitle,
+          liveCategoryValue: ended.liveCategoryValue,
+          openDate: ended.openDate,
+          peakConcurrentUserCount: ended.peakConcurrentUserCount,
+          // 종료 시각은 폴링이 감지한 시각 — 실제 종료보다 최대 1분(심야 3분) 늦다.
+          endedAt: FieldValue.serverTimestamp(),
+        });
+        console.log(`live session recorded: ${m.key} ${sessionId}`);
+      } catch (err) {
+        console.error(`live session record failed: ${m.key}`, err);
       }
     }
 

@@ -106,6 +106,11 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 - **실패 시 직전 상태 유지** → 거짓 CLOSE→OPEN 알림 방지 (에러 정책은 클라와 동일).
 - **발송**: 멤버별 토픽 `live_<memberKey>`, 채널 `live_channel`,
   `data: {type:'live', broadcastId, memberKey}`.
+- **방송 기록**: OPEN 동안 `peakConcurrentUserCount`(세션별 최고 시청자)를
+  집계에 누적하고, 종료(OPEN→CLOSE 또는 openDate 변경) 감지 시
+  `live_history/{memberKey}/sessions/{openDate숫자}`에 세션 문서를 기록한다
+  (베스트 에포트, ID 결정적이라 중복 없음). 클라 멤버 프로필 "지난 방송"이
+  읽는다 ([[firestore-data]]).
 
 ### 클라이언트 수신 (`notification_controller.dart`)
 

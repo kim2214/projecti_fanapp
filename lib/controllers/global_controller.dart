@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
+import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
@@ -379,6 +380,24 @@ class GlobalController extends GetxController {
       }
     }
     return null;
+  }
+
+  /// 멤버의 지난 방송 세션을 최신순으로 조회한다 (서버 pollLiveStatus가
+  /// 방송 종료 시 `live_history/{memberKey}/sessions/`에 기록).
+  /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
+  Future<List<LiveSessionModel>> fetchRecentSessions(String memberKey,
+      {int limit = 5}) async {
+    final snapshot = await _fireStore
+        .collection('live_history')
+        .doc(memberKey)
+        .collection('sessions')
+        .orderBy('endedAt', descending: true)
+        .limit(limit)
+        .get()
+        .timeout(_requestTimeout);
+    return [
+      for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
+    ];
   }
 
   Future<Map<String, LiveCheckModel>> liveCheck(

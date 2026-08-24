@@ -34,6 +34,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 서버(pollLiveStatus)가 방송 종료 시 기록하는 지난 방송 세션.
+    // 클라 멤버 프로필의 "지난 방송" 목록이 읽는다. 쓰기는 Admin SDK만.
+    match /live_history/{memberKey}/sessions/{sessionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // 그 외 모든 경로는 기본 차단 (새 컬렉션은 명시적으로 허용할 것)
     match /{document=**} {
       allow read, write: if false;

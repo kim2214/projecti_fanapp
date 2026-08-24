@@ -22,20 +22,39 @@ function parseLiveContent(content) {
 }
 
 /**
- * 한 멤버의 직전 상태 + 폴링 결과 → 다음 상태와 알림 여부.
+ * 한 멤버의 직전 상태 + 폴링 결과 → 다음 상태·알림 여부·종료된 세션.
  *
- * - 조회 실패: 직전 상태를 그대로 유지, 알림 없음 (거짓 전이/알림 방지)
+ * - 조회 실패: 직전 상태를 그대로 유지, 알림/종료 없음 (거짓 전이 방지)
  * - 같은 방송(openDate)엔 1회만 알림 — 상태 플랩에도 중복 발송 방지.
  *   lastNotifiedOpenDate는 발송 "성공" 후에만 기록되므로(index.js 발송 루프),
  *   발송이 실패한 방송은 다음 주기에 자동 재시도된다.
  * - openDate가 없으면 중복 판정이 불가능해 매 주기 재발송될 수 있으므로 생략.
+ * - `ended`: OPEN이던 방송이 끝났거나(CLOSE) openDate가 바뀌면(즉시 재시작)
+ *   직전 세션의 메타를 반환 — index.js가 live_history에 기록한다.
+ *   openDate가 없던 세션은 식별/중복 방지가 불가능해 기록하지 않는다.
+ * - `peakConcurrentUserCount`: 같은 세션(openDate) 동안의 최고 동시 시청자.
+ *   새 세션이면 리셋, 종료 기록에 쓰인다.
  */
 function nextMemberState(prev, result) {
-  if (!result.ok) return { next: prev, notify: false };
+  if (!result.ok) return { next: prev, notify: false, ended: null };
 
   const isLive = result.status === "OPEN";
+  const wasLive = prev.status === "OPEN";
+  const sameSession = isLive && wasLive && prev.openDate === result.openDate;
   const already =
     prev.lastNotifiedOpenDate && prev.lastNotifiedOpenDate === result.openDate;
+
+  const ended =
+    wasLive && !sameSession && prev.openDate
+      ? {
+          openDate: prev.openDate,
+          liveTitle: prev.liveTitle ?? null,
+          liveCategoryValue: prev.liveCategoryValue ?? null,
+          // 구버전 집계(peak 미기록)와의 호환: 마지막 시청자 수로 폴백.
+          peakConcurrentUserCount:
+            prev.peakConcurrentUserCount ?? prev.concurrentUserCount ?? null,
+        }
+      : null;
 
   return {
     next: {
@@ -45,8 +64,15 @@ function nextMemberState(prev, result) {
       liveCategoryValue: result.liveCategoryValue,
       openDate: result.openDate,
       lastNotifiedOpenDate: prev.lastNotifiedOpenDate ?? null,
+      peakConcurrentUserCount: isLive
+        ? Math.max(
+            sameSession ? (prev.peakConcurrentUserCount ?? 0) : 0,
+            result.concurrentUserCount ?? 0
+          )
+        : null,
     },
     notify: Boolean(isLive && !already && result.openDate != null),
+    ended,
   };
 }
 
