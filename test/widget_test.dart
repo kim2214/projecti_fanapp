@@ -90,7 +90,6 @@ void main() {
       final original = YouTubeVideoModel(
         videoId: 'abc123',
         title: '테스트 영상',
-        description: '설명',
         thumbnailUrl: 'https://img/thumb.jpg',
         channelTitle: '오화요',
         publishedAt: DateTime.utc(2026, 6, 15, 9, 30),
@@ -100,7 +99,6 @@ void main() {
 
       expect(restored.videoId, 'abc123');
       expect(restored.title, '테스트 영상');
-      expect(restored.description, '설명');
       expect(restored.thumbnailUrl, 'https://img/thumb.jpg');
       expect(restored.channelTitle, '오화요');
       expect(restored.publishedAt, DateTime.utc(2026, 6, 15, 9, 30));

@@ -90,7 +90,6 @@ class YouTubeService {
     return YouTubeVideoModel(
       videoId: entry.getElement('yt:videoId')?.innerText,
       title: entry.getElement('title')?.innerText,
-      description: mediaGroup?.getElement('media:description')?.innerText,
       thumbnailUrl:
           mediaGroup?.getElement('media:thumbnail')?.getAttribute('url'),
       channelTitle: entry.getElement('author')?.getElement('name')?.innerText,

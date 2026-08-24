@@ -1,15 +1,15 @@
 class YouTubeVideoModel {
   final String? videoId;
   final String? title;
-  final String? description;
   final String? thumbnailUrl;
   final String? channelTitle;
   final DateTime? publishedAt;
 
+  // description은 UI 어디서도 쓰지 않아 필드를 두지 않는다 — 영상 설명문 전체가
+  // 멤버 수 × 15개만큼 SharedPreferences 캐시에 누적돼 콜드스타트만 무거워졌다.
   YouTubeVideoModel({
     this.videoId,
     this.title,
-    this.description,
     this.thumbnailUrl,
     this.channelTitle,
     this.publishedAt,
@@ -19,7 +19,6 @@ class YouTubeVideoModel {
   Map<String, dynamic> toJson() => {
         'videoId': videoId,
         'title': title,
-        'description': description,
         'thumbnailUrl': thumbnailUrl,
         'channelTitle': channelTitle,
         'publishedAt': publishedAt?.toIso8601String(),
@@ -29,7 +28,6 @@ class YouTubeVideoModel {
       YouTubeVideoModel(
         videoId: json['videoId'] as String?,
         title: json['title'] as String?,
-        description: json['description'] as String?,
         thumbnailUrl: json['thumbnailUrl'] as String?,
         channelTitle: json['channelTitle'] as String?,
         publishedAt: json['publishedAt'] != null
