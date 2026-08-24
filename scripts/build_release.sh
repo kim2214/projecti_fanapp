@@ -23,10 +23,18 @@ TARGET="${1:-appbundle}"
 # build/ 밖에 두어 `flutter clean`에도 심볼이 지워지지 않게 한다.
 VERSION="$(grep '^version:' pubspec.yaml | awk '{print $2}')"
 SYMBOLS_DIR="release-symbols/${VERSION}"
+# 같은 버전 재빌드 시 이전 빌드의 심볼이 섞여 남지 않게 비우고 새로 만든다.
+rm -rf "$SYMBOLS_DIR"
 mkdir -p "$SYMBOLS_DIR"
 
 echo "▶ 릴리스 빌드: target=${TARGET}, version=${VERSION}"
 echo "▶ 심볼 출력: ${SYMBOLS_DIR}"
+
+# 증분 빌드에서는 app.so가 새로 생성돼도 --split-debug-info 심볼이 갱신되지 않는
+# 경우가 있어(26.08.07, 2.3.1+13), AAB와 심볼이 서로 다른 빌드에서 나올 수 있다.
+# 심볼이 어긋나면 그 버전의 크래시는 영영 복원할 수 없으므로 항상 클린 빌드한다.
+echo "▶ flutter clean (AAB와 심볼이 같은 빌드에서 나오도록 보장)"
+flutter clean
 
 flutter build "$TARGET" --release \
   --obfuscate \
