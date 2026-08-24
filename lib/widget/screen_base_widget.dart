@@ -406,39 +406,47 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     required Color themeColorDark,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 20 : 16,
-          vertical: 10,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? themeColor.withAlpha(25) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              item.icon,
-              size: 22,
-              color: isSelected ? themeColorDark : context.textFaint,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: themeColorDark,
-                ),
+    // GestureDetector는 시맨틱이 없어 스크린리더가 탭으로 읽지 못한다.
+    // 미선택 탭은 아이콘뿐이라 label도 여기서 제공한다 (자식 시맨틱은 중복 방지 제외).
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: item.label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 20 : 16,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? themeColor.withAlpha(25) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                item.icon,
+                size: 22,
+                color: isSelected ? themeColorDark : context.textFaint,
               ),
+              if (isSelected) ...[
+                const SizedBox(width: 8),
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: themeColorDark,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
