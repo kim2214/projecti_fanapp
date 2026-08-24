@@ -239,7 +239,10 @@ class GlobalController extends GetxController {
   Future<Map<String, Map<String, dynamic>>?> _fetchDocsByKey(
       String collection) async {
     try {
-      final snapshot = await _fireStore.collection(collection).get();
+      // 타임아웃이 없으면 불안정 네트워크에서 호출부(그룹 선택 버튼 등)가
+      // 무한정 "로딩 중"에 갇힌다 — 집계/치지직 조회와 동일한 8초 상한.
+      final snapshot =
+          await _fireStore.collection(collection).get().timeout(_requestTimeout);
 
       // 오프라인에서 로컬 캐시까지 비어 있으면 Firestore는 예외를 던지지 않고
       // "빈 스냅샷"을 성공으로 돌려준다. 그대로 통과시키면 네트워크 실패가
@@ -262,12 +265,16 @@ class GlobalController extends GetxController {
         error: e,
         stackTrace: st,
       );
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        st,
-        reason: 'Firestore 컬렉션 조회 실패 ($collection)',
-        fatal: false,
-      );
+      // 타임아웃은 일시적 네트워크 문제 — Crashlytics 노이즈로 남기지 않는다
+      // (치지직 폴링의 일시 오류 정책과 동일).
+      if (e is! TimeoutException) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'Firestore 컬렉션 조회 실패 ($collection)',
+          fatal: false,
+        );
+      }
       return null;
     }
   }
