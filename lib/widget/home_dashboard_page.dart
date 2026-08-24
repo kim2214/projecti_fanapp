@@ -54,10 +54,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   Future<void> _loadData() async {
-    // 라이브 상태 (캐시 있으면 그대로) + 그룹 최신 영상 + 멤버(생일) 데이터
+    // 라이브 상태 (캐시 있으면 그대로) + 멤버(생일) 데이터.
+    // 그룹 최신 영상은 YouTubeController가 자체 ever(selectedGroup)로 단일
+    // 소유한다 — 여기서도 부르면 그룹 전환마다 RSS fan-out이 두 벌 나간다.
     await Future.wait([
       _globalController.liveCheck(),
-      _youtubeController.loadGroupLatestVideos(),
       _globalController.loadStreamerFireStore(),
     ]);
   }

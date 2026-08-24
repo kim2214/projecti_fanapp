@@ -6,8 +6,8 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
-import 'package:projecti_fan_app/services/youtube_service.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
@@ -45,8 +45,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
     _memberIndex = members.indexWhere((m) => m.key == widget.memberKey);
     if (_memberIndex >= 0) {
       _member = members[_memberIndex];
-      _videosFuture = YouTubeService.instance
-          .getChannelVideos(channelId: _member!.youtubeChannelId);
+      // 컨트롤러의 멤버별 캐시를 경유한다 — 프로필을 열 때마다 RSS 재조회 방지.
+      _videosFuture = Get.find<YouTubeController>().videosFor(_member!);
     }
   }
 

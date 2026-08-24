@@ -105,7 +105,14 @@ class YouTubeController extends GetxController {
   void onInit() {
     super.onInit();
     _restoreFuture = _restorePersistedCache();
+    // 그룹 전환 시의 영상 로드는 이 컨트롤러가 단일 소유한다. 화면(홈)에서도
+    // ever를 걸면 그룹 전환마다 같은 RSS fan-out이 두 벌 나간다.
     ever(_globalController.selectedGroup, (_) => _onGroupChanged());
+    // 컨트롤러는 lazy 생성이라 첫 홈 진입 시점엔 그룹이 이미 선택된 뒤다
+    // (ever가 그 변경을 놓침) → 초기 1회는 여기서 직접 로드한다.
+    if (_globalController.selectedGroup.value.isNotEmpty) {
+      loadGroupLatestVideos();
+    }
   }
 
   void _onGroupChanged() {
@@ -151,27 +158,32 @@ class YouTubeController extends GetxController {
 
       final videos = await _service.getChannelVideos(channelId: channelId);
 
+      // 조회 도중 다른 멤버로 바뀌었으면(재시도 포함 최대 수십 초) 화면 상태를
+      // 건드리지 않는다 — 늦게 도착한 응답이 새 멤버의 목록을 덮는 것 방지.
+      // 결과는 캐시에는 반영해 다음 방문 때 활용한다.
+      final stillSelected = effectiveSelectedMemberKey == memberKey;
+
       if (videos.isNotEmpty) {
-        videoList.value = videos;
+        if (stillSelected) videoList.value = videos;
         // 캐시 저장 + 영속화 (빈 결과는 일시적 실패일 수 있어 저장하지 않는다)
         _cache[memberKey] = _MemberVideoCache(
           videos: List.from(videos),
           lastFetched: DateTime.now(),
         );
         await _persistCache(_memberCacheKey, _cache);
-      } else if (cached == null) {
+      } else if (cached == null && stillSelected) {
         // 캐시도 없는데 빈 결과면, 영상이 실제로 없는 채널로 보고 빈 목록을 표시.
         videoList.value = videos;
       }
       // 빈 결과 + 기존 캐시 있음: 보여주던 캐시를 유지하고 덮어쓰지 않는다.
     } on YouTubeServiceException catch (e) {
       // 이미 캐시로 표시 중이면 기존 콘텐츠를 유지하고 에러 화면을 띄우지 않는다.
-      if (cached == null) {
+      if (cached == null && effectiveSelectedMemberKey == memberKey) {
         hasError.value = true;
         errorMessage.value = e.message;
       }
     } catch (e) {
-      if (cached == null) {
+      if (cached == null && effectiveSelectedMemberKey == memberKey) {
         hasError.value = true;
         errorMessage.value = '알 수 없는 오류가 발생했습니다';
       }
@@ -184,6 +196,33 @@ class YouTubeController extends GetxController {
   @override
   Future<void> refresh() async {
     await loadVideos(forceRefresh: true);
+  }
+
+  /// 멤버 프로필 화면용: 멤버별 10분 캐시를 경유해 최신 영상을 반환한다.
+  /// (서비스를 직접 부르면 프로필을 열 때마다 RSS를 재조회한다 — 이 피드는
+  /// 레이트리밋에 민감하다.) 조회 실패·빈 결과 시엔 오래된 캐시라도 반환한다.
+  Future<List<YouTubeVideoModel>> videosFor(Member member) async {
+    await _restoreFuture; // 영속 캐시 복원 완료 보장 (null이면 즉시 통과)
+
+    final cached = _cache[member.key];
+    if (cached != null && !cached.isStale) return List.from(cached.videos);
+
+    try {
+      final videos =
+          await _service.getChannelVideos(channelId: member.youtubeChannelId);
+      if (videos.isNotEmpty) {
+        _cache[member.key] = _MemberVideoCache(
+          videos: List.from(videos),
+          lastFetched: DateTime.now(),
+        );
+        await _persistCache(_memberCacheKey, _cache);
+        return videos;
+      }
+      return cached != null ? List.from(cached.videos) : videos;
+    } catch (_) {
+      if (cached != null) return List.from(cached.videos);
+      rethrow; // 화면(FutureBuilder)이 "불러올 수 없습니다"로 표시
+    }
   }
 
   /// 홈 대시보드용: 그룹 전체 멤버의 최신 영상 로드 (최신순 상위 [limit]개)

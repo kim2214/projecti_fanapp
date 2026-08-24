@@ -24,27 +24,19 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
   String? _lastLoadedGroup;
   bool _isLoadingInProgress = false;
 
-  // GetX worker
-  Worker? _groupChangeWorker;
-
   @override
   void initState() {
     super.initState();
 
-    // 초기 데이터 로드
+    // 초기 데이터 로드. 그룹 전환 시의 재로드는 항상 살아있는 홈 대시보드의
+    // ever(selectedGroup)가 단일 소유한다 — 여기서도 ever를 걸면 같은
+    // Firestore 조회·라이브 체크가 두 벌 나간다. 이 화면은 Obx로 캐시를
+    // 구독하므로 홈이 채운 결과가 그대로 반영된다.
     _loadData();
-
-    // 그룹 변경 감지 리스너
-    _groupChangeWorker = ever(_globalController.selectedGroup, (group) {
-      if (_lastLoadedGroup != group) {
-        _loadData();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _groupChangeWorker?.dispose();
     _isLoading.close();
     super.dispose();
   }
