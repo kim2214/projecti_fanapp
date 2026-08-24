@@ -83,7 +83,8 @@ exports.onAcaxiaScheduleWrite = onDocumentWritten(
 );
 
 // ─────────────────────────────────────────────────────────────────────────
-// 서버측 라이브 폴링 → CLOSE→OPEN 전이 시 멤버별 토픽으로 방송 시작 푸시.
+// 서버측 라이브 폴링 → 아직 알림을 보내지 않은 방송(openDate 기준)이 OPEN이면
+// 멤버별 토픽으로 방송 시작 푸시.
 //
 // 치지직은 비공식 polling 엔드포인트라, 이 함수가 유일한 백그라운드 라이브
 // 감지 경로다. 클라 포그라운드 폴링(GlobalController)은 폴백으로 유지된다.
@@ -110,10 +111,17 @@ async function fetchLiveStatus(broadcastId) {
       console.warn(`chzzk live-status HTTP ${res.status}: ${broadcastId}`);
       return { ok: false };
     }
-    const content = (await res.json()).content || {};
+    const content = (await res.json()).content;
+    // 200인데 기대 형식이 아니면(비공식 API 계약 변경 신호) 실패로 처리해 직전
+    // 상태를 유지한다 — "CLOSE"로 오해석하면 방송 중 멤버 전원이 비방송으로
+    // 덮이는 무증상 실패가 된다. 클라의 "파싱 실패 = 계약 변경 의심" 정책과 동일.
+    if (!content || typeof content.status !== "string") {
+      console.error(`chzzk live-status 형식 변경 의심 (content.status 없음): ${broadcastId}`);
+      return { ok: false };
+    }
     return {
       ok: true,
-      status: content.status ?? "CLOSE",
+      status: content.status,
       liveTitle: content.liveTitle ?? null,
       concurrentUserCount: content.concurrentUserCount ?? null,
       // 클라 홈 대시보드 라이브 카드가 카테고리를 표시하므로 함께 집계한다.
@@ -158,11 +166,13 @@ exports.pollLiveStatus = onSchedule(
         continue;
       }
 
-      const wasLive = p.status === "OPEN";
       const isLive = r.status === "OPEN";
-      // 같은 방송(openDate)으로는 한 번만 알림 → 상태 플랩에도 중복 발송 방지
+      // 같은 방송(openDate)으로는 한 번만 알림 → 상태 플랩에도 중복 발송 방지.
+      // lastNotifiedOpenDate는 발송 "성공" 후에만 기록하므로(아래 발송 루프),
+      // 발송이 실패한 방송은 다음 주기에 자동 재시도된다. openDate가 없으면
+      // 중복 판정이 불가능해 매 주기 재발송될 수 있으므로 알림을 생략한다.
       const already = p.lastNotifiedOpenDate && p.lastNotifiedOpenDate === r.openDate;
-      const shouldNotify = isLive && !wasLive && !already;
+      const shouldNotify = isLive && !already && r.openDate != null;
 
       nextMembers[m.key] = {
         status: r.status,
@@ -170,19 +180,16 @@ exports.pollLiveStatus = onSchedule(
         concurrentUserCount: r.concurrentUserCount,
         liveCategoryValue: r.liveCategoryValue,
         openDate: r.openDate,
-        lastNotifiedOpenDate: shouldNotify ? r.openDate : (p.lastNotifiedOpenDate ?? null),
+        lastNotifiedOpenDate: p.lastNotifiedOpenDate ?? null,
         updatedAt: FieldValue.serverTimestamp(),
       };
 
       if (shouldNotify) toNotify.push({ m, r });
     }
 
-    // 11명 상태를 집계 문서 1개에 한 번에 기록 (주기당 읽기1 + 쓰기1)
-    await ref.set(
-      { members: nextMembers, updatedAt: FieldValue.serverTimestamp() },
-      { merge: true }
-    );
-
+    // 발송을 집계 기록보다 먼저 수행하고, 성공한 방송만 lastNotifiedOpenDate에
+    // 남긴다. 기록을 먼저 하면 발송이 한 번 실패했을 때 영영 재시도되지 않는다.
+    // (기록 전에 함수가 죽으면 다음 주기에 중복 발송될 수 있으나, 누락보다 낫다.)
     for (const { m, r } of toNotify) {
       try {
         await getMessaging().send({
@@ -198,9 +205,16 @@ exports.pollLiveStatus = onSchedule(
           },
         });
         console.log(`live push sent: ${m.key}`);
+        nextMembers[m.key].lastNotifiedOpenDate = r.openDate;
       } catch (err) {
         console.error(`live push failed: ${m.key}`, err);
       }
     }
+
+    // 11명 상태를 집계 문서 1개에 한 번에 기록 (주기당 읽기1 + 쓰기1)
+    await ref.set(
+      { members: nextMembers, updatedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
   }
 );
