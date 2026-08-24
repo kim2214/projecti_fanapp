@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 
@@ -55,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // 안전한 네비게이션을 위해 PostFrameCallback 사용
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _navigateToGroupSelect();
+      _navigateNext();
     });
   }
 
@@ -64,14 +68,30 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleController.forward();
   }
 
-  Future<void> _navigateToGroupSelect() async {
-    // 최소 표시 시간 (애니메이션 완료 + 여유 시간)
-    await Future.delayed(const Duration(milliseconds: 2500));
+  Future<void> _navigateNext() async {
+    // 저장된 그룹 복원과 최소 표시 시간(페이드 1.2초 + 여유)을 병행한다.
+    // (예전엔 고정 2.5초 대기라 애니메이션이 끝나고도 1.3초를 낭비했다.)
+    final results = await Future.wait([
+      Get.find<GlobalController>().restoreSelectedGroup(),
+      Future.delayed(const Duration(milliseconds: 1400)),
+    ]);
+    if (!mounted) return;
 
-    // mounted 체크 후 네비게이션
-    if (mounted) {
+    final savedGroup = results.first as String?;
+    if (savedGroup == null) {
+      // 첫 실행(또는 저장값 없음/오류) — 기존처럼 그룹 선택으로.
       context.pushReplacement('/groupSelect');
+      return;
     }
+
+    // 스케줄은 진입을 막지 않고 미리 받아둔다 (그룹 선택 화면과 같은 정책 —
+    // 실패하면 GlobalController가 안내 스낵바를 띄우고, 당겨서 새로고침도 있다).
+    unawaited(Get.find<GlobalController>().loadScheduleFireStore());
+
+    // 그룹 선택 화면을 스택 아래에 깔아 두어야 메인의 뒤로가기(pop)가 기존
+    // 선택 흐름과 동일하게 그룹 선택으로 돌아간다 (pop 대상 없음 크래시 방지).
+    context.pushReplacement('/groupSelect');
+    context.push('/baseScreen');
   }
 
   @override

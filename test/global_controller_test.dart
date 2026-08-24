@@ -9,6 +9,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 LiveCheckModel _live({String status = 'CLOSE', int? viewers}) =>
     LiveCheckModel(status: status, concurrentUserCount: viewers);
@@ -25,6 +26,36 @@ StreamerModel _streamer({String? birthday}) => StreamerModel(
 void main() {
   // honeyzMembers: [허니츄러스, 아야, 담유이, 디디디용, 오화요, 망내] (6명)
   // acaxiaMembers: [포포포포, 비올레타 모네, 블레어 로즈, 하시요, 류시호] (5명)
+
+  // SharedPreferences 목(setMockInitialValues) 사용을 위해 필요.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('selectGroup / restoreSelectedGroup (마지막 선택 그룹 영속화)', () {
+    test('selectGroup은 즉시 반영 + 저장, 다음 실행(restore)에서 복원', () async {
+      SharedPreferences.setMockInitialValues({});
+      final c = GlobalController();
+      await c.selectGroup('acaxia');
+      expect(c.selectedGroup.value, 'acaxia');
+
+      final next = GlobalController(); // 다음 실행을 흉내
+      expect(await next.restoreSelectedGroup(), 'acaxia');
+      expect(next.selectedGroup.value, 'acaxia');
+    });
+
+    test('저장값이 없으면(첫 실행) null — 그룹 선택 화면으로', () async {
+      SharedPreferences.setMockInitialValues({});
+      final c = GlobalController();
+      expect(await c.restoreSelectedGroup(), isNull);
+      expect(c.selectedGroup.value, '');
+    });
+
+    test('저장값이 유효한 그룹이 아니면 복원하지 않고 null', () async {
+      SharedPreferences.setMockInitialValues({'selected_group': 'oldgroup'});
+      final c = GlobalController();
+      expect(await c.restoreSelectedGroup(), isNull);
+      expect(c.selectedGroup.value, '');
+    });
+  });
 
   group('liveMembersAcrossGroups', () {
     test('isLive(OPEN)인 멤버만 포함하고 시청자 수 내림차순 정렬', () {

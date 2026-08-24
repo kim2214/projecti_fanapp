@@ -26,7 +26,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
       _isLoadingHoneyz = group == 'honeyz';
       _isLoadingAcaxia = group == 'acaxia';
     });
-    globalController.selectedGroup.value = group;
+    await globalController.selectGroup(group);
 
     // 스케줄을 미리 받아두되, 결과로 진입을 막지는 않는다. 멤버·라이브·영상은
     // 스케줄과 무관하게 동작하며, 조회에 실패하면 GlobalController가 안내

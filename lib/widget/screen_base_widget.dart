@@ -55,7 +55,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   }
 
   Future<void> _switchGroup(String group) async {
-    _globalController.selectedGroup.value = group;
+    await _globalController.selectGroup(group);
 
     // 스케줄 데이터만 로드 (멤버/라이브체크는 GroupPageWidget에서 처리)
     await _globalController.loadScheduleFireStore();

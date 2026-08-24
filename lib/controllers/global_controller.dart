@@ -15,6 +15,7 @@ import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GlobalController extends GetxController {
   // 지연 초기화: 생성 시점에 Firebase에 접근하지 않으므로, 순수 로직(정렬/필터)
@@ -85,6 +86,37 @@ class GlobalController extends GetxController {
   }
 
   RxString selectedGroup = ''.obs;
+
+  // 마지막 선택 그룹 영속화 키 — 다음 실행 스플래시에서 복원해 그룹 선택을 건너뛴다.
+  static const String _groupPrefsKey = 'selected_group';
+
+  /// 그룹 선택/전환 단일 진입점 — 값 반영과 기기 영속화를 함께 한다.
+  /// 값을 먼저 반영하므로 저장이 실패해도 이번 실행 동작에는 영향이 없다
+  /// (다음 실행에서 그룹 선택 화면이 다시 뜰 뿐이다).
+  Future<void> selectGroup(String group) async {
+    selectedGroup.value = group;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_groupPrefsKey, group);
+    } catch (_) {
+      // 저장 실패는 무시.
+    }
+  }
+
+  /// 저장된 마지막 선택 그룹을 복원한다. 유효한 그룹이면 [selectedGroup]에
+  /// 반영하고 그 값을, 없거나(첫 실행) 유효하지 않으면(읽기 실패 포함) null을
+  /// 반환해 호출부(스플래시)가 그룹 선택 화면으로 보내게 한다.
+  Future<String?> restoreSelectedGroup() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_groupPrefsKey);
+      if (saved != 'honeyz' && saved != 'acaxia') return null;
+      selectedGroup.value = saved!;
+      return saved;
+    } catch (_) {
+      return null;
+    }
+  }
 
   // 스케줄도 멤버 데이터와 동일하게 member.key로 조회하는 Map으로 보관한다.
   // (리스트로 두면 문서가 없는 멤버가 빠지면서 카탈로그와 인덱스가 어긋나,
