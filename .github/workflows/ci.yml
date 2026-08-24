@@ -96,3 +96,9 @@ jobs:
       - name: Lint functions
         run: npm run lint
         working-directory: functions
+
+      # 라이브 알림 판정(live_logic.js — 전이·중복 방지·심야 완화)은 순수 함수로
+      # 분리되어 있어 emulator 없이 node --test로 검증한다.
+      - name: Test functions
+        run: npm test
+        working-directory: functions

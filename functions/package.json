@@ -10,6 +10,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "lint": "eslint .",
+    "test": "node --test",
     "check": "node --check index.js"
   },
   "dependencies": {

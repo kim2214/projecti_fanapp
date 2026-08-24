@@ -91,9 +91,14 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 `functions/index.js`의 `pollLiveStatus`(Cloud Scheduler, 1분, `asia-northeast3`,
 `maxInstances: 1`)가 백그라운드 라이브 감지를 담당한다. 멤버 정보는
 `MEMBER_CATALOG`에 있으며 dart 카탈로그와 동기화 필수([[add-member]]).
+**판정 로직(파싱·전이·심야 완화)은 `functions/live_logic.js` 순수 함수**로
+분리되어 `functions/test/live_logic.test.js`(node --test, CI 포함)로 검증한다 —
+알림 판정을 고칠 땐 index.js가 아니라 여기부터.
 
 - **상태 저장**: 집계 문서 `live_status/current`(멤버별 `status`/`liveTitle`/
-  `concurrentUserCount`/`openDate`/`lastNotifiedOpenDate`)에 **주기당 읽기1·쓰기1**.
+  `concurrentUserCount`/`openDate`/`lastNotifiedOpenDate` + 메타
+  `consecutiveAllFailures`/`rateLimitedUntil`)에 **주기당 읽기1·쓰기1**.
+  members는 **merge 없이 통째 교체** — merge하면 카탈로그에서 뺀 멤버가 잔존한다.
 - **알림 판정**: `OPEN`이고 **`openDate`(방송 식별자)로 아직 알림을 보낸 적이
   없을 때** 발송 — 상태가 흔들려도(플랩) 같은 방송엔 1회만. `lastNotifiedOpenDate`는
   **발송 성공 후에만 기록**하므로 FCM 발송 실패는 다음 주기에 자동 재시도된다
@@ -110,11 +115,17 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 - 알림 탭 → `chzzk.naver.com/live/{broadcastId}` 이동 (포그라운드 로컬 알림은
   payload, 백그라운드/종료는 `onMessageOpenedApp`/`getInitialMessage`).
 
-### 밴/차단 완화
+### 밴/차단 완화 (구현됨)
 
-단일 egress IP 집중이 주 리스크. 주기 60초 이상 유지, 브라우저 UA 지정,
-429/403 시 백오프, 지속 실패 시 로그 알림. 서버가 막혀도 **클라 포그라운드
-폴링이 폴백**으로 남는다.
+단일 egress IP 집중이 주 리스크. 구현된 완화책:
+
+- **심야 완화**: KST 04–10시는 3분의 1 주기만 실제 폴링(사실상 3분 주기,
+  `isQuietHourSkip`) — 클라 stale 판정(5분)보다 짧게 유지해야 한다.
+- **429/403 백오프**: 감지 시 `rateLimitedUntil`(+10분)을 기록하고 그동안 주기
+  생략 + `console.error`. 집계가 오래되면 클라가 직접 폴링으로 폴백.
+- **지속 실패 승격**: 전원 조회 실패가 5회 연속(`consecutiveAllFailures`)이면
+  `console.error` — Cloud Logging 알림 정책은 error 레벨에 걸어둔다.
+- 브라우저 UA 지정, 서버가 막혀도 **클라 포그라운드 폴링이 폴백**으로 남는다.
 
 ## 검증
 
