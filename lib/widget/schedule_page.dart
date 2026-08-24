@@ -69,10 +69,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                         child: ScheduleCard(
                           imageURL: scheduleUrls[index],
                           memberName: members[index].name,
-                          index: index,
                           themeColor: themeColor,
                           themeColorDark: themeColorDark,
-                          isHoneyz: isHoneyz,
                         ),
                       );
                     },
@@ -237,19 +235,15 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 class ScheduleCard extends StatelessWidget {
   final String imageURL;
   final String memberName;
-  final int index;
   final Color themeColor;
   final Color themeColorDark;
-  final bool isHoneyz;
 
   const ScheduleCard({
     super.key,
     required this.imageURL,
     required this.memberName,
-    required this.index,
     required this.themeColor,
     required this.themeColorDark,
-    required this.isHoneyz,
   });
 
   @override

@@ -3,6 +3,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
 
 class GroupSelectWidget extends StatefulWidget {
   const GroupSelectWidget({super.key});
@@ -20,6 +21,11 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
   // 로딩 상태
   bool _isLoadingHoneyz = false;
   bool _isLoadingAcaxia = false;
+
+  // build에서 만들면 setState(그룹 카드 로딩 표시)마다 새 Future가 생겨
+  // 화면이 스피너로 되돌아가고 불필요한 재조회가 난다 — 한 번만 만든다.
+  late final Future<Map<String, StreamerModel>> _streamersFuture =
+      globalController.loadStreamerFireStore();
 
   Future<void> _selectGroup(String group) async {
     setState(() {
@@ -60,7 +66,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
         ),
         child: SafeArea(
           child: FutureBuilder(
-            future: globalController.loadStreamerFireStore(),
+            future: _streamersFuture,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               // hasError를 먼저 본다 — 에러일 때도 hasData는 false라, 순서가
               // 뒤바뀌면 아래 오류 화면에 영영 도달하지 못하고 스피너에 갇힌다.

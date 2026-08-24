@@ -39,7 +39,8 @@ class _LivePageWidgetState extends State<LivePageWidget> {
 
   Future<void> _loadData() async {
     await _globalController.refreshAllLiveStatus();
-    _initialLoading.value = false;
+    // 폴링(최대 8초) 중 뒤로가기로 dispose되면 닫힌 Rx에 값을 넣게 된다.
+    if (mounted) _initialLoading.value = false;
   }
 
   Future<void> _onRefresh() async {
