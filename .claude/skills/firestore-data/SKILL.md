@@ -42,6 +42,14 @@ firebase deploy --only firestore:rules
   푸시를 보낸다 (다른 필드 변경/삭제는 무시).
 - 알림 문구는 `MEMBER_NAMES`(key→이름), `GROUP_LABELS`(그룹→라벨) 맵을 쓴다 —
   dart 카탈로그와 동기화 필수.
+
+**생일 푸시**: `birthdayPush`(매일 KST 09:00 스케줄러)가 `honeyz`/`acaxia`
+프로필의 `birthday("MM-DD")`가 오늘(KST)인 멤버를 찾아 발송한다. 판정은
+`functions/birthday_logic.js` 순수 함수(node --test 검증). 별도 토픽 없이
+**`schedule_{group}` 토픽·`schedule_channel` 채널을 재사용**하므로 클라 변경이
+필요 없고, 그룹 알림을 끈 사용자에게는 가지 않는다. 생일 데이터는 콘솔에서
+프로필 문서의 `birthday` 필드로 관리한다.
+
 - 함수 수정 후 배포:
 
 ```bash

@@ -8,6 +8,7 @@ const {
   nextMemberState,
   isQuietHourSkip,
 } = require("./live_logic");
+const { birthdayKeysOn } = require("./birthday_logic");
 
 initializeApp();
 
@@ -247,5 +248,59 @@ exports.pollLiveStatus = onSchedule(
       consecutiveAllFailures,
       rateLimitedUntil: rateLimited ? Date.now() + 10 * 60 * 1000 : null,
     });
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// 생일 푸시 — 매일 KST 09:00에 Firestore 프로필의 birthday("MM-DD")가 오늘인
+// 멤버를 찾아 그룹 토픽으로 발송한다.
+//
+// 별도 토픽/채널 없이 기존 schedule_{group} 토픽·schedule_channel 채널을
+// 재사용한다 — 클라 변경 없이 현재 설치된 앱에도 즉시 동작하고, 그룹 알림을
+// 끈 사용자에게는 가지 않는다(설정 일관성). 하루 1회 스케줄(재시도 없음)이라
+// 별도 중복 방지 기록은 두지 않는다.
+// ─────────────────────────────────────────────────────────────────────────
+
+exports.birthdayPush = onSchedule(
+  {
+    schedule: "0 9 * * *",
+    timeZone: "Asia/Seoul",
+    region: "asia-northeast3",
+    memory: "256MiB",
+    timeoutSeconds: 60,
+    maxInstances: 1,
+  },
+  async () => {
+    const db = getFirestore();
+
+    for (const group of ["honeyz", "acaxia"]) {
+      // 스트리머 컬렉션 이름은 그룹 이름과 동일 (firestore-data skill 참고).
+      const snapshot = await db.collection(group).get();
+      const profiles = {};
+      snapshot.forEach((doc) => (profiles[doc.id] = doc.data()));
+
+      for (const key of birthdayKeysOn(new Date(), profiles)) {
+        // 카탈로그에 없는 key(탈퇴/오타 문서)는 발송하지 않는다.
+        const name = MEMBER_NAMES[key];
+        if (!name) continue;
+
+        try {
+          await getMessaging().send({
+            topic: `schedule_${group}`,
+            notification: {
+              title: `오늘은 ${name} 생일! 🎂`,
+              body: `${GROUP_LABELS[group]} ${name}에게 축하를 보내주세요 🎉`,
+            },
+            android: {
+              priority: "high",
+              notification: { channelId: "schedule_channel" },
+            },
+          });
+          console.log(`birthday push sent: ${group}/${key}`);
+        } catch (err) {
+          console.error(`birthday push failed: ${group}/${key}`, err);
+        }
+      }
+    }
   }
 );
