@@ -137,6 +137,35 @@ void main() {
     });
   });
 
+  group('liveCachesFromAggregate (빈 집계 폴백 판정)', () {
+    test('빈 members면 null — 캐시를 {}로 덮지 않고 직접 폴링으로 폴백', () {
+      final c = GlobalController();
+      // 홈은 "빈 맵 = 로딩 중"으로 그리므로, 빈 집계를 성공으로 취급하면
+      // 폴백이 막혀 스피너가 영영 사라지지 않는다 (회귀 방지).
+      expect(c.liveCachesFromAggregate(const {}), isNull);
+    });
+
+    test('한 그룹만 채워진 members도 null — 반대 그룹이 영구 스피너가 되지 않게', () {
+      final c = GlobalController();
+      final members = <String, dynamic>{
+        'damyui': {'status': 'OPEN'},
+      };
+      expect(c.liveCachesFromAggregate(members), isNull);
+    });
+
+    test('양쪽 그룹이 모두 있으면 두 캐시를 반환', () {
+      final c = GlobalController();
+      final members = <String, dynamic>{
+        'damyui': {'status': 'OPEN', 'concurrentUserCount': 10},
+        'popopopo': {'status': 'CLOSE'},
+      };
+
+      final caches = c.liveCachesFromAggregate(members)!;
+      expect(caches.honeyz['damyui']!.isLive, isTrue);
+      expect(caches.acaxia['popopopo']!.isLive, isFalse);
+    });
+  });
+
   group('scheduleImageUrlsOf', () {
     test('문서가 없는 멤버가 있어도 카탈로그와 길이·순서가 일치한다', () {
       final c = GlobalController();

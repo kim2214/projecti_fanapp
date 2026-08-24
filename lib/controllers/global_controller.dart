@@ -375,7 +375,8 @@ class GlobalController extends GetxController {
   /// 서버 집계 문서(`live_status/current`)에서 양쪽 그룹 상태를 채운다.
   ///
   /// 성공하면 true. 문서가 없거나(서버 미배포), 너무 오래됐거나(서버 폴링 중단),
-  /// 조회에 실패하면 false를 반환해 호출부가 치지직 직접 폴링으로 폴백하게 한다.
+  /// 집계가 비었거나(문서 초기화·형식 오류), 조회에 실패하면 false를 반환해
+  /// 호출부가 치지직 직접 폴링으로 폴백하게 한다.
   Future<bool> _refreshFromServerAggregate() async {
     try {
       final snapshot = await _fireStore
@@ -393,8 +394,10 @@ class GlobalController extends GetxController {
 
       final members =
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
-      _liveCacheOf('honeyz').value = liveStatusFromAggregate('honeyz', members);
-      _liveCacheOf('acaxia').value = liveStatusFromAggregate('acaxia', members);
+      final caches = liveCachesFromAggregate(members);
+      if (caches == null) return false;
+      _liveCacheOf('honeyz').value = caches.honeyz;
+      _liveCacheOf('acaxia').value = caches.acaxia;
       return true;
     } catch (e, st) {
       // 일시적 오류 등은 조용히 폴백 (치지직 직접 폴링이 폴백으로 남는다).
@@ -420,6 +423,20 @@ class GlobalController extends GetxController {
       Object? updatedAt, DateTime now, Duration maxAge) {
     return updatedAt is Timestamp &&
         now.difference(updatedAt.toDate()) > maxAge;
+  }
+
+  /// 서버 집계 members를 두 그룹의 캐시 값으로 변환한다. 어느 한 그룹도 채우지
+  /// 못하면(문서 초기화 직후·형식 오류) null — 홈은 "빈 맵 = 로딩 중"으로
+  /// 그리므로, 빈 집계를 성공으로 취급해 캐시를 {}로 덮으면 직접 폴링 폴백이
+  /// 막혀 스피너가 영영 사라지지 않는다. 정상 집계는 서버가 매 주기 멤버 전원을
+  /// 기록하므로 두 그룹 모두 비지 않는다. (순수 변환 — 테스트 대상)
+  @visibleForTesting
+  ({Map<String, LiveCheckModel> honeyz, Map<String, LiveCheckModel> acaxia})?
+      liveCachesFromAggregate(Map<String, dynamic> members) {
+    final honeyz = liveStatusFromAggregate('honeyz', members);
+    final acaxia = liveStatusFromAggregate('acaxia', members);
+    if (honeyz.isEmpty || acaxia.isEmpty) return null;
+    return (honeyz: honeyz, acaxia: acaxia);
   }
 
   /// 서버 집계 members 맵을 `member.key → 상태` 맵으로 변환한다.
