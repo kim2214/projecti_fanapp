@@ -2,11 +2,13 @@ const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
-const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 const {
   parseLiveContent,
   nextMemberState,
   isQuietHourSkip,
+  parseKstOpenDate,
+  estimateEndedAtMs,
 } = require("./live_logic");
 const { birthdayKeysOn } = require("./birthday_logic");
 
@@ -225,13 +227,21 @@ exports.pollLiveStatus = onSchedule(
     for (const { m, ended } of endedSessions) {
       try {
         const sessionId = ended.openDate.replace(/\D/g, "");
+        const startedMs = parseKstOpenDate(ended.openDate);
+        // 집계에서 읽은 updatedAt은 Firestore Timestamp(toMillis) — 없으면 now.
+        const lastSeenMs =
+          typeof ended.lastSeenLiveAt?.toMillis === "function"
+            ? ended.lastSeenLiveAt.toMillis()
+            : null;
         await db.doc(`live_history/${m.key}/sessions/${sessionId}`).set({
           liveTitle: ended.liveTitle,
           liveCategoryValue: ended.liveCategoryValue,
           openDate: ended.openDate,
+          // 절대 시각(Timestamp) — 클라가 기기 타임존과 무관하게 계산할 수 있게.
+          startedAt: startedMs != null ? Timestamp.fromMillis(startedMs) : null,
           peakConcurrentUserCount: ended.peakConcurrentUserCount,
-          // 종료 시각은 폴링이 감지한 시각 — 실제 종료보다 최대 1분(심야 3분) 늦다.
-          endedAt: FieldValue.serverTimestamp(),
+          // 마지막 OPEN 관측과 CLOSE 관측의 중간값 (±폴링 주기/2 오차).
+          endedAt: Timestamp.fromMillis(estimateEndedAtMs(lastSeenMs, Date.now())),
         });
         console.log(`live session recorded: ${m.key} ${sessionId}`);
       } catch (err) {

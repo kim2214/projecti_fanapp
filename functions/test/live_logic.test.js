@@ -6,6 +6,8 @@ const {
   parseLiveContent,
   nextMemberState,
   isQuietHourSkip,
+  parseKstOpenDate,
+  estimateEndedAtMs,
 } = require("../live_logic");
 
 test("parseLiveContent: 정상 content를 집계 결과로 변환", () => {
@@ -102,6 +104,7 @@ test("nextMemberState: OPEN→CLOSE면 직전 세션을 ended로 반환", () => 
     liveTitle: "제목",
     liveCategoryValue: "cat",
     peakConcurrentUserCount: 500,
+    lastSeenLiveAt: null, // 집계에 updatedAt이 없으면 null (index.js가 now로 대체)
   });
   assert.equal(next.peakConcurrentUserCount, null);
 });
@@ -163,4 +166,40 @@ test("isQuietHourSkip: 심야(KST 04–10시)는 3분 배수 분에만 폴링", 
 test("isQuietHourSkip: 주간(KST 14시)은 항상 폴링", () => {
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 5, 1))), false);
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 5, 3))), false);
+});
+
+test("nextMemberState: ended에 마지막 OPEN 관측 시각(updatedAt)을 넘긴다", () => {
+  const seen = { toMillis: () => 123 };
+  const { ended } = nextMemberState(
+    { status: "OPEN", openDate: "d1", updatedAt: seen },
+    { ok: true, status: "CLOSE", openDate: null }
+  );
+  assert.equal(ended.lastSeenLiveAt, seen);
+});
+
+test("parseKstOpenDate: KST 문자열을 UTC epoch ms로 (KST 20:00 = UTC 11:00)", () => {
+  assert.equal(
+    parseKstOpenDate("2026-08-24 20:00:00"),
+    Date.UTC(2026, 7, 24, 11, 0, 0)
+  );
+  // KST 자정 직후는 UTC 전날
+  assert.equal(
+    parseKstOpenDate("2026-08-25 00:30:00"),
+    Date.UTC(2026, 7, 24, 15, 30, 0)
+  );
+});
+
+test("parseKstOpenDate: 형식이 다르면 null", () => {
+  assert.equal(parseKstOpenDate(null), null);
+  assert.equal(parseKstOpenDate(""), null);
+  assert.equal(parseKstOpenDate("2026-08-24T20:00:00"), null);
+  assert.equal(parseKstOpenDate("2026-08-24"), null);
+});
+
+test("estimateEndedAtMs: 마지막 OPEN 관측과 now의 중간값, 없으면 now", () => {
+  assert.equal(estimateEndedAtMs(1000, 3000), 2000);
+  assert.equal(estimateEndedAtMs(null, 3000), 3000);
+  assert.equal(estimateEndedAtMs(undefined, 3000), 3000);
+  // 시계 역행(직전 시각이 미래)이면 now로 안전 처리
+  assert.equal(estimateEndedAtMs(5000, 3000), 3000);
 });

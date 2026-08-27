@@ -57,7 +57,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   Future<void> _switchGroup(String group) async {
     await _globalController.selectGroup(group);
 
-    // 스케줄 데이터만 로드 (멤버/라이브체크는 GroupPageWidget에서 처리)
+    // 스케줄 데이터만 로드한다. 멤버·라이브 상태는 홈 대시보드의
+    // ever(selectedGroup)가, 그룹 영상은 YouTubeController가 각각 재로드한다.
     await _globalController.loadScheduleFireStore();
 
     // 홈 페이지로 이동

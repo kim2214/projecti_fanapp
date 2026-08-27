@@ -53,6 +53,8 @@ function nextMemberState(prev, result) {
           // 구버전 집계(peak 미기록)와의 호환: 마지막 시청자 수로 폴백.
           peakConcurrentUserCount:
             prev.peakConcurrentUserCount ?? prev.concurrentUserCount ?? null,
+          // 마지막으로 OPEN을 본 시각(집계 updatedAt) — 종료 시각 추정에 쓴다.
+          lastSeenLiveAt: prev.updatedAt ?? null,
         }
       : null;
 
@@ -87,4 +89,34 @@ function isQuietHourSkip(date) {
   return date.getUTCMinutes() % 3 !== 0;
 }
 
-module.exports = { parseLiveContent, nextMemberState, isQuietHourSkip };
+/**
+ * 치지직 openDate("yyyy-MM-dd HH:mm:ss", KST)를 epoch ms로 변환한다.
+ * 형식이 다르면 null. 클라가 문자열을 기기 로컬로 해석하면 해외 사용자에게
+ * 방송 길이가 시차만큼 틀어지므로, 서버가 절대 시각(Timestamp)으로 저장한다.
+ */
+function parseKstOpenDate(openDate) {
+  const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(
+    openDate ?? ""
+  );
+  if (!m) return null;
+  const [, y, mo, d, h, mi, sec] = m.map(Number);
+  return Date.UTC(y, mo - 1, d, h, mi, sec) - 9 * 60 * 60 * 1000;
+}
+
+/**
+ * 종료 시각 추정(epoch ms). 실제 종료는 "마지막으로 OPEN을 본 폴링"과
+ * "CLOSE를 처음 본 폴링(now)" 사이 어딘가이므로 중간값을 쓴다 — 오차가
+ * 폴링 주기의 절반(±30초, 심야 ±90초)으로 줄어든다. 직전 시각이 없으면 now.
+ */
+function estimateEndedAtMs(lastSeenLiveMs, nowMs) {
+  if (typeof lastSeenLiveMs !== "number" || lastSeenLiveMs > nowMs) return nowMs;
+  return Math.round((lastSeenLiveMs + nowMs) / 2);
+}
+
+module.exports = {
+  parseLiveContent,
+  nextMemberState,
+  isQuietHourSkip,
+  parseKstOpenDate,
+  estimateEndedAtMs,
+};

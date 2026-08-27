@@ -22,6 +22,18 @@ void main() {
       expect(session.peakViewerText, '최고 1,384명');
     });
 
+    test('startedAt Timestamp가 있으면 openDate 문자열보다 우선한다', () {
+      // openDate는 KST 문자열(기기 로컬로 해석)이라 시차가 있으면 틀어진다 —
+      // 서버가 준 절대 시각을 우선해 어떤 타임존에서도 길이가 같아야 한다.
+      final session = LiveSessionModel.fromJson({
+        'openDate': '2000-01-01 00:00:00', // 엉뚱한 값 — 무시돼야 함
+        'startedAt': Timestamp.fromDate(DateTime(2026, 8, 23, 20, 0)),
+        'endedAt': Timestamp.fromDate(DateTime(2026, 8, 23, 21, 30)),
+      });
+      expect(session.durationLabel, '1시간 30분');
+      expect(session.dateLabel, '8/23');
+    });
+
     test('1시간 미만 방송은 분 단위로만 표기', () {
       final session = LiveSessionModel.fromJson({
         'openDate': '2026-08-23 20:00:00',

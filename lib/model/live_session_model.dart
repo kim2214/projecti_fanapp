@@ -6,11 +6,13 @@ class LiveSessionModel {
   final String? liveTitle;
   final String? liveCategoryValue;
 
-  /// 방송 시작 시각 — chzzk openDate("yyyy-MM-dd HH:mm:ss", KST)를 기기
-  /// 로컬 시간으로 해석한다 (주 사용자가 KST라는 전제).
+  /// 방송 시작 시각. 서버가 저장한 `startedAt` Timestamp(절대 시각)를 우선하고,
+  /// 구버전 기록엔 없으므로 chzzk openDate("yyyy-MM-dd HH:mm:ss", KST) 문자열을
+  /// 기기 로컬 시간으로 해석해 폴백한다 (KST 기기에서만 정확).
   final DateTime? startedAt;
 
-  /// 방송 종료 시각 — 서버 폴링이 감지한 시각(실제보다 최대 1~3분 늦은 근사값).
+  /// 방송 종료 시각 — 서버 폴링의 마지막 OPEN 관측과 CLOSE 관측의 중간값
+  /// (±폴링 주기/2 오차의 근사값).
   final DateTime? endedAt;
 
   /// 방송 중 최고 동시 시청자 수.
@@ -25,12 +27,15 @@ class LiveSessionModel {
   });
 
   factory LiveSessionModel.fromJson(Map<String, dynamic> json) {
+    final startedAt = json['startedAt'];
     final openDate = json['openDate'];
     final endedAt = json['endedAt'];
     return LiveSessionModel(
       liveTitle: json['liveTitle'] as String?,
       liveCategoryValue: json['liveCategoryValue'] as String?,
-      startedAt: openDate is String ? DateTime.tryParse(openDate) : null,
+      startedAt: startedAt is Timestamp
+          ? startedAt.toDate()
+          : (openDate is String ? DateTime.tryParse(openDate) : null),
       endedAt: endedAt is Timestamp ? endedAt.toDate() : null,
       peakConcurrentUserCount: (json['peakConcurrentUserCount'] as num?)?.toInt(),
     );
