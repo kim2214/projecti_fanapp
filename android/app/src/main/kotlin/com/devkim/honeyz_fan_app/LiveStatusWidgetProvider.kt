@@ -111,6 +111,15 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
             }
         }
 
+        // 카드의 빈 영역 탭: 방송이 하나뿐이면 어디를 눌러도 그 방송으로, 아니면 앱으로.
+        // (헤더·행은 자식 뷰의 PendingIntent가 우선하므로 나머지 영역만 이 동작을 탄다.)
+        val soleUrl = if (count == 1) live?.optJSONObject(0)?.optString("url").orEmpty() else ""
+        views.setOnClickPendingIntent(
+            R.id.widget_root,
+            if (soleUrl.isNotEmpty()) openUrlIntent(context, soleUrl, 99)
+            else HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java),
+        )
+
         val overflow = count - ROW_IDS.size
         if (overflow > 0) {
             views.setViewVisibility(R.id.more, View.VISIBLE)
@@ -135,7 +144,7 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
         if (Build.VERSION.SDK_INT >= 23) flags = flags or PendingIntent.FLAG_IMMUTABLE
-        // 행마다 requestCode를 달리 해야 PendingIntent가 서로 덮어쓰지 않는다.
+        // 행(100+i)·빈 영역(99)마다 requestCode를 달리 해야 PendingIntent가 서로 덮어쓰지 않는다.
         return PendingIntent.getActivity(context, 100 + index, intent, flags)
     }
 }
