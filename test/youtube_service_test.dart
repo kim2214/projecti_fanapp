@@ -47,8 +47,7 @@ void main() {
       expect(v.videoId, 'VIDEO_1');
       expect(v.title, '첫 번째 영상');
       expect(v.channelTitle, '채널명');
-      expect(v.thumbnailUrl,
-          'https://i.ytimg.com/vi/VIDEO_1/hqdefault.jpg');
+      expect(v.thumbnailUrl, 'https://i.ytimg.com/vi/VIDEO_1/hqdefault.jpg');
       expect(v.publishedAt, DateTime.parse('2026-07-18T10:00:00+00:00'));
     });
 

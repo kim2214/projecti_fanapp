@@ -28,9 +28,8 @@ class _MemberVideoCache {
         videos: (json['videos'] as List)
             .map((e) => YouTubeVideoModel.fromJson(e as Map<String, dynamic>))
             .toList(),
-        lastFetched:
-            DateTime.tryParse(json['lastFetched'] as String? ?? '') ??
-                DateTime(2000),
+        lastFetched: DateTime.tryParse(json['lastFetched'] as String? ?? '') ??
+            DateTime(2000),
       );
 }
 
@@ -96,7 +95,8 @@ class YouTubeController extends GetxController {
 
   /// 현재 선택된 멤버의 YouTube 채널 페이지 URL
   String? get currentChannelUrl {
-    final channelId = _memberByKey(effectiveSelectedMemberKey)?.youtubeChannelId;
+    final channelId =
+        _memberByKey(effectiveSelectedMemberKey)?.youtubeChannelId;
     if (channelId == null) return null;
     return 'https://www.youtube.com/channel/$channelId/videos';
   }

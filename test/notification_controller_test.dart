@@ -11,7 +11,8 @@ void main() {
   group('desiredLiveTopics (라이브 알림 구독 대상)', () {
     test("'favorites'(기본)는 최애 집합 그대로", () {
       expect(
-        NotificationController.desiredLiveTopics('favorites', favorites, allKeys),
+        NotificationController.desiredLiveTopics(
+            'favorites', favorites, allKeys),
         {'b'},
       );
     });

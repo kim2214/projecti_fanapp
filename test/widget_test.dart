@@ -16,8 +16,8 @@ void main() {
     });
 
     test('viewerCountText는 천 단위 콤마를 붙인다', () {
-      expect(LiveCheckModel(concurrentUserCount: 1384).viewerCountText,
-          '1,384명');
+      expect(
+          LiveCheckModel(concurrentUserCount: 1384).viewerCountText, '1,384명');
       expect(LiveCheckModel(concurrentUserCount: 384).viewerCountText, '384명');
       expect(LiveCheckModel(concurrentUserCount: 1000000).viewerCountText,
           '1,000,000명');
@@ -51,7 +51,8 @@ void main() {
       expect(_streamerWithBirthday(null).birthdayLabel, isNull);
       expect(_streamerWithBirthday('abc').birthdayLabel, isNull);
       expect(_streamerWithBirthday('13-40').birthdayLabel, isNull); // 월/일 범위 초과
-      expect(_streamerWithBirthday('2024-03-15').birthdayLabel, isNull); // MM-DD 아님
+      expect(_streamerWithBirthday('2024-03-15').birthdayLabel,
+          isNull); // MM-DD 아님
     });
 
     test('daysUntilBirthday는 유효한 생일에 대해 0~366 범위', () {
@@ -105,8 +106,7 @@ void main() {
     });
 
     test('publishedAt이 null이어도 안전하게 직렬화/복원', () {
-      final restored =
-          YouTubeVideoModel.fromJson(YouTubeVideoModel().toJson());
+      final restored = YouTubeVideoModel.fromJson(YouTubeVideoModel().toJson());
       expect(restored.publishedAt, isNull);
       expect(restored.videoId, isNull);
     });
