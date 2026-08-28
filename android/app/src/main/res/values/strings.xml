@@ -7,7 +7,6 @@
     <string name="widget_no_live">지금은 모두 휴식 중 💤</string>
     <string name="widget_more">+%1$d명 더 방송 중</string>
     <string name="widget_updated_pending">갱신 대기</string>
-    <string name="widget_updated_just">방금 갱신</string>
-    <string name="widget_updated_min">%1$d분 전 갱신</string>
+    <string name="widget_updated_at">%1$s 기준</string>
     <string name="widget_viewers">%1$s명</string>
 </resources>

@@ -14,6 +14,8 @@ import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 /**
@@ -130,14 +132,12 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
         return views
     }
 
+    // 위젯은 다시 그릴 때만 텍스트가 바뀌므로 "N분 전"은 최대 30분간 멈춘 값이
+    // 보인다 — 갱신된 절대 시각("10:41 기준")이 유일하게 정직한 표기다.
     private fun updatedLabel(context: Context, updatedAt: Long): String {
         if (updatedAt <= 0L) return context.getString(R.string.widget_updated_pending)
-        val minutes = ((System.currentTimeMillis() - updatedAt) / 60_000L).toInt()
-        return if (minutes < 1) {
-            context.getString(R.string.widget_updated_just)
-        } else {
-            context.getString(R.string.widget_updated_min, minutes)
-        }
+        val time = SimpleDateFormat("HH:mm", Locale.KOREA).format(Date(updatedAt))
+        return context.getString(R.string.widget_updated_at, time)
     }
 
     private fun openUrlIntent(context: Context, url: String, index: Int): PendingIntent {
