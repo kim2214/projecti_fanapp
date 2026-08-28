@@ -15,6 +15,7 @@ import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/services/live_widget_service.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -468,6 +469,7 @@ class GlobalController extends GetxController {
       _liveCacheOf('honeyz').value = caches.honeyz;
       _liveCacheOf('acaxia').value = caches.acaxia;
       lastSessions.value = lastSessionsFromAggregate(data['lastSessions']);
+      _pushLiveWidget();
       return true;
     } catch (e, st) {
       // 일시적 오류 등은 조용히 폴백 (치지직 직접 폴링이 폴백으로 남는다).
@@ -540,6 +542,14 @@ class GlobalController extends GetxController {
         members[i].key:
             results[i] ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
     };
+    _pushLiveWidget();
+  }
+
+  /// 홈스크린 위젯에 현재 라이브 상태(양 그룹 합본)를 반영한다. 라이브 캐시가
+  /// 바뀌는 두 경로(서버 집계·직접 폴링) 끝에서 호출. 실패는 서비스가 흡수한다.
+  void _pushLiveWidget() {
+    unawaited(
+        LiveWidgetService.push({...honeyzLiveStatus, ...acaxiaLiveStatus}));
   }
 
   /// 두 그룹을 통합한 현재 방송 중(LIVE) 멤버 목록.

@@ -81,6 +81,22 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashlytics 로그
 (`reason: 'chzzk ... 형식 변경 가능성'`)부터 확인한다.
 
+## 홈스크린 위젯 갱신 경로 (Android)
+
+`lib/services/live_widget_service.dart`가 `home_widget` 저장소에 JSON
+(`{updatedAt, live:[{name,group,title,viewers,url}]}`)을 쓰고, 네이티브
+`LiveStatusWidgetProvider.kt`가 그린다. **페이로드 형식은 양쪽(Dart `buildPayload`
+/ Kotlin `render`)을 함께 고친다** — 계약은 `test/live_widget_service_test.dart`.
+
+- 즉시 갱신: `GlobalController._pushLiveWidget()` — 라이브 캐시가 바뀌는 두 경로
+  (서버 집계·직접 폴링) 끝에서 호출.
+- 라이브 FCM 수신(백그라운드): `main._firebaseMessagingBackgroundHandler` →
+  `LiveWidgetService.refreshFromServer()` (집계 문서 직접 읽기, GetX 미사용).
+- 주기 갱신: 위젯 `updatePeriodMillis`(30분) → 네이티브 `onUpdate`가 데이터가
+  5분↑ 오래됐으면 `HomeWidgetBackgroundIntent`로 Dart `backgroundCallback` 호출.
+  갱신 후 updatedAt이 신선해져 재요청되지 않는다(루프 방지).
+- 위젯은 보조 UI — 실패는 전부 조용히 무시하고 기존 스냅샷을 유지한다.
+
 ## 통합 LIVE 정렬
 
 `liveMembersAcrossGroups`: 양쪽 그룹에서 `isLive`인 멤버만 모아 **시청자 수

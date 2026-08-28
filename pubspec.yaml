@@ -56,6 +56,7 @@ dependencies:
 
   # YouTube RSS 피드 파싱
   xml: ^6.5.0
+  home_widget: ^0.9.3
 
 dev_dependencies:
   flutter_test:

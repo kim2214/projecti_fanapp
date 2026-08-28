@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈스크린 위젯 색상 (다크). -->
+<resources>
+    <color name="widget_bg">#FF1C1C1E</color>
+    <color name="widget_text">#FFF2F2F7</color>
+    <color name="widget_text_sub">#FFB0B0B8</color>
+    <color name="widget_text_faint">#FF8E8E93</color>
+    <color name="widget_live">#FFFF453A</color>
+    <color name="widget_divider">#FF3A3A3C</color>
+</resources>

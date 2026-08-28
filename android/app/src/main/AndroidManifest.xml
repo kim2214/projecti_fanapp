@@ -55,5 +55,27 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- 홈스크린 위젯 "지금 방송 중" (LiveStatusWidgetProvider.kt) -->
+        <receiver
+            android:name=".LiveStatusWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/live_status_widget_info" />
+        </receiver>
+
+        <!-- home_widget 백그라운드 콜백 수신 (위젯 주기 갱신 → Dart 서버 재조회) -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

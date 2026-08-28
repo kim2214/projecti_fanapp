@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -7,19 +8,24 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
 import 'package:projecti_fan_app/router.dart';
+import 'package:projecti_fan_app/services/live_widget_service.dart';
 import 'package:projecti_fan_app/theme/app_theme.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 
 /// 백그라운드/종료 상태에서 FCM 메시지를 받을 때 실행되는 최상위 핸들러.
-/// notification 페이로드가 있으면 시스템이 트레이에 자동 표시하므로 별도 처리 불필요.
+/// notification 페이로드가 있으면 시스템이 트레이에 자동 표시하므로 표시 처리는
+/// 없고, 라이브 알림이면 홈스크린 위젯만 서버 집계로 갱신한다.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // 현재는 표시 외 처리할 작업이 없어 비워둔다.
+  if (message.data['type'] == 'live') {
+    await LiveWidgetService.refreshFromServer();
+  }
 }
 
 void main() async {
@@ -38,6 +44,13 @@ void main() async {
     if (e.code != 'duplicate-app') rethrow;
   }
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // 홈스크린 위젯 주기 갱신(네이티브 onUpdate)이 오래된 데이터를 보면 이 콜백으로
+  // 서버 집계를 다시 읽게 한다. Android 전용이라 그 외 플랫폼은 등록하지 않는다.
+  if (!kIsWeb && Platform.isAndroid) {
+    unawaited(HomeWidget.registerInteractivityCallback(
+        LiveWidgetService.backgroundCallback));
+  }
 
   // Crashlytics: 디버그 빌드의 크래시는 수집하지 않아 리포트 오염을 막는다.
   final crashlytics = FirebaseCrashlytics.instance;

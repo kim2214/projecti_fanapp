@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈스크린 위젯 색상 (라이트). 다크는 values-night/colors.xml. AppColors(dart)와 맞춘다. -->
+<resources>
+    <color name="widget_bg">#FFFFFFFF</color>
+    <color name="widget_text">#FF1A3A4A</color>
+    <color name="widget_text_sub">#FF757575</color>
+    <color name="widget_text_faint">#FF9E9E9E</color>
+    <color name="widget_live">#FFFF3B30</color>
+    <color name="widget_divider">#FFE0E0E0</color>
+</resources>

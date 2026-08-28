@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "지금 방송 중" 홈스크린 위젯 (기본 4x2). 30분 주기(updatePeriodMillis 최소값)로
+  onUpdate가 불리며, 데이터가 오래됐으면 Provider가 Dart 백그라운드 콜백으로 서버
+  집계를 다시 읽는다. 즉시 갱신은 앱 실행/라이브 푸시 경로가 담당한다.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/live_status_widget"
+    android:previewLayout="@layout/live_status_widget"
+    android:description="@string/widget_description"
+    android:widgetCategory="home_screen" />
