@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class GroupSelectWidget extends StatefulWidget {
   const GroupSelectWidget({super.key});
@@ -254,7 +255,8 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
     required String logoAsset,
     required bool isLoading,
   }) {
-    return GestureDetector(
+    return TapSemantics(
+        child: GestureDetector(
       onTap: isLoading ? null : () => _selectGroup(group),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -412,6 +414,6 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
           ],
         ),
       ),
-    );
+    ));
   }
 }

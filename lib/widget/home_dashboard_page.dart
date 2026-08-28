@@ -13,6 +13,7 @@ import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 /// 홈 대시보드: 지금 방송 중 + 주간 스케줄 바로가기 + 최신 영상
 class HomeDashboardWidget extends StatefulWidget {
@@ -116,7 +117,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   icon: Icons.podcasts_rounded,
                   title: '지금 방송 중',
                   color: AppColors.live,
-                  trailing: GestureDetector(
+                  trailing: TapSemantics(
+                      child: GestureDetector(
                     onTap: () => context.push('/livePage'),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -136,7 +138,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                         ),
                       ],
                     ),
-                  ),
+                  )),
                 ),
               ),
               SliverToBoxAdapter(
@@ -160,7 +162,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   icon: Icons.play_circle_fill_rounded,
                   title: '최신 영상',
                   color: const Color(0xFFFF0000),
-                  trailing: GestureDetector(
+                  trailing: TapSemantics(
+                      child: GestureDetector(
                     onTap: () => widget.onNavigateToTab(3),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -180,7 +183,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                         ),
                       ],
                     ),
-                  ),
+                  )),
                 ),
               ),
               _buildLatestVideos(),
@@ -264,6 +267,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       ),
     );
   }
+
+  /// 가로 스크롤 카드 행의 높이. 고정 높이는 시스템 글꼴을 키우면 카드 안의
+  /// 다단 텍스트가 넘치므로, 글꼴 배율(최대 1.6배까지)에 맞춰 함께 키운다.
+  double _scaledHeight(double base) =>
+      base * MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
 
   Widget _buildSectionTitle({
     required IconData icon,
@@ -364,7 +372,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     }
 
     return SizedBox(
-      height: 200,
+      height: _scaledHeight(200),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -392,7 +400,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     required Color themeColor,
     required Color themeColorDark,
   }) {
-    return GestureDetector(
+    return TapSemantics(
+        child: GestureDetector(
       onTap: () => _openChzzkLive(broadcastId),
       child: Container(
         width: 270,
@@ -534,7 +543,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ---------------- 다가오는 생일 ----------------
@@ -680,7 +689,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           color: AppColors.birthday,
         ),
         SizedBox(
-          height: 92,
+          height: _scaledHeight(92),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -785,7 +794,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   Widget _buildScheduleBanner(Color themeColor, Color themeColorDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: GestureDetector(
+      child: TapSemantics(
+          child: GestureDetector(
         onTap: () => widget.onNavigateToTab(1),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -851,7 +861,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 

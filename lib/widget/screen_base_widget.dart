@@ -10,6 +10,7 @@ import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/home_dashboard_page.dart';
 import 'package:projecti_fan_app/widget/youtube_page.dart';
 import 'package:projecti_fan_app/widget/schedule_page.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class ScreenBaseWidget extends StatefulWidget {
   const ScreenBaseWidget({super.key});
@@ -227,7 +228,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                         ],
                         selected: {_notificationController.liveMode.value},
                         onSelectionChanged: (selection) =>
-                            _notificationController.setLiveMode(selection.first),
+                            _notificationController
+                                .setLiveMode(selection.first),
                       ),
                     )),
                 const SizedBox(height: 20),
@@ -381,25 +383,27 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : context.textSub,
+    return TapSemantics(
+        selected: isSelected,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isSelected ? color : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : context.textSub,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildBottomNav(Color themeColor, Color themeColorDark) {

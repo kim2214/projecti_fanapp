@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 /// 통합 LIVE 화면용 세로 풀폭 카드.
 /// 그룹 뱃지로 소속을 구분하고, 시청자 수/업타임/방송 제목을 보여준다.
@@ -26,7 +27,8 @@ class LiveMemberCard extends StatelessWidget {
         ? AppColors.favorite.withAlpha(160)
         : AppColors.live.withAlpha(60);
 
-    return GestureDetector(
+    return TapSemantics(
+        child: GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -196,7 +198,7 @@ class LiveMemberCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildGroupBadge(bool isHoneyz, Color groupColor) {

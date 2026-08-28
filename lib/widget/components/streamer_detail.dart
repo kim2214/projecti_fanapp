@@ -12,6 +12,7 @@ import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class StreamerDetail extends StatefulWidget {
   final StreamerModel pjiMember;
@@ -106,29 +107,31 @@ class _StreamerDetailState extends State<StreamerDetail> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: context.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(8),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+            TapSemantics(
+                label: '뒤로가기',
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: context.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  color: themeColor,
-                  size: 22,
-                ),
-              ),
-            ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: themeColor,
+                      size: 22,
+                    ),
+                  ),
+                )),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -152,29 +155,31 @@ class _StreamerDetailState extends State<StreamerDetail> {
     if (widget.memberKey.isEmpty) return const SizedBox.shrink();
     return Obx(() {
       final isFav = _favorites.isFavorite(widget.group, widget.memberKey);
-      return GestureDetector(
-        onTap: () => _favorites.toggle(widget.group, widget.memberKey),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: context.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(8),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+      return TapSemantics(
+          label: isFav ? '최애 해제' : '최애 지정',
+          child: GestureDetector(
+            onTap: () => _favorites.toggle(widget.group, widget.memberKey),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: context.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(8),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Icon(
-            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
-            color: isFav ? AppColors.favorite : context.textFaint,
-            size: 24,
-          ),
-        ),
-      );
+              child: Icon(
+                isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: isFav ? AppColors.favorite : context.textFaint,
+                size: 24,
+              ),
+            ),
+          ));
     });
   }
 
@@ -317,7 +322,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
       final status = _liveStatus;
       if (status == null || !status.isLive) return const SizedBox.shrink();
 
-      return GestureDetector(
+      return TapSemantics(
+          child: GestureDetector(
         onTap: () {
           if (_member != null) _openChzzkLive(_member!.chzzkBroadcastId);
         },
@@ -428,7 +434,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
             ],
           ),
         ),
-      );
+      ));
     });
   }
 

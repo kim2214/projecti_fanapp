@@ -7,6 +7,7 @@ import 'package:projecti_fan_app/widget/youtube_theme.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class YouTubePageWidget extends StatefulWidget {
   const YouTubePageWidget({super.key});
@@ -270,55 +271,57 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
 
           return Padding(
             padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
-              onTap: () {
-                youtubeController.selectMember(member.key);
-                if (_scrollController.hasClients) {
-                  _scrollController.jumpTo(0);
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? youtubeRed : context.surface,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: isSelected ? youtubeRed : youtubeRed.withAlpha(50),
-                    width: 1.5,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: youtubeRed.withAlpha(60),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundImage: AssetImage(member.profileAssetPath),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      member.name,
-                      style: TextStyle(
+            child: TapSemantics(
+                selected: isSelected,
+                child: GestureDetector(
+                  onTap: () {
+                    youtubeController.selectMember(member.key);
+                    if (_scrollController.hasClients) {
+                      _scrollController.jumpTo(0);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? youtubeRed : context.surface,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(
                         color:
-                            isSelected ? Colors.white : context.textMain,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                            isSelected ? youtubeRed : youtubeRed.withAlpha(50),
+                        width: 1.5,
                       ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: youtubeRed.withAlpha(60),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : [],
                     ),
-                  ],
-                ),
-              ),
-            ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundImage: AssetImage(member.profileAssetPath),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          member.name,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : context.textMain,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
           );
         },
       ),

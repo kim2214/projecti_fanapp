@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class StreamerCard extends StatelessWidget {
   final StreamerModel streamer;
@@ -32,7 +33,8 @@ class StreamerCard extends StatelessWidget {
     final birthdayDays = streamer.daysUntilBirthday;
     final showBirthday = birthdayDays != null && birthdayDays <= 7;
 
-    return GestureDetector(
+    return TapSemantics(
+        child: GestureDetector(
       onTap: () {
         final group = isHoneyz ? 'honeyz' : 'acaxia';
         context.push('/streamerDetail?group=$group&key=$assetName',
@@ -206,40 +208,42 @@ class StreamerCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildFavoriteButton() {
     final favorites = Get.find<FavoritesController>();
     final group = isHoneyz ? 'honeyz' : 'acaxia';
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => favorites.toggle(group, assetName),
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withAlpha(220),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return TapSemantics(
+        label: favorites.isFavorite(group, assetName) ? '최애 해제' : '최애 지정',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => favorites.toggle(group, assetName),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withAlpha(220),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Obx(() {
-          final isFav = favorites.isFavorite(group, assetName);
-          return Icon(
-            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
-            size: 20,
-            color: isFav ? AppColors.favorite : Colors.grey[400],
-          );
-        }),
-      ),
-    );
+            child: Obx(() {
+              final isFav = favorites.isFavorite(group, assetName);
+              return Icon(
+                isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: 20,
+                color: isFav ? AppColors.favorite : Colors.grey[400],
+              );
+            }),
+          ),
+        ));
   }
 
   Widget _buildBirthdayBadge(int days) {

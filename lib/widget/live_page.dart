@@ -7,6 +7,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 /// 통합 LIVE 현황 화면.
 /// 그룹(허니즈/아카시아) 전환 없이 지금 방송 중인 모든 멤버를 한 화면에 보여준다.
@@ -23,7 +24,6 @@ class _LivePageWidgetState extends State<LivePageWidget> {
 
   // 첫 진입 시 초기 폴링 진행 여부
   final RxBool _initialLoading = true.obs;
-
 
   @override
   void initState() {
@@ -110,8 +110,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                           )
                         else
                           SliverPadding(
-                            padding:
-                                const EdgeInsets.fromLTRB(20, 4, 20, 40),
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
                             sliver: SliverList(
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
@@ -146,29 +145,31 @@ class _LivePageWidgetState extends State<LivePageWidget> {
       child: Row(
         children: [
           // 뒤로가기
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          TapSemantics(
+              label: '뒤로가기',
+              child: GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.live,
-                size: 22,
-              ),
-            ),
-          ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: AppColors.live,
+                    size: 22,
+                  ),
+                ),
+              )),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

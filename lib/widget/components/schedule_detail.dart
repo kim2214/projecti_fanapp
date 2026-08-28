@@ -4,6 +4,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 /// 스케줄 상세 화면 인자.
 ///
@@ -192,29 +193,31 @@ class ScheduleDetail extends StatelessWidget {
       child: Row(
         children: [
           // 뒤로가기 버튼
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          TapSemantics(
+              label: '뒤로가기',
+              child: GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: themeColor,
-                size: 22,
-              ),
-            ),
-          ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: themeColor,
+                    size: 22,
+                  ),
+                ),
+              )),
           const SizedBox(width: 16),
           // 타이틀
           Expanded(

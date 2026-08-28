@@ -4,6 +4,7 @@ import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/youtube_theme.dart';
+import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class YouTubeVideoCard extends StatelessWidget {
   final YouTubeVideoModel video;
@@ -207,25 +208,27 @@ class YouTubeVideoCard extends StatelessWidget {
   }
 
   Widget _buildPlayButton() {
-    return GestureDetector(
-      onTap: _openYouTube,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: youtubeRed.withAlpha(15),
-          border: Border.all(
-            color: youtubeRed.withAlpha(40),
-            width: 1.5,
+    return TapSemantics(
+        label: 'YouTube에서 재생',
+        child: GestureDetector(
+          onTap: _openYouTube,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: youtubeRed.withAlpha(15),
+              border: Border.all(
+                color: youtubeRed.withAlpha(40),
+                width: 1.5,
+              ),
+            ),
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              color: youtubeRed,
+              size: 22,
+            ),
           ),
-        ),
-        child: const Icon(
-          Icons.play_arrow_rounded,
-          color: youtubeRed,
-          size: 22,
-        ),
-      ),
-    );
+        ));
   }
 }
