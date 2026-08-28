@@ -21,6 +21,12 @@ import 'package:projecti_fan_app/model/member.dart';
 ///
 /// 네이티브(LiveStatusWidgetProvider.kt)는 [dataKey]에 저장된 JSON만 읽는다 —
 /// 페이로드 형식을 바꾸면 양쪽을 함께 고친다.
+///
+/// 클래스에도 `vm:entry-point`가 필요하다 — 네이티브(home_widget 백그라운드
+/// 워커)가 콜백 핸들로 정적 메서드에 접근할 때 메서드 pragma만으로는
+/// "must be annotated with @pragma('vm:entry-point')" 오류로 콜백이 실행되지
+/// 않는다 (실기기에서 확인, 26.08.28).
+@pragma('vm:entry-point')
 class LiveWidgetService {
   static const String dataKey = 'live_widget_json';
   static const String androidProviderName = 'LiveStatusWidgetProvider';
@@ -75,7 +81,14 @@ class LiveWidgetService {
     if (!_supported) return;
     try {
       if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+        // google-services가 네이티브에서 기본 앱을 이미 만들어 두므로, 이 isolate의
+        // 첫 초기화는 [core/duplicate-app]으로 실패할 수 있다 — main.dart와 동일하게
+        // 무시하고 기존 앱을 재사용한다 (실기기에서 확인, 26.08.28).
+        try {
+          await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+        } on FirebaseException catch (e) {
+          if (e.code != 'duplicate-app') rethrow;
+        }
       }
       final snapshot = await FirebaseFirestore.instance
           .doc('live_status/current')
@@ -91,8 +104,10 @@ class LiveWidgetService {
                 (entry.value as Map).cast<String, dynamic>()),
       };
       await push(statusByKey);
-    } catch (_) {
-      // 오프라인 등 — 위젯은 기존 스냅샷을 유지한다.
+    } catch (e) {
+      // 오프라인 등 — 위젯은 기존 스냅샷을 유지한다. 원인은 로그캣으로만 남긴다
+      // (백그라운드 isolate라 Crashlytics 기록 경로가 보장되지 않음).
+      debugPrint('LiveWidgetService.refreshFromServer 실패: $e');
     }
   }
 
