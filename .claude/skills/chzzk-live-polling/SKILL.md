@@ -109,8 +109,10 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 - **방송 기록**: OPEN 동안 `peakConcurrentUserCount`(세션별 최고 시청자)를
   집계에 누적하고, 종료(OPEN→CLOSE 또는 openDate 변경) 감지 시
   `live_history/{memberKey}/sessions/{openDate숫자}`에 세션 문서를 기록한다
-  (베스트 에포트, ID 결정적이라 중복 없음). 클라 멤버 프로필 "지난 방송"이
-  읽는다 ([[firestore-data]]).
+  (베스트 에포트, ID 결정적이라 중복 없음). 같은 레코드를 집계 문서의
+  `lastSessions[memberKey]`에도 써서(48h 지난 항목 정리) 홈 "오늘 방송했어요"가
+  추가 읽기 없이 표시한다. 클라 멤버 프로필 "지난 방송"은 live_history를 읽는다
+  ([[firestore-data]]).
 
 ### 클라이언트 수신 (`notification_controller.dart`)
 

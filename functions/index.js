@@ -224,25 +224,36 @@ exports.pollLiveStatus = onSchedule(
     // (클라 멤버 프로필의 "지난 방송" 목록). 문서 ID를 openDate에서 파생해
     // 재실행돼도 같은 세션이 중복 생성되지 않는다. 베스트 에포트 — 기록이
     // 실패해도 집계 쓰기는 진행한다(다음 주기에 전이가 소진돼 그 세션만 유실).
+    // 홈 "오늘 방송했어요"용 멤버별 마지막 세션 요약. 집계 문서에 함께 써서 클라가
+    // 추가 읽기 없이 표시한다. 48시간 지난 항목은 정리해 문서를 작게 유지한다.
+    const lastSessions = { ...(doc.lastSessions || {}) };
+    for (const [key, s] of Object.entries(lastSessions)) {
+      const endedMs =
+        typeof s?.endedAt?.toMillis === "function" ? s.endedAt.toMillis() : 0;
+      if (Date.now() - endedMs > 48 * 60 * 60 * 1000) delete lastSessions[key];
+    }
+
     for (const { m, ended } of endedSessions) {
+      const sessionId = ended.openDate.replace(/\D/g, "");
+      const startedMs = parseKstOpenDate(ended.openDate);
+      // 집계에서 읽은 updatedAt은 Firestore Timestamp(toMillis) — 없으면 now.
+      const lastSeenMs =
+        typeof ended.lastSeenLiveAt?.toMillis === "function"
+          ? ended.lastSeenLiveAt.toMillis()
+          : null;
+      const record = {
+        liveTitle: ended.liveTitle,
+        liveCategoryValue: ended.liveCategoryValue,
+        openDate: ended.openDate,
+        // 절대 시각(Timestamp) — 클라가 기기 타임존과 무관하게 계산할 수 있게.
+        startedAt: startedMs != null ? Timestamp.fromMillis(startedMs) : null,
+        peakConcurrentUserCount: ended.peakConcurrentUserCount,
+        // 마지막 OPEN 관측과 CLOSE 관측의 중간값 (±폴링 주기/2 오차).
+        endedAt: Timestamp.fromMillis(estimateEndedAtMs(lastSeenMs, Date.now())),
+      };
+      lastSessions[m.key] = record;
       try {
-        const sessionId = ended.openDate.replace(/\D/g, "");
-        const startedMs = parseKstOpenDate(ended.openDate);
-        // 집계에서 읽은 updatedAt은 Firestore Timestamp(toMillis) — 없으면 now.
-        const lastSeenMs =
-          typeof ended.lastSeenLiveAt?.toMillis === "function"
-            ? ended.lastSeenLiveAt.toMillis()
-            : null;
-        await db.doc(`live_history/${m.key}/sessions/${sessionId}`).set({
-          liveTitle: ended.liveTitle,
-          liveCategoryValue: ended.liveCategoryValue,
-          openDate: ended.openDate,
-          // 절대 시각(Timestamp) — 클라가 기기 타임존과 무관하게 계산할 수 있게.
-          startedAt: startedMs != null ? Timestamp.fromMillis(startedMs) : null,
-          peakConcurrentUserCount: ended.peakConcurrentUserCount,
-          // 마지막 OPEN 관측과 CLOSE 관측의 중간값 (±폴링 주기/2 오차).
-          endedAt: Timestamp.fromMillis(estimateEndedAtMs(lastSeenMs, Date.now())),
-        });
+        await db.doc(`live_history/${m.key}/sessions/${sessionId}`).set(record);
         console.log(`live session recorded: ${m.key} ${sessionId}`);
       } catch (err) {
         console.error(`live session record failed: ${m.key}`, err);
@@ -254,6 +265,7 @@ exports.pollLiveStatus = onSchedule(
     // 뺀 멤버의 옛 상태(OPEN 가능)가 문서에 영구 잔존한다.
     await ref.set({
       members: nextMembers,
+      lastSessions,
       updatedAt: FieldValue.serverTimestamp(),
       consecutiveAllFailures,
       rateLimitedUntil: rateLimited ? Date.now() + 10 * 60 * 1000 : null,

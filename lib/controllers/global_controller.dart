@@ -135,6 +135,11 @@ class GlobalController extends GetxController {
   RxMap<String, LiveCheckModel> acaxiaLiveStatus =
       <String, LiveCheckModel>{}.obs;
 
+  // 멤버별 마지막 방송 세션 요약 (서버 집계 문서의 lastSessions). 홈 "오늘
+  // 방송했어요" 섹션용 — 서버가 종료 시 함께 써주므로 추가 읽기가 없다.
+  RxMap<String, LiveSessionModel> lastSessions =
+      <String, LiveSessionModel>{}.obs;
+
   // 멤버 정적 카탈로그 — 멤버 1명의 모든 메타데이터를 Member 객체 하나로 묶는다.
   // (기존 *Sequence/*NameList/*AssetName/*BrodcastIDList 병렬 리스트를 대체)
   static const List<Member> honeyzMembers = [
@@ -216,6 +221,10 @@ class GlobalController extends GetxController {
   /// 두 그룹 합본 (통합 LIVE 등)
   List<Member> get allMembers => [...honeyzMembers, ...acaxiaMembers];
 
+  /// 캐시된 멤버 프로필 (Firestore 문서). 아직 로드 전이거나 문서가 없으면 null.
+  StreamerModel? streamerOf(String group, String key) =>
+      _streamerCacheOf(group)[key];
+
   /// 그룹별 스케줄 컬렉션 이름. (멤버/스트리머 컬렉션 이름은 그룹 이름과 동일)
   static const Map<String, String> _scheduleCollection = {
     'honeyz': 'schedule',
@@ -242,8 +251,10 @@ class GlobalController extends GetxController {
     try {
       // 타임아웃이 없으면 불안정 네트워크에서 호출부(그룹 선택 버튼 등)가
       // 무한정 "로딩 중"에 갇힌다 — 집계/치지직 조회와 동일한 8초 상한.
-      final snapshot =
-          await _fireStore.collection(collection).get().timeout(_requestTimeout);
+      final snapshot = await _fireStore
+          .collection(collection)
+          .get()
+          .timeout(_requestTimeout);
 
       // 오프라인에서 로컬 캐시까지 비어 있으면 Firestore는 예외를 던지지 않고
       // "빈 스냅샷"을 성공으로 돌려준다. 그대로 통과시키면 네트워크 실패가
@@ -456,6 +467,7 @@ class GlobalController extends GetxController {
       if (caches == null) return false;
       _liveCacheOf('honeyz').value = caches.honeyz;
       _liveCacheOf('acaxia').value = caches.acaxia;
+      lastSessions.value = lastSessionsFromAggregate(data['lastSessions']);
       return true;
     } catch (e, st) {
       // 일시적 오류 등은 조용히 폴백 (치지직 직접 폴링이 폴백으로 남는다).
@@ -576,6 +588,44 @@ class GlobalController extends GetxController {
 
   /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
   /// Member(이름/에셋)와 StreamerModel(생일)을 member.key로 매칭한다.
+  /// 집계 문서의 lastSessions(멤버 key → 세션 맵)를 모델 맵으로 변환한다.
+  /// 필드가 없거나(구버전 서버) 형식이 다르면 빈 맵. (순수 변환 — 테스트 대상)
+  @visibleForTesting
+  static Map<String, LiveSessionModel> lastSessionsFromAggregate(Object? raw) {
+    if (raw is! Map) return const {};
+    return {
+      for (final entry in raw.entries)
+        if (entry.key is String && entry.value is Map)
+          entry.key as String: LiveSessionModel.fromJson(
+              (entry.value as Map).cast<String, dynamic>()),
+    };
+  }
+
+  /// 홈 "오늘 방송했어요": 오늘(기기 로컬 날짜) 방송을 마쳤고 지금은 방송 중이
+  /// 아닌 멤버를 종료 시각 내림차순으로 반환한다. [now]는 테스트용 주입.
+  List<({Member member, LiveSessionModel session})> endedTodaySessions(
+      String group,
+      {DateTime? now}) {
+    final today = now ?? DateTime.now();
+    final live = _liveCacheOf(group);
+    final result = <({Member member, LiveSessionModel session})>[];
+    for (final member in membersOf(group)) {
+      final session = lastSessions[member.key];
+      final ended = session?.endedAt;
+      if (session == null || ended == null) continue;
+      if (ended.year != today.year ||
+          ended.month != today.month ||
+          ended.day != today.day) {
+        continue;
+      }
+      // 이미 다시 방송 중이면 "지금 방송 중" 카드가 담당한다.
+      if (live[member.key]?.isLive == true) continue;
+      result.add((member: member, session: session));
+    }
+    result.sort((a, b) => b.session.endedAt!.compareTo(a.session.endedAt!));
+    return result;
+  }
+
   List<BirthdayEntry> upcomingBirthdays(String group) {
     final streamers = group == 'honeyz' ? honeyz : acaxia;
 

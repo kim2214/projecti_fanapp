@@ -37,7 +37,8 @@ class LiveSessionModel {
           ? startedAt.toDate()
           : (openDate is String ? DateTime.tryParse(openDate) : null),
       endedAt: endedAt is Timestamp ? endedAt.toDate() : null,
-      peakConcurrentUserCount: (json['peakConcurrentUserCount'] as num?)?.toInt(),
+      peakConcurrentUserCount:
+          (json['peakConcurrentUserCount'] as num?)?.toInt(),
     );
   }
 
@@ -54,6 +55,17 @@ class LiveSessionModel {
     if (d == null) return '';
     if (d.inHours > 0) return '${d.inHours}시간 ${d.inMinutes % 60}분';
     return '${d.inMinutes}분';
+  }
+
+  /// "2시간 전 종료" / "35분 전 종료". 종료 시각이 없으면 빈 문자열.
+  String endedAgoLabel({DateTime? now}) {
+    final ended = endedAt;
+    if (ended == null) return '';
+    final diff = (now ?? DateTime.now()).difference(ended);
+    if (diff.isNegative) return '방금 종료';
+    if (diff.inHours > 0) return '${diff.inHours}시간 전 종료';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전 종료';
+    return '방금 종료';
   }
 
   /// "8/23". 시작 시각이 없으면 빈 문자열.

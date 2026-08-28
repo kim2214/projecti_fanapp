@@ -34,6 +34,19 @@ void main() {
       expect(session.dateLabel, '8/23');
     });
 
+    test('endedAgoLabel: 종료 후 경과를 시간/분 단위로, 미래·직후는 "방금 종료"', () {
+      final ended = DateTime(2026, 8, 23, 21, 0);
+      final session = LiveSessionModel(endedAt: ended);
+      expect(session.endedAgoLabel(now: DateTime(2026, 8, 23, 23, 30)),
+          '2시간 전 종료');
+      expect(session.endedAgoLabel(now: DateTime(2026, 8, 23, 21, 35)),
+          '35분 전 종료');
+      expect(session.endedAgoLabel(now: DateTime(2026, 8, 23, 21, 0, 20)),
+          '방금 종료');
+      expect(session.endedAgoLabel(now: DateTime(2026, 8, 23, 20, 0)), '방금 종료');
+      expect(LiveSessionModel().endedAgoLabel(), '');
+    });
+
     test('1시간 미만 방송은 분 단위로만 표기', () {
       final session = LiveSessionModel.fromJson({
         'openDate': '2026-08-23 20:00:00',

@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -194,6 +195,56 @@ void main() {
       final caches = c.liveCachesFromAggregate(members)!;
       expect(caches.honeyz['damyui']!.isLive, isTrue);
       expect(caches.acaxia['popopopo']!.isLive, isFalse);
+    });
+  });
+
+  group('lastSessionsFromAggregate / endedTodaySessions (오늘 방송했어요)', () {
+    final now = DateTime(2026, 8, 28, 22, 0);
+    Timestamp ts(DateTime d) => Timestamp.fromDate(d);
+
+    test('집계 lastSessions를 모델 맵으로 변환하고, 없거나 형식이 다르면 빈 맵', () {
+      final parsed = GlobalController.lastSessionsFromAggregate({
+        'damyui': {
+          'liveTitle': '제목',
+          'startedAt': ts(DateTime(2026, 8, 28, 18, 0)),
+          'endedAt': ts(DateTime(2026, 8, 28, 21, 0)),
+        },
+        'weird': 'not-a-map',
+      });
+      expect(parsed.keys, ['damyui']);
+      expect(parsed['damyui']!.durationLabel, '3시간 0분');
+
+      expect(GlobalController.lastSessionsFromAggregate(null), isEmpty);
+      expect(GlobalController.lastSessionsFromAggregate('x'), isEmpty);
+    });
+
+    test('오늘 끝난 방송만, 종료 최신순으로, 다시 방송 중인 멤버는 제외', () {
+      final c = GlobalController();
+      c.lastSessions.value = {
+        // 오늘 21:00 종료 → 포함
+        'damyui': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 21, 0)),
+        // 오늘 15:00 종료 → 포함 (damyui보다 뒤)
+        'ayauke': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 15, 0)),
+        // 어제 종료 → 제외
+        'ohwayo': LiveSessionModel(endedAt: DateTime(2026, 8, 27, 23, 50)),
+        // 오늘 종료했지만 지금 다시 방송 중 → 제외 (지금 방송 중 카드가 담당)
+        'mangnae': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 12, 0)),
+        // 다른 그룹 → honeyz 결과에 없어야 함
+        'popopopo': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 20, 0)),
+        // 종료 시각 없음 → 제외
+        'ddddragon': LiveSessionModel(),
+      };
+      c.honeyzLiveStatus.value = {
+        'mangnae': LiveCheckModel(status: 'OPEN'),
+      };
+
+      final result = c.endedTodaySessions('honeyz', now: now);
+      expect(result.map((e) => e.member.name).toList(), ['담유이', '아야']);
+    });
+
+    test('기록이 없으면 빈 목록 — 구버전 서버/신규 배포 직후', () {
+      final c = GlobalController();
+      expect(c.endedTodaySessions('acaxia', now: now), isEmpty);
     });
   });
 

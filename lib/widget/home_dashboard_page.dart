@@ -7,7 +7,9 @@ import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
+import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
+import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
@@ -83,7 +85,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
       final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark = isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColorDark =
+          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
 
       return Container(
         decoration: BoxDecoration(
@@ -138,6 +141,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               ),
               SliverToBoxAdapter(
                 child: _buildLiveSection(isHoneyz, themeColor, themeColorDark),
+              ),
+              // 오늘 방송했어요 (기록 없으면 통째로 생략)
+              SliverToBoxAdapter(
+                child: _buildEndedTodaySection(themeColor, themeColorDark),
               ),
               // 다가오는 생일 (데이터 없으면 통째로 생략)
               SliverToBoxAdapter(
@@ -532,6 +539,128 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   // ---------------- 다가오는 생일 ----------------
 
+  // ---------------- 오늘 방송했어요 ----------------
+
+  /// 오늘 방송을 마친 멤버 목록 (서버 집계의 lastSessions 기반). 놓친 방송을
+  /// 바로 알 수 있게 하고, 탭하면 프로필의 "지난 방송"으로 이어진다.
+  Widget _buildEndedTodaySection(Color themeColor, Color themeColorDark) {
+    final group = _globalController.selectedGroup.value;
+    final entries = _globalController.endedTodaySessions(group);
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionTitle(
+          icon: Icons.history_rounded,
+          title: '오늘 방송했어요',
+          color: themeColorDark,
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: context.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: themeColor.withAlpha(50), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: themeColor.withAlpha(20),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < entries.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: context.textFaint.withAlpha(40),
+                  ),
+                _buildEndedTodayRow(entries[i].member, entries[i].session,
+                    themeColor, themeColorDark),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEndedTodayRow(Member member, LiveSessionModel session,
+      Color themeColor, Color themeColorDark) {
+    final details = [
+      session.durationLabel,
+      session.endedAgoLabel(),
+    ].where((s) => s.isNotEmpty).join(' · ');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          // 프로필 데이터가 아직 없으면 빈 모델 — 화면은 group/key로 그려진다.
+          final streamer =
+              _globalController.streamerOf(member.group, member.key) ??
+                  StreamerModel.empty();
+          context.push(
+            '/streamerDetail?group=${member.group}&key=${member.key}',
+            extra: streamer,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: themeColor.withAlpha(30),
+                backgroundImage: AssetImage(member.profileAssetPath),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      member.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: context.textMain,
+                      ),
+                    ),
+                    if (session.liveTitle?.isNotEmpty == true) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        session.liveTitle!,
+                        style: TextStyle(fontSize: 12, color: context.textSub),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (details.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        details,
+                        style:
+                            TextStyle(fontSize: 11, color: context.textFaint),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: context.textFaint),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildBirthdaySection(Color themeColor, Color themeColorDark) {
     final group = _globalController.selectedGroup.value;
@@ -581,7 +710,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         ),
         boxShadow: [
           BoxShadow(
-            color: (entry.isToday ? AppColors.birthday : themeColor).withAlpha(25),
+            color:
+                (entry.isToday ? AppColors.birthday : themeColor).withAlpha(25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -630,7 +760,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   Widget _buildDdayChip(BirthdayEntry entry, Color themeColorDark) {
-    final bg = entry.isToday ? AppColors.birthday : themeColorDark.withAlpha(30);
+    final bg =
+        entry.isToday ? AppColors.birthday : themeColorDark.withAlpha(30);
     final fg = entry.isToday ? Colors.white : themeColorDark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
