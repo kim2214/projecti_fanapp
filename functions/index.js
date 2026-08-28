@@ -60,6 +60,15 @@ async function handleScheduleWrite(group, event) {
   const memberName = MEMBER_NAMES[memberKey] || "멤버";
   const groupLabel = GROUP_LABELS[group] || "";
 
+  // 멱등 가드: Firestore 트리거는 at-least-once라 같은 쓰기 이벤트가 재전달될 수
+  // 있고, 그때 before/after 비교만으로는 중복 발송을 못 막는다. 마지막으로 발송한
+  // 이미지 URL을 기록해 두고 같으면 건너뛴다 (Admin 전용 컬렉션, 클라 규칙 불필요).
+  const logRef = getFirestore().doc(`schedule_push_log/${group}_${memberKey}`);
+  if ((await logRef.get()).data()?.lastImage === url) {
+    console.log(`schedule push skipped (already sent): group=${group} member=${memberKey}`);
+    return;
+  }
+
   try {
     await getMessaging().send({
       topic: `schedule_${group}`,
@@ -75,6 +84,7 @@ async function handleScheduleWrite(group, event) {
       },
     });
     console.log(`schedule push sent: group=${group} member=${memberKey}`);
+    await logRef.set({ lastImage: url, sentAt: FieldValue.serverTimestamp() });
   } catch (err) {
     console.error(`schedule push failed: group=${group} member=${memberKey}`, err);
   }
@@ -153,6 +163,9 @@ exports.pollLiveStatus = onSchedule(
     const ref = db.doc("live_status/current");
     const doc = (await ref.get()).data() || {};
     const prev = doc.members || {};
+    // 집계가 비어 있으면(최초 배포·문서 삭제 직후) 지금 방송 중인 전원이 "방금
+    // 시작"으로 보여 일괄 푸시가 나간다 — 이번 주기는 상태만 기록하고 알림은 생략.
+    const firstRun = Object.keys(prev).length === 0;
 
     // 429/403(밴 의심) 감지 후 백오프 중이면 이번 주기는 쉰다 — 집계 문서가
     // 오래되면(5분) 클라가 직접 폴링으로 폴백하므로 화면 표시는 유지된다.
@@ -175,7 +188,7 @@ exports.pollLiveStatus = onSchedule(
       nextMembers[m.key] = r.ok
         ? { ...next, updatedAt: FieldValue.serverTimestamp() }
         : next;
-      if (notify) toNotify.push({ m, r });
+      if (notify && !firstRun) toNotify.push({ m, r });
       if (ended) endedSessions.push({ m, ended });
     }
 
