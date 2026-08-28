@@ -9,6 +9,7 @@ const {
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  liveSetChanged,
 } = require("./live_logic");
 const { birthdayKeysOn } = require("./birthday_logic");
 
@@ -283,6 +284,22 @@ exports.pollLiveStatus = onSchedule(
       consecutiveAllFailures,
       rateLimitedUntil: rateLimited ? Date.now() + 10 * 60 * 1000 : null,
     });
+
+    // 홈 위젯 즉시 갱신: 방송 중 멤버 집합이 바뀐 주기에만 전원 구독 토픽으로
+    // 무음 data 푸시를 보낸다(알림 표시 없음). 클라는 집계 문서를 다시 읽으므로
+    // 반드시 위의 집계 쓰기 뒤에 보낸다. 실패해도 30분 주기 갱신이 폴백.
+    if (liveSetChanged(prev, results)) {
+      try {
+        await getMessaging().send({
+          topic: "live_widget",
+          data: { type: "widget_refresh" },
+          android: { priority: "high" },
+        });
+        console.log("widget refresh push sent");
+      } catch (err) {
+        console.error("widget refresh push failed", err);
+      }
+    }
   }
 );
 

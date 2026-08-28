@@ -113,10 +113,24 @@ function estimateEndedAtMs(lastSeenLiveMs, nowMs) {
   return Math.round((lastSeenLiveMs + nowMs) / 2);
 }
 
+/**
+ * 이번 주기에 "방송 중 멤버 집합"이 바뀌었는지(OPEN↔CLOSE 전이가 하나라도).
+ * 조회 실패 멤버는 판정에서 제외한다. 홈 위젯 즉시 갱신용 무음 푸시의 발송 조건 —
+ * 시청자 수 변화까지 포함하면 매 분 푸시가 나가므로 집합 변화만 본다.
+ */
+function liveSetChanged(prevMembers, results) {
+  return results.some(({ m, r }) => {
+    if (!r.ok) return false;
+    const wasLive = (prevMembers[m.key] || {}).status === "OPEN";
+    return wasLive !== (r.status === "OPEN");
+  });
+}
+
 module.exports = {
   parseLiveContent,
   nextMemberState,
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  liveSetChanged,
 };

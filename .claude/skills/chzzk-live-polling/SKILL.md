@@ -90,6 +90,11 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 
 - 즉시 갱신: `GlobalController._pushLiveWidget()` — 라이브 캐시가 바뀌는 두 경로
   (서버 집계·직접 폴링) 끝에서 호출.
+- **즉시 반영(무음 푸시)**: 서버가 방송 중 멤버 집합이 바뀐 주기(`liveSetChanged`,
+  순수)에만 전원 구독 토픽 `live_widget`으로 data-only 푸시(`type: widget_refresh`)를
+  집계 쓰기 **뒤에** 보낸다. 클라는 항상 구독(`NotificationController`), 백그라운드면
+  `refreshFromServer()`, 포그라운드면 `GlobalController.refreshAllLiveStatus()`(화면+위젯).
+  위젯 미설치 기기는 `HomeWidget.getInstalledWidgets()`가 비어 있으면 건너뛴다.
 - 라이브 FCM 수신(백그라운드): `main._firebaseMessagingBackgroundHandler` →
   `LiveWidgetService.refreshFromServer()` (집계 문서 직접 읽기, GetX 미사용).
 - 주기 갱신: 위젯 `updatePeriodMillis`(30분) → 네이티브 `onUpdate`가 데이터가

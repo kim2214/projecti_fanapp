@@ -140,7 +140,14 @@ class NotificationController extends GetxController {
       scheduleEnabled[group] = enabled;
       await _applySubscription(group, enabled);
     }
+    // 홈 위젯 즉시 갱신용 무음 data 푸시 토픽 — 알림을 띄우지 않으므로 사용자
+    // 설정과 무관하게 항상 구독한다 (위젯 미설치 기기는 수신 후 바로 무시).
+    await FirebaseMessaging.instance.subscribeToTopic(widgetRefreshTopic);
   }
+
+  /// 서버(pollLiveStatus)가 방송 중 멤버 집합이 바뀔 때 보내는 무음 푸시 토픽.
+  static const String widgetRefreshTopic = 'live_widget';
+  static const String widgetRefreshType = 'widget_refresh';
 
   Future<void> _applySubscription(String group, bool enabled) async {
     final topic = 'schedule_$group';
@@ -226,6 +233,15 @@ class NotificationController extends GetxController {
 
   /// 포그라운드에서 받은 FCM 메시지를 로컬 알림으로 표시.
   void showForegroundMessage(RemoteMessage message) {
+    // 위젯 갱신 무음 푸시(포그라운드): 앱 자체의 라이브 상태를 즉시 새로 읽는다 —
+    // 화면이 바로 바뀌고, GlobalController가 위젯도 함께 갱신한다.
+    if (message.data['type'] == widgetRefreshType) {
+      if (Get.isRegistered<GlobalController>()) {
+        Get.find<GlobalController>().refreshAllLiveStatus();
+      }
+      return;
+    }
+
     final notification = message.notification;
     if (notification == null) return;
 

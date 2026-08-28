@@ -80,6 +80,12 @@ class LiveWidgetService {
   static Future<void> refreshFromServer() async {
     if (!_supported) return;
     try {
+      // 위젯을 하나도 놓지 않은 기기는 무음 푸시·주기 갱신 때 Firestore 읽기를
+      // 건너뛴다. 조회 자체가 실패하면(플러그인 미등록 등) 갱신 쪽으로 진행한다.
+      try {
+        if ((await HomeWidget.getInstalledWidgets()).isEmpty) return;
+      } catch (_) {}
+
       if (Firebase.apps.isEmpty) {
         // google-services가 네이티브에서 기본 앱을 이미 만들어 두므로, 이 isolate의
         // 첫 초기화는 [core/duplicate-app]으로 실패할 수 있다 — main.dart와 동일하게

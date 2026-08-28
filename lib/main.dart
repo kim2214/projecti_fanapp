@@ -20,10 +20,11 @@ import 'package:projecti_fan_app/utils/app_snackbar.dart';
 
 /// 백그라운드/종료 상태에서 FCM 메시지를 받을 때 실행되는 최상위 핸들러.
 /// notification 페이로드가 있으면 시스템이 트레이에 자동 표시하므로 표시 처리는
-/// 없고, 라이브 알림이면 홈스크린 위젯만 서버 집계로 갱신한다.
+/// 없고, 라이브 알림 또는 위젯 갱신 무음 푸시면 홈스크린 위젯을 서버 집계로 갱신한다.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (message.data['type'] == 'live') {
+  final type = message.data['type'];
+  if (type == 'live' || type == NotificationController.widgetRefreshType) {
     await LiveWidgetService.refreshFromServer();
   }
 }

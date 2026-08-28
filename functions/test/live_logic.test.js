@@ -8,6 +8,7 @@ const {
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  liveSetChanged,
 } = require("../live_logic");
 
 test("parseLiveContent: 정상 content를 집계 결과로 변환", () => {
@@ -202,4 +203,25 @@ test("estimateEndedAtMs: 마지막 OPEN 관측과 now의 중간값, 없으면 no
   assert.equal(estimateEndedAtMs(undefined, 3000), 3000);
   // 시계 역행(직전 시각이 미래)이면 now로 안전 처리
   assert.equal(estimateEndedAtMs(5000, 3000), 3000);
+});
+
+test("liveSetChanged: OPEN↔CLOSE 전이가 하나라도 있으면 true", () => {
+  const prev = { a: { status: "OPEN" }, b: { status: "CLOSE" } };
+  const same = [
+    { m: { key: "a" }, r: { ok: true, status: "OPEN", concurrentUserCount: 999 } },
+    { m: { key: "b" }, r: { ok: true, status: "CLOSE" } },
+  ];
+  assert.equal(liveSetChanged(prev, same), false); // 시청자 수 변화는 무시
+  const ended = [{ m: { key: "a" }, r: { ok: true, status: "CLOSE" } }];
+  assert.equal(liveSetChanged(prev, ended), true);
+  const started = [{ m: { key: "b" }, r: { ok: true, status: "OPEN" } }];
+  assert.equal(liveSetChanged(prev, started), true);
+});
+
+test("liveSetChanged: 조회 실패·미기록 멤버 처리", () => {
+  // 실패는 전이로 보지 않는다
+  assert.equal(liveSetChanged({ a: { status: "OPEN" } }, [{ m: { key: "a" }, r: { ok: false } }]), false);
+  // 미기록(첫 관측) 멤버가 OPEN이면 전이
+  assert.equal(liveSetChanged({}, [{ m: { key: "c" }, r: { ok: true, status: "OPEN" } }]), true);
+  assert.equal(liveSetChanged({}, [{ m: { key: "c" }, r: { ok: true, status: "CLOSE" } }]), false);
 });
