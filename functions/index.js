@@ -1,5 +1,6 @@
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { defineSecret } = require("firebase-functions/params");
 const { initializeApp } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
@@ -12,6 +13,7 @@ const {
   liveSetChanged,
 } = require("./live_logic");
 const { birthdayKeysOn } = require("./birthday_logic");
+const { kstDateKey, followerCountsByKey } = require("./follower_logic");
 
 initializeApp();
 
@@ -354,5 +356,64 @@ exports.birthdayPush = onSchedule(
         }
       }
     }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// 팔로워 수 일별 기록 — 매일 KST 09:05에 치지직 공식 Open API(Client 인증)로
+// 전원 팔로워 수를 한 번에 조회해 follower_history/{memberKey}/daily/{yyyyMMdd}에
+// 남긴다 (클라 멤버 프로필의 "팔로워 추이"). 공식 API라 비공식 폴링 엔드포인트와
+// 달리 형식 변경 위험이 낮다. 자격 증명은 Secret Manager(CHZZK_CLIENT_ID /
+// CHZZK_CLIENT_SECRET) — 개발자센터 등록 앱은 90일간 호출이 없으면 삭제되므로
+// 이 함수를 내리면 앱 등록도 함께 사라질 수 있다.
+// ─────────────────────────────────────────────────────────────────────────
+
+const CHZZK_CLIENT_ID = defineSecret("CHZZK_CLIENT_ID");
+const CHZZK_CLIENT_SECRET = defineSecret("CHZZK_CLIENT_SECRET");
+
+exports.recordFollowerCounts = onSchedule(
+  {
+    schedule: "5 9 * * *",
+    timeZone: "Asia/Seoul",
+    region: "asia-northeast3",
+    memory: "256MiB",
+    timeoutSeconds: 60,
+    maxInstances: 1,
+    secrets: [CHZZK_CLIENT_ID, CHZZK_CLIENT_SECRET],
+  },
+  async () => {
+    // 채널 조회는 요청당 20개까지 — 카탈로그(11명)는 한 번에 들어간다.
+    const ids = MEMBER_CATALOG.map((m) => m.broadcastId).join(",");
+    const url = `https://openapi.chzzk.naver.com/open/v1/channels?channelIds=${ids}`;
+    const res = await fetch(url, {
+      headers: {
+        "Client-Id": CHZZK_CLIENT_ID.value(),
+        "Client-Secret": CHZZK_CLIENT_SECRET.value(),
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(CHZZK_TIMEOUT_MS),
+    });
+    if (res.status !== 200) {
+      // 401/403은 자격 증명 문제, 429는 쿼터 — 하루 1회라 재시도 없이 다음 날을 기다린다.
+      console.error(`chzzk open api channels HTTP ${res.status}`);
+      return;
+    }
+    const counts = followerCountsByKey(MEMBER_CATALOG, (await res.json())?.content?.data);
+    if (Object.keys(counts).length === 0) {
+      console.error("chzzk open api channels 응답에 유효한 followerCount 없음 (형식 변경 의심)");
+      return;
+    }
+
+    const db = getFirestore();
+    const dateKey = kstDateKey(new Date());
+    const batch = db.batch();
+    for (const [key, followerCount] of Object.entries(counts)) {
+      batch.set(db.doc(`follower_history/${key}/daily/${dateKey}`), {
+        followerCount,
+        recordedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    console.log(`follower counts recorded: ${dateKey} (${Object.keys(counts).length}명)`);
   }
 );

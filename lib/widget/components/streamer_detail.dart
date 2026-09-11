@@ -11,6 +11,9 @@ import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
+import 'package:projecti_fan_app/model/follower_point_model.dart';
+import 'package:projecti_fan_app/widget/components/follower_trend_chart.dart';
+import 'package:projecti_fan_app/widget/components/peak_viewer_chart.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
@@ -38,6 +41,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
   int _memberIndex = -1;
   Future<List<YouTubeVideoModel>>? _videosFuture;
   Future<List<LiveSessionModel>>? _sessionsFuture;
+  Future<List<FollowerPointModel>>? _followersFuture;
 
   bool get _isHoneyz => widget.group == 'honeyz';
 
@@ -50,7 +54,10 @@ class _StreamerDetailState extends State<StreamerDetail> {
       _member = members[_memberIndex];
       // 컨트롤러의 멤버별 캐시를 경유한다 — 프로필을 열 때마다 RSS 재조회 방지.
       _videosFuture = Get.find<YouTubeController>().videosFor(_member!);
-      _sessionsFuture = _global.fetchRecentSessions(widget.memberKey);
+      // 목록은 5개만 보이지만 시청자 추이 차트는 10회를 쓴다 — 한 번에 조회.
+      _sessionsFuture =
+          _global.fetchRecentSessions(widget.memberKey, limit: 10);
+      _followersFuture = _global.fetchFollowerHistory(widget.memberKey);
     }
   }
 
@@ -87,6 +94,10 @@ class _StreamerDetailState extends State<StreamerDetail> {
           // 실시간 LIVE 상태 (방송 중일 때만)
           SliverToBoxAdapter(
             child: _buildLiveSection(context, themeColor),
+          ),
+          // 팔로워 추이 (기록이 있을 때만)
+          SliverToBoxAdapter(
+            child: _buildFollowerSection(context, themeColor),
           ),
           // 지난 방송 (기록이 있을 때만)
           SliverToBoxAdapter(
@@ -443,19 +454,58 @@ class _StreamerDetailState extends State<StreamerDetail> {
     });
   }
 
+  // ---------------- 팔로워 추이 ----------------
+
+  /// 서버가 매일 기록한 팔로워 수(최근 30일). 기록이 없거나 조회에 실패하면
+  /// 섹션을 숨긴다 — 보조 정보라 에러를 띄우지 않는다.
+  Widget _buildFollowerSection(BuildContext context, Color themeColor) {
+    if (_followersFuture == null) return const SizedBox.shrink();
+
+    return FutureBuilder<List<FollowerPointModel>>(
+      future: _followersFuture,
+      builder: (context, snapshot) {
+        final history = snapshot.data ?? [];
+        if (history.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          decoration: BoxDecoration(
+            color: context.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: FollowerTrendChart(
+            history: history,
+            color: themeColor,
+            colorDark: AppColors.groupDark(_isHoneyz),
+          ),
+        );
+      },
+    );
+  }
+
   // ---------------- 지난 방송 ----------------
 
   /// 서버가 기록한 최근 방송 세션 목록. 데이터가 없거나(신규 배포 직후·미방송
   /// 멤버) 조회에 실패하면 섹션 자체를 숨긴다 — 보조 정보라 에러를 띄우지 않는다.
   /// 각 줄을 탭하면 치지직 채널 다시보기 목록으로 이동한다(놓친 방송 시청).
+  /// 목록 위에는 최근 10회의 최고 동시 시청자 추이 차트를 둔다(성장 지표).
   Widget _buildHistorySection(BuildContext context, Color themeColor) {
     if (_sessionsFuture == null) return const SizedBox.shrink();
 
     return FutureBuilder<List<LiveSessionModel>>(
       future: _sessionsFuture,
       builder: (context, snapshot) {
-        final sessions = snapshot.data ?? [];
-        if (sessions.isEmpty) return const SizedBox.shrink();
+        final all = snapshot.data ?? [];
+        if (all.isEmpty) return const SizedBox.shrink();
+        final sessions = all.take(5).toList();
 
         return Container(
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -479,6 +529,27 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   ],
                 ),
               ),
+              if (PeakViewerChart.pointsOf(all).length >= 2)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: PeakViewerChart(
+                    sessions: all,
+                    color: themeColor,
+                    colorDark: AppColors.groupDark(_isHoneyz),
+                  ),
+                ),
               Container(
                 decoration: BoxDecoration(
                   color: context.surface,

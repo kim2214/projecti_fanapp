@@ -41,6 +41,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 서버(recordFollowerCounts)가 매일 기록하는 치지직 팔로워 수.
+    // 클라 멤버 프로필의 "팔로워 추이"가 읽는다. 쓰기는 Admin SDK만.
+    match /follower_history/{memberKey}/daily/{dateKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // 그 외 모든 경로는 기본 차단 (새 컬렉션은 명시적으로 허용할 것)
     match /{document=**} {
       allow read, write: if false;

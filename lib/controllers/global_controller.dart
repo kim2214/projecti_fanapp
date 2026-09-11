@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
+import 'package:projecti_fan_app/model/follower_point_model.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
@@ -409,6 +410,25 @@ class GlobalController extends GetxController {
         .timeout(_requestTimeout);
     return [
       for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
+    ];
+  }
+
+  /// 멤버의 치지직 팔로워 수 일별 기록을 최신순으로 조회한다 (서버
+  /// recordFollowerCounts가 매일 `follower_history/{memberKey}/daily/`에 기록).
+  /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
+  Future<List<FollowerPointModel>> fetchFollowerHistory(String memberKey,
+      {int limit = 30}) async {
+    final snapshot = await _fireStore
+        .collection('follower_history')
+        .doc(memberKey)
+        .collection('daily')
+        .orderBy(FieldPath.documentId, descending: true)
+        .limit(limit)
+        .get()
+        .timeout(_requestTimeout);
+    return [
+      for (final doc in snapshot.docs)
+        if (FollowerPointModel.fromDoc(doc.id, doc.data()) case final p?) p,
     ];
   }
 

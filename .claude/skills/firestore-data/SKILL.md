@@ -20,6 +20,7 @@ Admin SDK(Cloud Functions)로만 하며, `firestore.rules`는 클라이언트 �
 | `schedule/{key}` | 멤버 key | 허니즈 주간 스케줄 (`schedule_image` 필드) |
 | `schedule_acaxia/{key}` | 멤버 key | 아카시아 주간 스케줄 |
 | `live_status/current` | 고정 문서 | 서버 폴링 라이브 집계 + `lastSessions`(멤버별 마지막 세션 요약, 48h 보존 — 홈 "오늘 방송했어요") ([[chzzk-live-polling]]) |
+| `follower_history/{key}/daily/{yyyyMMdd}` | KST 날짜 | 치지직 팔로워 수 일별 기록 (`followerCount`, `recordedAt`). 서버 `recordFollowerCounts`(매일 KST 09:05, 공식 Open API Client 인증, Secret `CHZZK_CLIENT_ID`/`CHZZK_CLIENT_SECRET`)가 기록, 클라 멤버 프로필 "팔로워" 섹션이 문서 ID 내림차순 30개를 읽음 (`FollowerPointModel`) |
 | `live_history/{key}/sessions/{id}` | openDate 숫자 | 지난 방송 세션 (제목·카테고리·openDate·startedAt(절대 시각)·peak 시청자·endedAt(마지막 OPEN 관측과 CLOSE 관측의 중간값)). 서버가 방송 종료 시 기록, 클라 멤버 프로필 "지난 방송"이 endedAt 내림차순으로 읽음 (`LiveSessionModel`) |
 
 - `{key}`는 dart 카탈로그(`global_controller.dart`)의 `Member.key`와 동일
@@ -49,6 +50,13 @@ firebase deploy --only firestore:rules
 **`schedule_{group}` 토픽·`schedule_channel` 채널을 재사용**하므로 클라 변경이
 필요 없고, 그룹 알림을 끈 사용자에게는 가지 않는다. 생일 데이터는 콘솔에서
 프로필 문서의 `birthday` 필드로 관리한다.
+
+**팔로워 기록**: `recordFollowerCounts`(매일 KST 09:05)가 치지직 공식 Open API
+`GET https://openapi.chzzk.naver.com/open/v1/channels?channelIds=...`(요청당 20채널)로
+전원 팔로워 수를 받아 `follower_history`에 남긴다. 판정은 `functions/follower_logic.js`
+순수 함수. 자격 증명은 Secret Manager(`firebase functions:secrets:set CHZZK_CLIENT_ID` /
+`CHZZK_CLIENT_SECRET`) — 개발자센터(developers.chzzk.naver.com) 앱은 **90일간 호출이
+없으면 삭제**되므로 이 함수를 내리면 앱 등록도 다시 해야 한다.
 
 - 함수 수정 후 배포:
 
