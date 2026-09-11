@@ -9,7 +9,6 @@ import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
-import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
@@ -76,6 +75,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   Future<void> _openChzzkLive(String broadcastId) async {
     final uri = Uri.parse(Member.liveUrlOf(broadcastId));
+    await openExternalUrl(uri);
+  }
+
+  Future<void> _openChzzkReplay(String broadcastId) async {
+    final uri = Uri.parse(Member.replayUrlOf(broadcastId));
     await openExternalUrl(uri);
   }
 
@@ -551,7 +555,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   // ---------------- 오늘 방송했어요 ----------------
 
   /// 오늘 방송을 마친 멤버 목록 (서버 집계의 lastSessions 기반). 놓친 방송을
-  /// 바로 알 수 있게 하고, 탭하면 프로필의 "지난 방송"으로 이어진다.
+  /// 바로 알 수 있게 하고, 탭하면 치지직 채널 다시보기 목록으로 이동한다
+  /// (방금 끝난 방송이 맨 위에 온다). 세션 상세는 멤버 탭의 프로필에서 본다.
   Widget _buildEndedTodaySection(Color themeColor, Color themeColorDark) {
     final group = _globalController.selectedGroup.value;
     final entries = _globalController.endedTodaySessions(group);
@@ -606,65 +611,60 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       session.endedAgoLabel(),
     ].where((s) => s.isNotEmpty).join(' · ');
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          // 프로필 데이터가 아직 없으면 빈 모델 — 화면은 group/key로 그려진다.
-          final streamer =
-              _globalController.streamerOf(member.group, member.key) ??
-                  StreamerModel.empty();
-          context.push(
-            '/streamerDetail?group=${member.group}&key=${member.key}',
-            extra: streamer,
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: themeColor.withAlpha(30),
-                backgroundImage: AssetImage(member.profileAssetPath),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member.name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: context.textMain,
-                      ),
-                    ),
-                    if (session.liveTitle?.isNotEmpty == true) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        session.liveTitle!,
-                        style: TextStyle(fontSize: 12, color: context.textSub),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (details.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        details,
-                        style:
-                            TextStyle(fontSize: 11, color: context.textFaint),
-                      ),
-                    ],
-                  ],
+    return TapSemantics(
+      label: '${member.name} 다시보기',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => _openChzzkReplay(member.chzzkBroadcastId),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: themeColor.withAlpha(30),
+                  backgroundImage: AssetImage(member.profileAssetPath),
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20, color: context.textFaint),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.name,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: context.textMain,
+                        ),
+                      ),
+                      if (session.liveTitle?.isNotEmpty == true) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          session.liveTitle!,
+                          style:
+                              TextStyle(fontSize: 12, color: context.textSub),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          details,
+                          style:
+                              TextStyle(fontSize: 11, color: context.textFaint),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.play_circle_outline_rounded,
+                    size: 20, color: context.textFaint),
+              ],
+            ),
           ),
         ),
       ),

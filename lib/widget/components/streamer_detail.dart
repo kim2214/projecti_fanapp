@@ -59,6 +59,11 @@ class _StreamerDetailState extends State<StreamerDetail> {
     await openExternalUrl(uri);
   }
 
+  Future<void> _openChzzkReplay(String broadcastId) async {
+    final uri = Uri.parse(Member.replayUrlOf(broadcastId));
+    await openExternalUrl(uri);
+  }
+
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
   LiveCheckModel? get _liveStatus {
     final statuses =
@@ -442,6 +447,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   /// 서버가 기록한 최근 방송 세션 목록. 데이터가 없거나(신규 배포 직후·미방송
   /// 멤버) 조회에 실패하면 섹션 자체를 숨긴다 — 보조 정보라 에러를 띄우지 않는다.
+  /// 각 줄을 탭하면 치지직 채널 다시보기 목록으로 이동한다(놓친 방송 시청).
   Widget _buildHistorySection(BuildContext context, Color themeColor) {
     if (_sessionsFuture == null) return const SizedBox.shrink();
 
@@ -516,49 +522,66 @@ class _StreamerDetailState extends State<StreamerDetail> {
       session.liveCategoryValue ?? '',
     ].where((s) => s.isNotEmpty).join(' · ');
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              session.dateLabel,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: themeColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
+    final broadcastId = _member?.chzzkBroadcastId;
+
+    return TapSemantics(
+      label: '${session.liveTitle ?? '지난 방송'} 다시보기',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap:
+              broadcastId == null ? null : () => _openChzzkReplay(broadcastId),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  session.liveTitle ?? '(제목 없음)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.textMain,
-                    height: 1.3,
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    session.dateLabel,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: themeColor,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (details.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    details,
-                    style: TextStyle(fontSize: 12, color: context.textFaint),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session.liveTitle ?? '(제목 없음)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: context.textMain,
+                          height: 1.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          details,
+                          style:
+                              TextStyle(fontSize: 12, color: context.textFaint),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.play_circle_outline_rounded,
+                    size: 20, color: context.textFaint),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -49,4 +49,13 @@ class Member {
 
   /// 이 멤버의 치지직 라이브 시청 URL
   String get liveUrl => liveUrlOf(chzzkBroadcastId);
+
+  /// 치지직 채널의 다시보기(VOD) 목록 URL을 broadcastId로 만든다.
+  /// (broadcastId는 채널 ID와 같다. 세션별 VOD 매칭은 비공식 API가 필요해
+  ///  하지 않고, 채널 다시보기 목록으로 보낸다 — 방금 끝난 방송이 맨 위에 온다.)
+  static String replayUrlOf(String broadcastId) =>
+      'https://chzzk.naver.com/$broadcastId/videos';
+
+  /// 이 멤버의 치지직 다시보기 목록 URL
+  String get replayUrl => replayUrlOf(chzzkBroadcastId);
 }
