@@ -11,6 +11,8 @@ const {
   parseKstOpenDate,
   estimateEndedAtMs,
   liveSetChanged,
+  needsLiveImage,
+  parseLiveImageUrl,
 } = require("./live_logic");
 const { birthdayKeysOn } = require("./birthday_logic");
 const { kstDateKey, followerCountsByKey } = require("./follower_logic");
@@ -149,6 +151,25 @@ async function fetchLiveStatus(broadcastId) {
   }
 }
 
+/**
+ * 방송 썸네일 URL 조회 (비공식 live-detail). polling 응답엔 썸네일이 없어
+ * 방송 시작 세션당 1회만 부른다(needsLiveImage). 보조 정보라 실패는 null.
+ */
+async function fetchLiveImageUrl(broadcastId) {
+  const url = `https://api.chzzk.naver.com/service/v2/channels/${broadcastId}/live-detail`;
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(CHZZK_TIMEOUT_MS),
+      headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
+    });
+    if (res.status !== 200) return null;
+    return parseLiveImageUrl((await res.json()).content);
+  } catch (e) {
+    console.warn(`chzzk live-detail fetch failed: ${broadcastId} (${e.message})`);
+    return null;
+  }
+}
+
 exports.pollLiveStatus = onSchedule(
   {
     schedule: "every 1 minutes",
@@ -194,6 +215,15 @@ exports.pollLiveStatus = onSchedule(
       if (notify && !firstRun) toNotify.push({ m, r });
       if (ended) endedSessions.push({ m, ended });
     }
+
+    // 방송 시작 세션의 썸네일 URL을 채운다 (방송 중이고 아직 없는 멤버만 —
+    // 보통 주기당 0~1건). 클라 라이브 카드가 표시한다.
+    await Promise.all(
+      MEMBER_CATALOG.filter((m) => needsLiveImage(nextMembers[m.key])).map(async (m) => {
+        const imageUrl = await fetchLiveImageUrl(m.broadcastId);
+        if (imageUrl) nextMembers[m.key].liveImageUrl = imageUrl;
+      })
+    );
 
     // 관측성: warn만으로는 폴링이 몇 시간 죽어도 아무도 모른다. 429/403과
     // 전원 실패 지속은 error로 승격해 Cloud Logging 알림 정책에 걸리게 한다.

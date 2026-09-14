@@ -683,6 +683,24 @@ class _StreamerDetailState extends State<StreamerDetail> {
         color: const Color(0xFF000000),
         description: '소식 및 업데이트',
       ),
+      // 팬 커뮤니티 — Firestore 프로필에 값이 있는 멤버만 표시한다 (기본 3개 링크와
+      // 달리 없는 멤버가 대부분이라 빈 카드를 늘어놓지 않는다).
+      if (widget.pjiMember.cafe?.isNotEmpty == true)
+        SocialLink(
+          name: '네이버 카페',
+          iconData: Icons.forum_rounded,
+          url: widget.pjiMember.cafe,
+          color: const Color(0xFF03C75A),
+          description: '팬 커뮤니티',
+        ),
+      if (widget.pjiMember.discord?.isNotEmpty == true)
+        SocialLink(
+          name: '디스코드',
+          iconData: Icons.discord,
+          url: widget.pjiMember.discord,
+          color: const Color(0xFF5865F2),
+          description: '팬 디스코드 서버',
+        ),
     ];
 
     return Container(
@@ -752,7 +770,9 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Image.asset(link.icon, fit: BoxFit.contain),
+                    child: link.icon != null
+                        ? Image.asset(link.icon!, fit: BoxFit.contain)
+                        : Icon(link.iconData, size: 26, color: link.color),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -873,16 +893,20 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
 class SocialLink {
   final String name;
-  final String icon;
+
+  /// 브랜드 아이콘 에셋 경로. 없으면 [iconData](Material 아이콘)로 그린다.
+  final String? icon;
+  final IconData? iconData;
   final String? url;
   final Color color;
   final String description;
 
   const SocialLink({
     required this.name,
-    required this.icon,
+    this.icon,
+    this.iconData,
     required this.url,
     required this.color,
     required this.description,
-  });
+  }) : assert(icon != null || iconData != null);
 }

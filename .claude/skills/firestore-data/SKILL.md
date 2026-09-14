@@ -19,13 +19,15 @@ Admin SDK(Cloud Functions)로만 하며, `firestore.rules`는 클라이언트 �
 | `acaxia/{key}` | 멤버 key | 아카시아 멤버 프로필 |
 | `schedule/{key}` | 멤버 key | 허니즈 주간 스케줄 (`schedule_image` 필드) |
 | `schedule_acaxia/{key}` | 멤버 key | 아카시아 주간 스케줄 |
-| `live_status/current` | 고정 문서 | 서버 폴링 라이브 집계 + `lastSessions`(멤버별 마지막 세션 요약, 48h 보존 — 홈 "오늘 방송했어요") ([[chzzk-live-polling]]) |
+| `live_status/current` | 고정 문서 | 서버 폴링 라이브 집계(멤버별 `liveImageUrl` 썸네일 템플릿 포함) + `lastSessions`(멤버별 마지막 세션 요약, 48h 보존 — 홈 "오늘 방송했어요") ([[chzzk-live-polling]]) |
 | `follower_history/{key}/daily/{yyyyMMdd}` | KST 날짜 | 치지직 팔로워 수 일별 기록 (`followerCount`, `recordedAt`). 서버 `recordFollowerCounts`(매일 KST 09:05, 공식 Open API Client 인증, Secret `CHZZK_CLIENT_ID`/`CHZZK_CLIENT_SECRET`)가 기록, 클라 멤버 프로필 "팔로워" 섹션이 문서 ID 내림차순 30개를 읽음 (`FollowerPointModel`) |
 | `live_history/{key}/sessions/{id}` | openDate 숫자 | 지난 방송 세션 (제목·카테고리·openDate·startedAt(절대 시각)·peak 시청자·endedAt(마지막 OPEN 관측과 CLOSE 관측의 중간값)). 서버가 방송 종료 시 기록, 클라 멤버 프로필 "지난 방송"이 endedAt 내림차순으로 읽음 (`LiveSessionModel`) |
 
 - `{key}`는 dart 카탈로그(`global_controller.dart`)의 `Member.key`와 동일
   (예: `honeychurros`, `popopopo`). 멤버 추가는 [[add-member]] 참고.
 - 프로필 필드는 `StreamerModel`, 스케줄은 `ScheduleModel`(`lib/model/`)에 매핑된다.
+  프로필 선택 필드 `cafe`/`discord`(URL 문자열)는 값이 있는 멤버만 프로필 "SNS & 채널"에
+  카드로 나타난다 — 콘솔에서 필드를 추가하면 앱 변경 없이 바로 보인다.
 - 그 외 모든 경로는 기본 차단. **새 컬렉션은 `firestore.rules`에 명시적으로
   허용**해야 앱에서 읽을 수 있다.
 

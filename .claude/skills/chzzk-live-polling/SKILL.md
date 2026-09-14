@@ -116,8 +116,15 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 분리되어 `functions/test/live_logic.test.js`(node --test, CI 포함)로 검증한다 —
 알림 판정을 고칠 땐 index.js가 아니라 여기부터.
 
+- **썸네일**: polling 응답엔 썸네일이 없다. 방송 중인데 `liveImageUrl`이 없는
+  멤버(=세션 시작, `needsLiveImage`)만 비공식 `service/v2/channels/{id}/live-detail`을
+  1회 조회해 `liveImageUrl`(`{type}` 자리표시자 템플릿)을 집계에 넣는다. 같은
+  세션이면 이어받고 새 세션·종료면 비운다. 실패는 null — 카드가 썸네일 없이
+  그려질 뿐이다. 클라 `LiveCheckModel.thumbnailUrl()`이 480으로 치환 + 10분 단위
+  캐시 버스터를 붙여 `LiveThumbnail` 위젯(홈 카드·통합 LIVE 카드)이 표시한다.
+  클라 직접 폴링 폴백엔 썸네일이 없다(의도).
 - **상태 저장**: 집계 문서 `live_status/current`(멤버별 `status`/`liveTitle`/
-  `concurrentUserCount`/`openDate`/`lastNotifiedOpenDate` + 메타
+  `concurrentUserCount`/`openDate`/`lastNotifiedOpenDate`/`liveImageUrl` + 메타
   `consecutiveAllFailures`/`rateLimitedUntil`)에 **주기당 읽기1·쓰기1**.
   members는 **merge 없이 통째 교체** — merge하면 카탈로그에서 뺀 멤버가 잔존한다.
 - **알림 판정**: `OPEN`이고 **`openDate`(방송 식별자)로 아직 알림을 보낸 적이

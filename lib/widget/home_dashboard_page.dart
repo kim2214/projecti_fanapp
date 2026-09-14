@@ -13,6 +13,7 @@ import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
+import 'package:projecti_fan_app/widget/components/live_thumbnail.dart';
 
 /// 홈 대시보드: 지금 방송 중 + 주간 스케줄 바로가기 + 최신 영상
 class HomeDashboardWidget extends StatefulWidget {
@@ -375,8 +376,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       );
     }
 
+    // 카드 폭 270 - 패딩 32 = 238 → 16:9 썸네일 134 + 간격 12. 한 명이라도
+    // 썸네일이 있으면 줄 전체를 그만큼 키운다 (가로 스크롤 줄은 높이가 하나).
+    final hasThumbnail =
+        liveMembers.any((m) => liveStatus[m.key]?.thumbnailUrl() != null);
     return SizedBox(
-      height: _scaledHeight(200),
+      height: _scaledHeight(200) + (hasThumbnail ? 146 : 0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -426,6 +431,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 방송 썸네일 (서버 집계에 있을 때만)
+            LiveThumbnail(url: status.thumbnailUrl()),
             Row(
               children: [
                 // 프로필 + LIVE 링

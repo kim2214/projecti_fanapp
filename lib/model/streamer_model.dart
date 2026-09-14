@@ -8,13 +8,20 @@ class StreamerModel {
   /// 생일 (Firestore "birthday" 필드, "MM-DD" 형식. 연도는 무시하고 매년 반복)
   final String? birthday;
 
+  /// 팬 커뮤니티 링크 (Firestore "cafe"/"discord" 필드, 선택). 없으면 프로필
+  /// SNS 섹션에 카드가 나타나지 않는다.
+  final String? cafe;
+  final String? discord;
+
   StreamerModel(
       {required this.name,
       required this.profileName,
       required this.youtube,
       required this.chzzk,
       required this.twitter,
-      this.birthday});
+      this.birthday,
+      this.cafe,
+      this.discord});
 
   /// Firestore 문서가 없는 멤버용 빈 모델.
   /// 멤버 카탈로그와 1:1 인덱스 정렬을 유지하기 위한 플레이스홀더로 쓰인다.
@@ -34,6 +41,8 @@ class StreamerModel {
       chzzk: json["chzzk"],
       twitter: json["twitter"],
       birthday: json["birthday"],
+      cafe: json["cafe"],
+      discord: json["discord"],
     );
   }
 
@@ -46,6 +55,8 @@ class StreamerModel {
       "chzzk": chzzk,
       "twitter": twitter,
       "birthday": birthday,
+      "cafe": cafe,
+      "discord": discord,
     };
   }
 

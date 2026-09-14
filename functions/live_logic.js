@@ -66,6 +66,9 @@ function nextMemberState(prev, result) {
       liveCategoryValue: result.liveCategoryValue,
       openDate: result.openDate,
       lastNotifiedOpenDate: prev.lastNotifiedOpenDate ?? null,
+      // 썸네일 URL은 세션당 1회만 별도 조회한다 — 같은 세션이면 이어받고,
+      // 새 세션·종료면 비운다 (채움 여부는 needsLiveImage → index.js).
+      liveImageUrl: sameSession ? (prev.liveImageUrl ?? null) : null,
       peakConcurrentUserCount: isLive
         ? Math.max(
             sameSession ? (prev.peakConcurrentUserCount ?? 0) : 0,
@@ -126,8 +129,28 @@ function liveSetChanged(prevMembers, results) {
   });
 }
 
+/**
+ * 이 주기에 썸네일 URL을 조회해야 하는가 — 방송 중인데 아직 URL이 없을 때만.
+ * (조회는 비공식 live-detail 엔드포인트라 최소 호출: 세션당 1회, 실패해도
+ *  다음 주기에 다시 시도되며 없으면 카드가 썸네일 없이 그려진다.)
+ */
+function needsLiveImage(next) {
+  return next.status === "OPEN" && !next.liveImageUrl;
+}
+
+/**
+ * live-detail 응답 content에서 썸네일 URL 템플릿을 꺼낸다. 형식이 다르면 null.
+ * URL엔 `{type}` 크기 자리표시자가 들어 있다 — 치환은 클라(LiveCheckModel)가 한다.
+ */
+function parseLiveImageUrl(content) {
+  const url = content?.liveImageUrl;
+  return typeof url === "string" && url.startsWith("https://") ? url : null;
+}
+
 module.exports = {
   parseLiveContent,
+  needsLiveImage,
+  parseLiveImageUrl,
   nextMemberState,
   isQuietHourSkip,
   parseKstOpenDate,

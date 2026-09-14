@@ -9,6 +9,8 @@ const {
   parseKstOpenDate,
   estimateEndedAtMs,
   liveSetChanged,
+  needsLiveImage,
+  parseLiveImageUrl,
 } = require("../live_logic");
 
 test("parseLiveContent: 정상 content를 집계 결과로 변환", () => {
@@ -224,4 +226,28 @@ test("liveSetChanged: 조회 실패·미기록 멤버 처리", () => {
   // 미기록(첫 관측) 멤버가 OPEN이면 전이
   assert.equal(liveSetChanged({}, [{ m: { key: "c" }, r: { ok: true, status: "OPEN" } }]), true);
   assert.equal(liveSetChanged({}, [{ m: { key: "c" }, r: { ok: true, status: "CLOSE" } }]), false);
+});
+
+test("nextMemberState: 썸네일 URL은 같은 세션에서만 이어받고 새 세션·종료면 비운다", () => {
+  const prev = { status: "OPEN", openDate: "2026-09-14 10:00:00", liveImageUrl: "https://img/{type}.jpg" };
+  const same = nextMemberState(prev, { ok: true, status: "OPEN", openDate: "2026-09-14 10:00:00" });
+  assert.equal(same.next.liveImageUrl, "https://img/{type}.jpg");
+  const restarted = nextMemberState(prev, { ok: true, status: "OPEN", openDate: "2026-09-14 11:00:00" });
+  assert.equal(restarted.next.liveImageUrl, null);
+  const closed = nextMemberState(prev, { ok: true, status: "CLOSE", openDate: null });
+  assert.equal(closed.next.liveImageUrl, null);
+});
+
+test("needsLiveImage: 방송 중이고 URL이 없을 때만 true", () => {
+  assert.equal(needsLiveImage({ status: "OPEN" }), true);
+  assert.equal(needsLiveImage({ status: "OPEN", liveImageUrl: "https://x/{type}.jpg" }), false);
+  assert.equal(needsLiveImage({ status: "CLOSE" }), false);
+  assert.equal(needsLiveImage({}), false);
+});
+
+test("parseLiveImageUrl: https 문자열만 통과, 그 외(형식 변경)는 null", () => {
+  assert.equal(parseLiveImageUrl({ liveImageUrl: "https://a/b/image_{type}.jpg" }), "https://a/b/image_{type}.jpg");
+  assert.equal(parseLiveImageUrl({ liveImageUrl: null }), null);
+  assert.equal(parseLiveImageUrl({ liveImageUrl: 123 }), null);
+  assert.equal(parseLiveImageUrl(undefined), null);
 });

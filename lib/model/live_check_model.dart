@@ -5,12 +5,17 @@ class LiveCheckModel {
   final String? liveCategoryValue;
   final String? openDate;
 
+  /// 방송 썸네일 URL 템플릿 (`{type}` 자리에 가로 크기). 서버 집계에서만 오며
+  /// (polling 응답엔 없음) 클라 직접 폴링 폴백 시엔 null → 카드가 썸네일 없이 그려진다.
+  final String? liveImageUrl;
+
   LiveCheckModel({
     this.liveTitle,
     this.status,
     this.concurrentUserCount,
     this.liveCategoryValue,
     this.openDate,
+    this.liveImageUrl,
   });
 
   bool get isLive => status == 'OPEN';
@@ -23,6 +28,7 @@ class LiveCheckModel {
       concurrentUserCount: (json["concurrentUserCount"] as num?)?.toInt(),
       liveCategoryValue: json["liveCategoryValue"] as String?,
       openDate: json["openDate"] as String?,
+      liveImageUrl: json["liveImageUrl"] as String?,
     );
   }
 
@@ -33,7 +39,19 @@ class LiveCheckModel {
       "concurrentUserCount": concurrentUserCount,
       "liveCategoryValue": liveCategoryValue,
       "openDate": openDate,
+      "liveImageUrl": liveImageUrl,
     };
+  }
+
+  /// 카드용 썸네일 URL (가로 480). 템플릿이 없으면 null.
+  /// 같은 세션은 URL이 고정이고 CDN 이미지만 갱신되므로, 이미지 캐시가 첫 장면에
+  /// 머물지 않게 10분 단위 쿼리를 붙여 주기적으로 다시 받게 한다.
+  String? thumbnailUrl({DateTime? now}) {
+    final template = liveImageUrl;
+    if (template == null || !template.contains('{type}')) return null;
+    final bucket =
+        (now ?? DateTime.now()).millisecondsSinceEpoch ~/ (10 * 60 * 1000);
+    return '${template.replaceAll('{type}', '480')}?t=$bucket';
   }
 
   /// 방송 경과 시간 (예: 2시간 30분)
