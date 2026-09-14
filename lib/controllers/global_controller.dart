@@ -13,6 +13,7 @@ import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/model/follower_point_model.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
+import 'package:projecti_fan_app/utils/timed_cache.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
@@ -395,41 +396,53 @@ class GlobalController extends GetxController {
     return null;
   }
 
+  // 멤버 프로필 보조 데이터(지난 방송 10건 + 팔로워 30건) 세션 캐시. 프로필을
+  // 열 때마다 Firestore를 40건씩 읽지 않게 10분간 재사용한다 — 값이 바뀌는
+  // 주기(방송 종료·하루 1회 기록)보다 짧아 신선도 문제는 없다. 앱 재시작 시 비움.
+  static const Duration _profileCacheTtl = Duration(minutes: 10);
+  final _sessionsCache = TimedCache<List<LiveSessionModel>>(_profileCacheTtl);
+  final _followersCache =
+      TimedCache<List<FollowerPointModel>>(_profileCacheTtl);
+
   /// 멤버의 지난 방송 세션을 최신순으로 조회한다 (서버 pollLiveStatus가
   /// 방송 종료 시 `live_history/{memberKey}/sessions/`에 기록).
   /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
   Future<List<LiveSessionModel>> fetchRecentSessions(String memberKey,
-      {int limit = 5}) async {
-    final snapshot = await _fireStore
-        .collection('live_history')
-        .doc(memberKey)
-        .collection('sessions')
-        .orderBy('endedAt', descending: true)
-        .limit(limit)
-        .get()
-        .timeout(_requestTimeout);
-    return [
-      for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
-    ];
+      {int limit = 5}) {
+    return _sessionsCache.getOrFetch('$memberKey:$limit', () async {
+      final snapshot = await _fireStore
+          .collection('live_history')
+          .doc(memberKey)
+          .collection('sessions')
+          .orderBy('endedAt', descending: true)
+          .limit(limit)
+          .get()
+          .timeout(_requestTimeout);
+      return [
+        for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
+      ];
+    });
   }
 
   /// 멤버의 치지직 팔로워 수 일별 기록을 최신순으로 조회한다 (서버
   /// recordFollowerCounts가 매일 `follower_history/{memberKey}/daily/`에 기록).
   /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
   Future<List<FollowerPointModel>> fetchFollowerHistory(String memberKey,
-      {int limit = 30}) async {
-    final snapshot = await _fireStore
-        .collection('follower_history')
-        .doc(memberKey)
-        .collection('daily')
-        .orderBy(FieldPath.documentId, descending: true)
-        .limit(limit)
-        .get()
-        .timeout(_requestTimeout);
-    return [
-      for (final doc in snapshot.docs)
-        if (FollowerPointModel.fromDoc(doc.id, doc.data()) case final p?) p,
-    ];
+      {int limit = 30}) {
+    return _followersCache.getOrFetch('$memberKey:$limit', () async {
+      final snapshot = await _fireStore
+          .collection('follower_history')
+          .doc(memberKey)
+          .collection('daily')
+          .orderBy(FieldPath.documentId, descending: true)
+          .limit(limit)
+          .get()
+          .timeout(_requestTimeout);
+      return [
+        for (final doc in snapshot.docs)
+          if (FollowerPointModel.fromDoc(doc.id, doc.data()) case final p?) p,
+      ];
+    });
   }
 
   Future<Map<String, LiveCheckModel>> liveCheck(
