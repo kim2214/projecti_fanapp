@@ -334,6 +334,13 @@ void main() {
     });
   });
 
+  group('pushServiceDown (푸시 발송 중단 표시)', () {
+    test('초기값은 false — 아직 관측 전이므로 중단이라고 단정하지 않는다', () {
+      // 앱을 켜자마자 알림 설정에 "발송 중단" 배너가 뜨면 안 된다.
+      expect(GlobalController().pushServiceDown.value, isFalse);
+    });
+  });
+
   group('isAggregateStale (서버 집계 폴백 판정)', () {
     // 기준 시각을 고정해 결정적으로 검증한다.
     final now = DateTime(2026, 7, 20, 12, 0, 0);

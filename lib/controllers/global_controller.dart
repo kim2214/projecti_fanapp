@@ -143,6 +143,17 @@ class GlobalController extends GetxController {
   RxMap<String, LiveSessionModel> lastSessions =
       <String, LiveSessionModel>{}.obs;
 
+  /// 서버 폴링(`pollLiveStatus`)이 멈춘 것으로 관측됐는지.
+  ///
+  /// 집계 문서가 없거나 stale일 때만 true로 둔다 — 조회 실패(오프라인 등)는
+  /// 서버 상태를 알 수 없으므로 건드리지 않는다.
+  ///
+  /// **추론**: 푸시를 보내는 함수들(라이브·스케줄·생일)은 폴링과 같은 Functions
+  /// 배포에 있으므로, 폴링이 멈췄으면 푸시도 오지 않는다고 본다. 알림 설정
+  /// 화면이 "켜면 알림이 온다"고 약속하지 않도록 이 값을 참고한다.
+  /// (라이브 현황 자체는 치지직 직접 폴링으로 폴백하므로 영향이 없다.)
+  final RxBool pushServiceDown = false.obs;
+
   // 멤버 정적 카탈로그 — 멤버 1명의 모든 메타데이터를 Member 객체 하나로 묶는다.
   // (기존 *Sequence/*NameList/*AssetName/*BrodcastIDList 병렬 리스트를 대체)
   static const List<Member> honeyzMembers = [
@@ -481,13 +492,18 @@ class GlobalController extends GetxController {
           .get()
           .timeout(_requestTimeout);
       final data = snapshot.data();
-      if (data == null) return false;
+      if (data == null) {
+        pushServiceDown.value = true; // 문서 자체가 없음 = 서버가 쓴 적 없음
+        return false;
+      }
 
       // 서버 폴링이 멈췄으면(문서가 오래됨) 신선한 직접 폴링으로 폴백한다.
       if (isAggregateStale(
           data['updatedAt'], DateTime.now(), _serverStatusMaxAge)) {
+        pushServiceDown.value = true;
         return false;
       }
+      pushServiceDown.value = false;
 
       final members =
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
