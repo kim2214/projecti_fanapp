@@ -22,6 +22,11 @@ import 'package:projecti_fan_app/model/member.dart';
 /// 네이티브(LiveStatusWidgetProvider.kt)는 [dataKey]에 저장된 JSON만 읽는다 —
 /// 페이로드 형식을 바꾸면 양쪽을 함께 고친다.
 ///
+/// 2·3번 경로는 서버 집계 문서만 읽고 치지직 직접 폴링 폴백이 없으므로,
+/// 집계가 오래됐으면(서버 폴링 중단) 페이로드에 `stale: true`를 실어
+/// 네이티브가 "상태 확인 불가"를 그리게 한다 — 얼어붙은 목록을 그대로 두는 것도,
+/// 빈 목록으로 "모두 휴식 중"이라고 단정하는 것도 둘 다 거짓이 되기 때문이다.
+///
 /// 클래스에도 `vm:entry-point`가 필요하다 — 네이티브(home_widget 백그라운드
 /// 워커)가 콜백 핸들로 정적 메서드에 접근할 때 메서드 pragma만으로는
 /// "must be annotated with @pragma('vm:entry-point')" 오류로 콜백이 실행되지
@@ -34,13 +39,17 @@ class LiveWidgetService {
   static bool get _supported => !kIsWeb && Platform.isAndroid;
 
   /// 위젯에 그릴 JSON 페이로드. 방송 중인 멤버만 시청자 수 내림차순.
+  ///
+  /// [stale]이 true면 라이브 목록을 신뢰할 수 없다는 뜻이다(서버 폴링 중단).
+  /// 네이티브는 이때 목록·"모두 휴식 중" 대신 "상태 확인 불가"를 그린다.
   /// (순수 — 테스트 대상. URL은 Member.liveUrlOf 한 곳에서 파생한다.)
   @visibleForTesting
   static Map<String, dynamic> buildPayload(
     List<Member> members,
     Map<String, LiveCheckModel> statusByKey,
-    DateTime now,
-  ) {
+    DateTime now, {
+    bool stale = false,
+  }) {
     final live = <Map<String, dynamic>>[];
     for (final member in members) {
       final status = statusByKey[member.key];
@@ -54,18 +63,26 @@ class LiveWidgetService {
       });
     }
     live.sort((a, b) => (b['viewers'] as int).compareTo(a['viewers'] as int));
-    return {'updatedAt': now.millisecondsSinceEpoch, 'live': live};
+    return {
+      'updatedAt': now.millisecondsSinceEpoch,
+      'stale': stale,
+      'live': live,
+    };
   }
 
   /// 현재 라이브 상태(양 그룹 합본 map)로 위젯을 갱신한다.
   /// 위젯은 보조 UI라 Android 외 플랫폼·실패는 조용히 무시한다.
-  static Future<void> push(Map<String, LiveCheckModel> statusByKey) async {
+  static Future<void> push(
+    Map<String, LiveCheckModel> statusByKey, {
+    bool stale = false,
+  }) async {
     if (!_supported) return;
     try {
       final payload = buildPayload(
         [...GlobalController.honeyzMembers, ...GlobalController.acaxiaMembers],
         statusByKey,
         DateTime.now(),
+        stale: stale,
       );
       await HomeWidget.saveWidgetData<String>(dataKey, json.encode(payload));
       await HomeWidget.updateWidget(androidName: androidProviderName);
@@ -100,21 +117,42 @@ class LiveWidgetService {
           .doc('live_status/current')
           .get()
           .timeout(const Duration(seconds: 8));
-      final members =
-          (snapshot.data()?['members'] as Map?)?.cast<String, dynamic>() ??
-              const {};
-      final statusByKey = <String, LiveCheckModel>{
-        for (final entry in members.entries)
-          if (entry.value is Map)
-            entry.key: LiveCheckModel.fromJson(
-                (entry.value as Map).cast<String, dynamic>()),
-      };
-      await push(statusByKey);
+      final result = statusFromAggregate(snapshot.data(), DateTime.now());
+      await push(result.status, stale: result.stale);
     } catch (e) {
       // 오프라인 등 — 위젯은 기존 스냅샷을 유지한다. 원인은 로그캣으로만 남긴다
       // (백그라운드 isolate라 Crashlytics 기록 경로가 보장되지 않음).
       debugPrint('LiveWidgetService.refreshFromServer 실패: $e');
     }
+  }
+
+  /// 집계 문서(`live_status/current`)를 위젯이 그릴 상태로 바꾼다.
+  ///
+  /// 서버 폴링이 멈추면(Functions 중단·장애) 집계 문서는 마지막 상태로 얼어붙는다.
+  /// 앱 화면은 직접 폴링으로 폴백하지만 이 백그라운드 경로에는 폴백이 없으므로,
+  /// 오래된 집계는 그리지 않고 [stale]로 표시해 네이티브가 "확인 불가"를 그리게
+  /// 한다. (얼어붙은 목록을 그리면 "방송 중"이, 빈 목록을 그리면 "모두 휴식 중"이
+  /// 거짓이 된다 — 둘 다 단정이라 어느 쪽도 맞지 않는다.)
+  /// (Firestore 읽기와 분리된 순수 변환 — 테스트 대상)
+  @visibleForTesting
+  static ({Map<String, LiveCheckModel> status, bool stale}) statusFromAggregate(
+      Map<String, dynamic>? data, DateTime now) {
+    if (data == null ||
+        GlobalController.isAggregateStale(
+            data['updatedAt'], now, GlobalController.serverStatusMaxAge)) {
+      return (status: const {}, stale: true);
+    }
+    final members =
+        (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return (
+      status: {
+        for (final entry in members.entries)
+          if (entry.value is Map)
+            entry.key: LiveCheckModel.fromJson(
+                (entry.value as Map).cast<String, dynamic>()),
+      },
+      stale: false,
+    );
   }
 
   /// home_widget 백그라운드 콜백 진입점 (main에서 registerInteractivityCallback).

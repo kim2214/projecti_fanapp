@@ -5,6 +5,7 @@
     <string name="widget_description">지금 방송 중인 멤버를 홈 화면에서 바로 확인합니다.</string>
     <string name="widget_loading">불러오는 중…</string>
     <string name="widget_no_live">지금은 모두 휴식 중 💤</string>
+    <string name="widget_unknown">상태를 확인할 수 없어요</string>
     <string name="widget_more">+%1$d명 더 방송 중</string>
     <string name="widget_updated_pending">갱신 대기</string>
     <string name="widget_updated_at">%1$s 기준</string>

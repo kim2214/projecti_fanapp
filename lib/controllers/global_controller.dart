@@ -39,7 +39,8 @@ class GlobalController extends GetxController {
 
   // 집계 문서가 이보다 오래되면(서버 폴링 중단 의심) 치지직 직접 폴링으로 폴백한다.
   // 서버는 1분 주기라 정상이면 1분 미만이며, 몇 번 놓쳐도 견디도록 여유를 둔다.
-  static const Duration _serverStatusMaxAge = Duration(minutes: 5);
+  // 홈스크린 위젯(LiveWidgetService)도 같은 기준으로 stale을 판정한다.
+  static const Duration serverStatusMaxAge = Duration(minutes: 5);
   Timer? _liveRefreshTimer;
   AppLifecycleListener? _lifecycleListener;
 
@@ -499,7 +500,7 @@ class GlobalController extends GetxController {
 
       // 서버 폴링이 멈췄으면(문서가 오래됨) 신선한 직접 폴링으로 폴백한다.
       if (isAggregateStale(
-          data['updatedAt'], DateTime.now(), _serverStatusMaxAge)) {
+          data['updatedAt'], DateTime.now(), serverStatusMaxAge)) {
         pushServiceDown.value = true;
         return false;
       }
@@ -533,7 +534,9 @@ class GlobalController extends GetxController {
   /// updatedAt이 Timestamp가 아니면(null/누락/형식 오류) false를 반환한다 —
   /// 현재는 이 경우를 "오래되지 않음"으로 보아 집계 데이터를 그대로 사용한다.
   /// (Firestore 읽기와 분리된 순수 판정 — 테스트 대상)
-  @visibleForTesting
+  ///
+  /// [LiveWidgetService.refreshFromServer]도 이 판정을 공유한다 — 위젯은 앱과
+  /// 달리 직접 폴링 폴백이 없어, 오래된 집계를 그대로 그리면 멈춘 상태가 남는다.
   static bool isAggregateStale(
       Object? updatedAt, DateTime now, Duration maxAge) {
     return updatedAt is Timestamp &&

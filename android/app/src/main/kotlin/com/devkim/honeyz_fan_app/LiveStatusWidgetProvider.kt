@@ -78,10 +78,17 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
         )
 
         val count = live?.length() ?: 0
+        // stale = 서버 집계가 멈춰 목록을 신뢰할 수 없다는 표시(Dart buildPayload).
+        // 이때는 목록도 "모두 휴식 중"도 그리지 않는다 — 둘 다 단정이라 거짓이 된다.
+        val stale = payload?.optBoolean("stale", false) ?: false
         when {
             payload == null -> {
                 views.setViewVisibility(R.id.empty, View.VISIBLE)
                 views.setTextViewText(R.id.empty, context.getString(R.string.widget_loading))
+            }
+            stale -> {
+                views.setViewVisibility(R.id.empty, View.VISIBLE)
+                views.setTextViewText(R.id.empty, context.getString(R.string.widget_unknown))
             }
             count == 0 -> {
                 views.setViewVisibility(R.id.empty, View.VISIBLE)
@@ -90,8 +97,9 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
             else -> views.setViewVisibility(R.id.empty, View.GONE)
         }
 
+        val rowCount = if (stale) 0 else count
         for (i in ROW_IDS.indices) {
-            val item = if (i < count) live?.optJSONObject(i) else null
+            val item = if (i < rowCount) live?.optJSONObject(i) else null
             if (item == null) {
                 views.setViewVisibility(ROW_IDS[i], View.GONE)
                 continue
