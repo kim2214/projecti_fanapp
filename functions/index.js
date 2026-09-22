@@ -27,7 +27,6 @@ const MEMBER_CATALOG = [
   { key: "damyui",       name: "담유이",         group: "honeyz", broadcastId: "b82e8bc2505e37156b2d1140ba1fc05c" },
   { key: "ddddragon",    name: "디디디용",       group: "honeyz", broadcastId: "798e100206987b59805cfb75f927e965" },
   { key: "ohwayo",       name: "오화요",         group: "honeyz", broadcastId: "65a53076fe1a39636082dd6dba8b8a4b" },
-  { key: "mangnae",      name: "망내",           group: "honeyz", broadcastId: "bd07973b6021d72512240c01a386d5c9" },
   { key: "popopopo",     name: "포포포포",       group: "acaxia", broadcastId: "3e3781d3bd20dadc2f6f6d5d30091195" },
   { key: "violetaMone",  name: "비올레타 모네",  group: "acaxia", broadcastId: "5c897b3e639045ca6e314bbaff991f73" },
   { key: "blaireRose",   name: "블레어 로즈",    group: "acaxia", broadcastId: "dae2de8eaa005a59163f2e4c045e1aa1" },

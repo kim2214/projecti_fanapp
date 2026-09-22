@@ -33,7 +33,7 @@ class GlobalController extends GetxController {
   // 2분마다 폴링되므로, 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을 방지한다.
   static const Duration _requestTimeout = Duration(seconds: 8);
 
-  // 서버(Cloud Function pollLiveStatus)가 1분 주기로 11명 상태를 집계하는 문서.
+  // 서버(Cloud Function pollLiveStatus)가 1분 주기로 10명 상태를 집계하는 문서.
   // 클라는 이 문서를 우선 읽어 치지직 직접 폴링(클라 수 × 11요청)을 대체한다.
   static const String _liveStatusDocPath = 'live_status/current';
 
@@ -176,12 +176,6 @@ class GlobalController extends GetxController {
         group: 'honeyz',
         chzzkBroadcastId: '65a53076fe1a39636082dd6dba8b8a4b',
         youtubeChannelId: 'UC1RdgfinRXTboGZLZ4xG5Aw'),
-    Member(
-        key: 'mangnae',
-        name: '망내',
-        group: 'honeyz',
-        chzzkBroadcastId: 'bd07973b6021d72512240c01a386d5c9',
-        youtubeChannelId: 'UCicn6yqObjHrCKWkKL70ALg'),
   ];
 
   static const List<Member> acaxiaMembers = [

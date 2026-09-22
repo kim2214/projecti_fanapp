@@ -25,7 +25,7 @@ StreamerModel _streamer({String? birthday}) => StreamerModel(
     );
 
 void main() {
-  // honeyzMembers: [허니츄러스, 아야, 담유이, 디디디용, 오화요, 망내] (6명)
+  // honeyzMembers: [허니츄러스, 아야, 담유이, 디디디용, 오화요] (5명)
   // acaxiaMembers: [포포포포, 비올레타 모네, 블레어 로즈, 하시요, 류시호] (5명)
 
   // SharedPreferences 목(setMockInitialValues) 사용을 위해 필요.
@@ -120,7 +120,7 @@ void main() {
   group('liveStatusFromAggregate', () {
     test('key로 매칭해 상태를 파싱하고, 문서에 없는 멤버는 맵에서 제외', () {
       final c = GlobalController();
-      // honeyz 6명 중 담유이만 방송 중
+      // honeyz 5명 중 담유이만 방송 중
       final members = <String, dynamic>{
         'damyui': {
           'status': 'OPEN',
@@ -228,14 +228,14 @@ void main() {
         // 어제 종료 → 제외
         'ohwayo': LiveSessionModel(endedAt: DateTime(2026, 8, 27, 23, 50)),
         // 오늘 종료했지만 지금 다시 방송 중 → 제외 (지금 방송 중 카드가 담당)
-        'mangnae': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 12, 0)),
+        'honeychurros': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 12, 0)),
         // 다른 그룹 → honeyz 결과에 없어야 함
         'popopopo': LiveSessionModel(endedAt: DateTime(2026, 8, 28, 20, 0)),
         // 종료 시각 없음 → 제외
         'ddddragon': LiveSessionModel(),
       };
       c.honeyzLiveStatus.value = {
-        'mangnae': LiveCheckModel(status: 'OPEN'),
+        'honeychurros': LiveCheckModel(status: 'OPEN'),
       };
 
       final result = c.endedTodaySessions('honeyz', now: now);
@@ -251,7 +251,7 @@ void main() {
   group('scheduleImageUrlsOf', () {
     test('문서가 없는 멤버가 있어도 카탈로그와 길이·순서가 일치한다', () {
       final c = GlobalController();
-      // honeyz 6명 중 아야(1번)·오화요(4번)만 스케줄 문서가 있다.
+      // honeyz 5명 중 아야(1번)·오화요(4번)만 스케줄 문서가 있다.
       c.honeyzSchedules.value = {
         'ayauke': ScheduleModel(scheduleURL: 'https://example.com/aya.png'),
         'ohwayo': ScheduleModel(scheduleURL: 'https://example.com/ohwayo.png'),
@@ -267,7 +267,6 @@ void main() {
         '',
         '',
         'https://example.com/ohwayo.png',
-        '',
       ]);
     });
 

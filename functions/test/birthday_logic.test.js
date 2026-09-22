@@ -26,7 +26,7 @@ test("birthdayKeysOn: KST 기준 오늘 생일인 멤버만 반환", () => {
     ohwayo: { birthday: "06-15" },
     ayauke: { birthday: "6-15" }, // 패딩 없는 입력도 매칭
     damyui: { birthday: "12-31" },
-    mangnae: {}, // 생일 미설정
+    ddddragon: {}, // 생일 미설정
     ghost: null, // 손상 문서
   };
   assert.deepEqual(birthdayKeysOn(now, profiles), ["ohwayo", "ayauke"]);
