@@ -58,7 +58,20 @@ void main() async {
   await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
 
   // Flutter 프레임워크 에러와 그 밖의 비동기 에러를 모두 Crashlytics로 전달.
-  FlutterError.onError = crashlytics.recordFlutterFatalError;
+  //
+  // 단, 이미지 로딩 실패는 fatal이 아니다. 네트워크가 끊기거나 느리면
+  // extended_image가 `StateError('Failed to load <url>.')`를 던지는데, 앱은 죽지
+  // 않고 위젯의 loadStateChanged가 대체 UI를 그린다(schedule_detail 등). Flutter도
+  // 이 경로를 silent로 표시한다("could be a network error or whatnot",
+  // image_provider.dart의 resolve 에러 처리). 이걸 fatal로 올리면 크래시프리 지표가
+  // 망가지고 진짜 크래시가 묻히므로 non-fatal로만 기록한다.
+  FlutterError.onError = (details) {
+    if (details.library == 'image resource service') {
+      crashlytics.recordFlutterError(details, fatal: false);
+      return;
+    }
+    crashlytics.recordFlutterFatalError(details);
+  };
   PlatformDispatcher.instance.onError = (error, stack) {
     crashlytics.recordError(error, stack, fatal: true);
     return true;
