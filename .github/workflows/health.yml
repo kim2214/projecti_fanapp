@@ -1,0 +1,20 @@
+name: Server health
+
+# Cloud Functions 멈춤 감지. 빌링 중단·권한 변경 등으로 서버가 조용히 멈추면
+# GCP 안의 알림도 함께 멈출 수 있어, GCP 밖에서 Firestore 공개 읽기로 점검한다.
+# 실패하면 GitHub가 워크플로 실패 메일을 보낸다 (자격 증명·시크릿 불필요).
+on:
+  schedule:
+    - cron: "17 * * * *" # 매시 17분 (정각 혼잡 회피)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/health_check.mjs
