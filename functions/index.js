@@ -10,6 +10,7 @@ const {
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  isRecentOpen,
   liveSetChanged,
   needsLiveImage,
   parseLiveImageUrl,
@@ -211,7 +212,10 @@ exports.pollLiveStatus = onSchedule(
       nextMembers[m.key] = r.ok
         ? { ...next, updatedAt: FieldValue.serverTimestamp() }
         : next;
-      if (notify && !firstRun) toNotify.push({ m, r });
+      // 폴링 공백 뒤 재개 시 오래전에 시작한 방송까지 일괄 발송되지 않게 한다.
+      if (notify && !firstRun && isRecentOpen(r.openDate, Date.now())) {
+        toNotify.push({ m, r });
+      }
       if (ended) endedSessions.push({ m, ended });
     }
 

@@ -131,6 +131,10 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
   없을 때** 발송 — 상태가 흔들려도(플랩) 같은 방송엔 1회만. `lastNotifiedOpenDate`는
   **발송 성공 후에만 기록**하므로 FCM 발송 실패는 다음 주기에 자동 재시도된다
   (openDate가 없으면 중복 판정 불가 → 알림 생략).
+- **폴링 공백 후 재개 가드**: 시작 15분 이내 방송만 발송(`isRecentOpen`) —
+  빌링 중단 등으로 멈췄다 재개되면 공백 중 시작된 방송이 일괄 "방송 시작!"으로
+  나가는 것을 막는다(`firstRun`은 빈 집계만 막음). 관측 공백이 30분을 넘은
+  종료는 종료 시각을 중간값 대신 마지막 OPEN 관측 시각으로 기록(`estimateEndedAtMs`).
 - **실패 시 직전 상태 유지** → 거짓 CLOSE→OPEN 알림 방지 (에러 정책은 클라와 동일).
 - **발송**: 멤버별 토픽 `live_<memberKey>`, 채널 `live_channel`,
   `data: {type:'live', broadcastId, memberKey}`.

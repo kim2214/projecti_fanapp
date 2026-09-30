@@ -107,13 +107,41 @@ function parseKstOpenDate(openDate) {
 }
 
 /**
+ * 관측 공백 허용치. 정상 주기(1분·심야 3분)와 429 백오프(10분)를 넘는 공백은
+ * 폴링이 멈췄다 재개된 것(빌링 중단·배포 장애 등)으로 본다.
+ */
+const MAX_OBSERVATION_GAP_MS = 30 * 60 * 1000;
+
+/**
  * 종료 시각 추정(epoch ms). 실제 종료는 "마지막으로 OPEN을 본 폴링"과
  * "CLOSE를 처음 본 폴링(now)" 사이 어딘가이므로 중간값을 쓴다 — 오차가
  * 폴링 주기의 절반(±30초, 심야 ±90초)으로 줄어든다. 직전 시각이 없으면 now.
+ *
+ * 공백이 허용치를 넘으면(폴링 중단 후 재개) 중간값은 수일짜리 가짜 방송이 되므로
+ * 마지막 OPEN 관측 시각을 쓴다 — "적어도 그때까지는 방송했다"는 확실한 하한이고,
+ * 홈 "오늘 방송했어요"(오늘 종료만 표시)에도 옛 방송이 끼지 않는다.
  */
 function estimateEndedAtMs(lastSeenLiveMs, nowMs) {
   if (typeof lastSeenLiveMs !== "number" || lastSeenLiveMs > nowMs) return nowMs;
+  if (nowMs - lastSeenLiveMs > MAX_OBSERVATION_GAP_MS) return lastSeenLiveMs;
   return Math.round((lastSeenLiveMs + nowMs) / 2);
+}
+
+/** 방송 시작 푸시를 보낼 수 있는 시작 후 경과 시간 상한. */
+const LIVE_NOTIFY_WINDOW_MS = 15 * 60 * 1000;
+
+/**
+ * 방송 시작 푸시를 보내기에 아직 "방금 시작"인가. 폴링이 멈췄다 재개되면
+ * 공백 동안 시작된 방송이 전부 미알림 상태라, 몇 시간 전에 시작한 방송까지
+ * "방송 시작!"이 한꺼번에 나간다(firstRun 가드는 빈 집계만 막는다).
+ *
+ * 창(15분)은 발송 실패 재시도·429 백오프(10분)를 덮을 만큼 둔다. openDate
+ * 형식이 바뀌어 해석할 수 없으면 true — 알림이 조용히 전부 끊기는 것보다 낫다.
+ */
+function isRecentOpen(openDate, nowMs) {
+  const startedMs = parseKstOpenDate(openDate);
+  if (startedMs == null) return true;
+  return nowMs - startedMs <= LIVE_NOTIFY_WINDOW_MS;
 }
 
 /**
@@ -155,5 +183,6 @@ module.exports = {
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  isRecentOpen,
   liveSetChanged,
 };

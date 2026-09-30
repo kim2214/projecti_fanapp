@@ -8,6 +8,7 @@ const {
   isQuietHourSkip,
   parseKstOpenDate,
   estimateEndedAtMs,
+  isRecentOpen,
   liveSetChanged,
   needsLiveImage,
   parseLiveImageUrl,
@@ -205,6 +206,35 @@ test("estimateEndedAtMs: 마지막 OPEN 관측과 now의 중간값, 없으면 no
   assert.equal(estimateEndedAtMs(undefined, 3000), 3000);
   // 시계 역행(직전 시각이 미래)이면 now로 안전 처리
   assert.equal(estimateEndedAtMs(5000, 3000), 3000);
+});
+
+test("estimateEndedAtMs: 관측 공백이 30분을 넘으면(폴링 중단 후 재개) 마지막 OPEN 관측 시각", () => {
+  const min = 60 * 1000;
+  const seen = Date.UTC(2026, 8, 18, 11, 51);
+  // 12일 공백 — 중간값(약 6일 뒤)이 아니라 마지막으로 본 시각
+  assert.equal(estimateEndedAtMs(seen, seen + 12 * 24 * 60 * min), seen);
+  // 429 백오프(10분) 수준의 공백은 여전히 중간값
+  assert.equal(estimateEndedAtMs(seen, seen + 11 * min), seen + 5.5 * min);
+  // 경계: 정확히 30분은 중간값
+  assert.equal(estimateEndedAtMs(seen, seen + 30 * min), seen + 15 * min);
+});
+
+test("isRecentOpen: 시작 15분 이내만 방송 시작 푸시 대상", () => {
+  const open = "2026-09-30 20:00:00"; // KST = UTC 11:00
+  const startedMs = Date.UTC(2026, 8, 30, 11, 0, 0);
+  const min = 60 * 1000;
+  assert.equal(isRecentOpen(open, startedMs + 1 * min), true);
+  assert.equal(isRecentOpen(open, startedMs + 15 * min), true);
+  // 폴링 공백 뒤 재개 — 몇 시간 전 시작한 방송엔 "방송 시작!"을 보내지 않는다
+  assert.equal(isRecentOpen(open, startedMs + 16 * min), false);
+  assert.equal(isRecentOpen(open, startedMs + 3 * 60 * min), false);
+  // 서버 시계가 약간 느려 시작 시각이 미래로 보여도 발송
+  assert.equal(isRecentOpen(open, startedMs - 1 * min), true);
+});
+
+test("isRecentOpen: openDate 형식을 해석할 수 없으면 true — 알림이 조용히 끊기지 않게", () => {
+  assert.equal(isRecentOpen("2026-09-30T20:00:00", Date.now()), true);
+  assert.equal(isRecentOpen(null, Date.now()), true);
 });
 
 test("liveSetChanged: OPEN↔CLOSE 전이가 하나라도 있으면 true", () => {
