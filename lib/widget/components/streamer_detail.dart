@@ -610,12 +610,17 @@ class _StreamerDetailState extends State<StreamerDetail> {
               children: [
                 SizedBox(
                   width: 40,
-                  child: Text(
-                    session.dateLabel,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: themeColor,
+                  // 다른 해 기록("25.9.11")은 칸에 맞게 줄인다.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      session.dateLabel,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: themeColor,
+                      ),
                     ),
                   ),
                 ),

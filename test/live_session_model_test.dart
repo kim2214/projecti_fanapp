@@ -4,6 +4,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
+import 'package:projecti_fan_app/utils/date_label.dart';
 
 void main() {
   group('LiveSessionModel', () {
@@ -17,7 +18,8 @@ void main() {
       });
 
       expect(session.liveTitle, '게릴라 방송');
-      expect(session.dateLabel, '8/23');
+      // 연도 표기는 date_label_test가 검증 — 여기선 시작 시각을 쓰는지만 본다.
+      expect(session.dateLabel, shortDateLabel(DateTime(2026, 8, 23)));
       expect(session.durationLabel, '3시간 12분');
       expect(session.peakViewerText, '최고 1,384명');
     });
@@ -31,7 +33,8 @@ void main() {
         'endedAt': Timestamp.fromDate(DateTime(2026, 8, 23, 21, 30)),
       });
       expect(session.durationLabel, '1시간 30분');
-      expect(session.dateLabel, '8/23');
+      // 연도 표기는 date_label_test가 검증 — 여기선 시작 시각을 쓰는지만 본다.
+      expect(session.dateLabel, shortDateLabel(DateTime(2026, 8, 23)));
     });
 
     test('endedAgoLabel: 종료 후 경과를 시간/분 단위로, 미래·직후는 "방금 종료"', () {

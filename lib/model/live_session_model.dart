@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:projecti_fan_app/utils/date_label.dart';
 
 /// 서버(pollLiveStatus)가 방송 종료 시 기록하는 지난 방송 세션.
 /// `live_history/{memberKey}/sessions/{id}` 문서에 매핑된다.
@@ -68,9 +69,8 @@ class LiveSessionModel {
     return '방금 종료';
   }
 
-  /// "8/23". 시작 시각이 없으면 빈 문자열.
-  String get dateLabel =>
-      startedAt == null ? '' : '${startedAt!.month}/${startedAt!.day}';
+  /// "8/23" (다른 해면 "25.8.23"). 시작 시각이 없으면 빈 문자열.
+  String get dateLabel => startedAt == null ? '' : shortDateLabel(startedAt!);
 
   /// "최고 1,384명". 기록이 없으면 빈 문자열.
   String get peakViewerText {

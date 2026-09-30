@@ -26,13 +26,37 @@ class FollowerTrendChart extends StatelessWidget {
       history.reversed.toList();
 
   /// 구간 증감 라벨: "최근 30일 +1,234" / "최근 7일 -12" / 변동 없음 "최근 7일 ±0".
-  /// 점이 2개 미만이면 빈 문자열. (순수 — 테스트 대상)
-  static String deltaLabel(List<FollowerPointModel> points) {
+  /// 마지막 기록이 이틀 이상 지났으면(서버 기록 중단) "최근"이 거짓이 되므로
+  /// 구간 날짜로 쓴다: "8/16–9/14 +1,234". 점이 2개 미만이면 빈 문자열.
+  /// [now]는 테스트용 주입. (순수 — 테스트 대상)
+  static String deltaLabel(List<FollowerPointModel> points, {DateTime? now}) {
     if (points.length < 2) return '';
-    final days = points.last.date.difference(points.first.date).inDays;
-    final delta = points.last.followerCount - points.first.followerCount;
+    final first = points.first;
+    final last = points.last;
+    final delta = last.followerCount - first.followerCount;
     final sign = delta > 0 ? '+' : (delta < 0 ? '-' : '±');
-    return '최근 $days일 $sign${formatCount(delta.abs())}';
+    final value = '$sign${formatCount(delta.abs())}';
+    final today = now ?? DateTime.now();
+    final lastAge =
+        DateTime(today.year, today.month, today.day).difference(last.date);
+    if (lastAge.inDays >= 2) {
+      return '${first.dateLabel}–${last.dateLabel} $value';
+    }
+    final days = last.date.difference(first.date).inDays;
+    return '최근 $days일 $value';
+  }
+
+  /// 각 점의 가로 위치(0~1)를 날짜에 비례해 정한다 — 순서대로 등간격이면 기록이
+  /// 끊긴 구간(서버 중단)이 하루처럼 그려져 급등/급락으로 보인다. 모든 점이 같은
+  /// 날이면 등간격으로 폴백. (순수 — 테스트 대상)
+  static List<double> xPositionsOf(List<FollowerPointModel> points) {
+    if (points.length < 2) return [for (final _ in points) 0.0];
+    final start = points.first.date;
+    final span = points.last.date.difference(start).inHours;
+    if (span <= 0) {
+      return [for (var i = 0; i < points.length; i++) i / (points.length - 1)];
+    }
+    return [for (final p in points) p.date.difference(start).inHours / span];
   }
 
   static String formatCount(int count) => count.toString().replaceAllMapped(
@@ -93,6 +117,7 @@ class FollowerTrendChart extends StatelessWidget {
                 child: CustomPaint(
                   painter: _LinePainter(
                     values: [for (final p in points) p.followerCount],
+                    xs: xPositionsOf(points),
                     line: colorDark,
                     fill: color.withAlpha(50),
                     ring: context.surface,
@@ -121,12 +146,16 @@ class FollowerTrendChart extends StatelessWidget {
 /// 위아래 여백을 더한 것 — 모든 값이 같으면 가운데 수평선.
 class _LinePainter extends CustomPainter {
   final List<int> values;
+
+  /// 각 점의 가로 위치(0~1, [FollowerTrendChart.xPositionsOf]).
+  final List<double> xs;
   final Color line;
   final Color fill;
   final Color ring;
 
   const _LinePainter({
     required this.values,
+    required this.xs,
     required this.line,
     required this.fill,
     required this.ring,
@@ -141,7 +170,7 @@ class _LinePainter extends CustomPainter {
     final range = (maxV - minV) == 0 ? 1 : (maxV - minV);
 
     Offset at(int i) {
-      final x = pad + (size.width - pad * 2) * i / (values.length - 1);
+      final x = pad + (size.width - pad * 2) * xs[i];
       final t = (values[i] - minV) / range;
       final y = pad + (size.height - pad * 2) * (1 - t);
       return Offset(x, y);
@@ -175,5 +204,8 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LinePainter old) =>
-      old.values != values || old.line != line || old.fill != fill;
+      old.values != values ||
+      old.xs != xs ||
+      old.line != line ||
+      old.fill != fill;
 }

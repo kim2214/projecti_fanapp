@@ -1,3 +1,5 @@
+import 'package:projecti_fan_app/utils/date_label.dart';
+
 /// 서버(recordFollowerCounts)가 매일 기록하는 치지직 팔로워 수 한 점.
 /// `follower_history/{memberKey}/daily/{yyyyMMdd}` 문서에 매핑된다.
 class FollowerPointModel {
@@ -21,6 +23,6 @@ class FollowerPointModel {
     );
   }
 
-  /// "9/11"
-  String get dateLabel => '${date.month}/${date.day}';
+  /// "9/11" (다른 해면 "25.9.11")
+  String get dateLabel => shortDateLabel(date);
 }

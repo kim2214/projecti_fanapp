@@ -153,11 +153,15 @@ class PeakViewerChart extends StatelessWidget {
           child: showDate
               ? Align(
                   alignment: Alignment.bottomCenter,
-                  child: Text(
-                    session.dateLabel,
-                    style: TextStyle(fontSize: 10, color: context.textFaint),
-                    maxLines: 1,
-                    softWrap: false,
+                  // 다른 해 기록("25.9.11")은 막대 칸에 맞게 줄인다.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      session.dateLabel,
+                      style: TextStyle(fontSize: 10, color: context.textFaint),
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
                   ),
                 )
               : null,
