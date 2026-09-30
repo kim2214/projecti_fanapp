@@ -192,6 +192,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 ),
               ),
               _buildLatestVideos(),
+              // 도움말·문의·앱 정보 입구 (상단 바는 좁아 여기에 둔다)
+              SliverToBoxAdapter(child: _buildHelpLink()),
               // 하단 여백
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
@@ -873,6 +875,39 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   }
 
   // ---------------- 최신 영상 ----------------
+
+  Widget _buildHelpLink() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Center(
+        child: TapSemantics(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/help'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.help_outline_rounded,
+                      size: 16, color: context.textFaint),
+                  const SizedBox(width: 6),
+                  Text(
+                    '도움말 · 문의 · 앱 정보',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.textFaint,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildLatestVideos() {
     final videos = _youtubeController.groupLatestVideos;
