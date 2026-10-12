@@ -82,14 +82,22 @@ function nextMemberState(prev, result) {
 }
 
 /**
- * 심야(KST 04:00–09:59)에는 1분 스케줄 중 3분의 1만 실제 폴링한다(사실상 3분
- * 주기) — 시청이 드문 시간대에 단일 egress IP로 치지직에 11req/분을 계속 보내는
- * 밴 리스크 완화. 3분은 클라의 집계 stale 판정(5분)보다 짧아 폴백을 유발하지 않는다.
+ * 1분 스케줄 중 이번 분을 건너뛸지 — 시간대별로 실제 폴링 주기를 늦춘다.
+ *
+ * - 심야(KST 04:00–09:59): 3분 주기 — 시청이 드문 시간대에 단일 egress IP로
+ *   치지직에 10req/분을 계속 보내는 밴 리스크 완화.
+ * - 밤(KST 20:00–03:59): 2분 주기 — 방송 중인 멤버는 많아도 새로 시작하는 방송은
+ *   적어(26.08.28–10.11 세션 260건 중 10%) 시작 푸시 지연이 드물다. 실행 비용 절감.
+ * - 그 외(KST 10:00–19:59, 시작의 82%): 매분.
+ *
+ * 최대 주기 3분은 클라의 집계 stale 판정(5분)보다 짧아 폴백을 유발하지 않는다.
  */
 function isQuietHourSkip(date) {
   const kstHour = (date.getUTCHours() + 9) % 24;
-  if (kstHour < 4 || kstHour >= 10) return false;
-  return date.getUTCMinutes() % 3 !== 0;
+  const minute = date.getUTCMinutes();
+  if (kstHour >= 4 && kstHour < 10) return minute % 3 !== 0;
+  if (kstHour >= 20 || kstHour < 4) return minute % 2 !== 0;
+  return false;
 }
 
 /**

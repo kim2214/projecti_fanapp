@@ -9,7 +9,7 @@
 const BASE =
   "https://firestore.googleapis.com/v1/projects/honeyzfanapp/databases/(default)/documents";
 
-// pollLiveStatus는 1분(심야 3분) 주기지만, 429 백오프 중엔 10분간 집계를 쓰지 않는다.
+// pollLiveStatus는 1분(밤 2분·심야 3분) 주기지만, 429 백오프 중엔 10분간 집계를 쓰지 않는다.
 const LIVE_STALE_MS = 20 * 60 * 1000;
 // functions/index.js pollLiveStatus가 error로 승격하는 기준과 같다.
 const ALL_FAILURE_THRESHOLD = 5;

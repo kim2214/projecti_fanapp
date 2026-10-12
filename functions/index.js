@@ -183,7 +183,7 @@ exports.pollLiveStatus = onSchedule(
     maxInstances: 1, // 겹쳐 실행되지 않게 단일 인스턴스로 제한
   },
   async () => {
-    // 심야(KST 04–10시)는 3분 주기로 완화한다 — live_logic.isQuietHourSkip 참고.
+    // 밤(KST 20–04시)은 2분, 심야(04–10시)는 3분 주기로 완화한다 — live_logic.isQuietHourSkip 참고.
     if (isQuietHourSkip(new Date())) return;
 
     const db = getFirestore();
@@ -416,6 +416,10 @@ exports.recordFollowerCounts = onSchedule(
     timeoutSeconds: 60,
     maxInstances: 1,
     secrets: [CHZZK_CLIENT_ID, CHZZK_CLIENT_SECRET],
+    // 하루 1회라 일시 실패(타임아웃·5xx)가 그날 기록 누락으로 이어진다 — 실패 시
+    // Cloud Scheduler가 1·2·4분 뒤 재시도한다. 같은 날짜 문서를 덮어쓰므로 멱등.
+    retryCount: 3,
+    minBackoffSeconds: 60,
   },
   async () => {
     // 채널 조회는 요청당 20개까지 — 카탈로그(11명)는 한 번에 들어간다.
@@ -430,14 +434,13 @@ exports.recordFollowerCounts = onSchedule(
       signal: AbortSignal.timeout(CHZZK_TIMEOUT_MS),
     });
     if (res.status !== 200) {
-      // 401/403은 자격 증명 문제, 429는 쿼터 — 하루 1회라 재시도 없이 다음 날을 기다린다.
-      console.error(`chzzk open api channels HTTP ${res.status}`);
-      return;
+      // 401/403은 자격 증명 문제, 429는 쿼터. throw해야 스케줄러 재시도가 걸린다
+      // (자격 증명 문제면 재시도도 실패하지만 호출 3번 더일 뿐이다).
+      throw new Error(`chzzk open api channels HTTP ${res.status}`);
     }
     const counts = followerCountsByKey(MEMBER_CATALOG, (await res.json())?.content?.data);
     if (Object.keys(counts).length === 0) {
-      console.error("chzzk open api channels 응답에 유효한 followerCount 없음 (형식 변경 의심)");
-      return;
+      throw new Error("chzzk open api channels 응답에 유효한 followerCount 없음 (형식 변경 의심)");
     }
 
     const db = getFirestore();

@@ -167,6 +167,17 @@ test("isQuietHourSkip: 심야(KST 04–10시)는 3분 배수 분에만 폴링", 
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 2, 1, 1))), false);
 });
 
+test("isQuietHourSkip: 밤(KST 20–04시)은 짝수 분에만 폴링", () => {
+  // UTC 11:01 = KST 20:01 → skip, UTC 11:02 = KST 20:02 → 폴링
+  assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 11, 1))), true);
+  assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 11, 2))), false);
+  // 자정 넘어 KST 03:59 → skip(홀수), KST 03:58 → 폴링
+  assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 18, 59))), true);
+  assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 18, 58))), false);
+  // 경계: KST 19:59(밤 시작 전)는 홀수 분이어도 폴링
+  assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 10, 59))), false);
+});
+
 test("isQuietHourSkip: 주간(KST 14시)은 항상 폴링", () => {
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 5, 1))), false);
   assert.equal(isQuietHourSkip(new Date(Date.UTC(2026, 0, 1, 5, 3))), false);

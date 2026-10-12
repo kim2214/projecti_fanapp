@@ -10,7 +10,7 @@ description: 치지직(CHZZK) 비공식 폴링 API로 멤버 라이브 상태를
 
 - **클라 포그라운드 폴링** — `lib/controllers/global_controller.dart`.
   화면에 보이는 라이브 현황 갱신용(2분 주기, 포그라운드만).
-- **서버 폴링** — `functions/index.js`의 `pollLiveStatus`(1분 주기 스케줄러).
+- **서버 폴링** — `functions/index.js`의 `pollLiveStatus`(1분 스케줄러, 밤 2분·심야 3분 실효 주기).
   백그라운드 라이브 감지 → 방송 시작 푸시. 아래 "서버 폴링" 절 참고.
 
 ## 엔드포인트
@@ -161,8 +161,9 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 
 단일 egress IP 집중이 주 리스크. 구현된 완화책:
 
-- **심야 완화**: KST 04–10시는 3분의 1 주기만 실제 폴링(사실상 3분 주기,
-  `isQuietHourSkip`) — 클라 stale 판정(5분)보다 짧게 유지해야 한다.
+- **시간대별 완화** (`isQuietHourSkip`): KST 04–10시는 3분, 20–04시는 2분 주기로만
+  실제 폴링한다(10–20시는 매분 — 방송 시작의 82%가 이 시간대). 최대 주기는 클라
+  stale 판정(5분)보다 짧게 유지해야 한다.
 - **429/403 백오프**: 감지 시 `rateLimitedUntil`(+10분)을 기록하고 그동안 주기
   생략 + `console.error`. 집계가 오래되면 클라가 직접 폴링으로 폴백.
 - **지속 실패 승격**: 전원 조회 실패가 5회 연속(`consecutiveAllFailures`)이면
