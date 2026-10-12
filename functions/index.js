@@ -176,6 +176,9 @@ exports.pollLiveStatus = onSchedule(
     timeZone: "Asia/Seoul",
     region: "asia-northeast3",
     memory: "256MiB",
+    // 치지직·Firestore 응답 대기가 대부분인 I/O 작업이라 분할 vCPU(256MiB 기준
+    // ~0.17)로 충분하다 — 기본 1 vCPU 대비 과금 vCPU-초가 약 1/6. 동시성은 1로 고정된다.
+    cpu: "gcf_gen1",
     timeoutSeconds: 60,
     maxInstances: 1, // 겹쳐 실행되지 않게 단일 인스턴스로 제한
   },
