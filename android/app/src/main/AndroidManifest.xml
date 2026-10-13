@@ -69,10 +69,12 @@
                 android:resource="@xml/live_status_widget_info" />
         </receiver>
 
-        <!-- home_widget 백그라운드 콜백 수신 (위젯 주기 갱신 → Dart 서버 재조회) -->
+        <!-- home_widget 백그라운드 콜백 수신 (위젯 주기 갱신 → Dart 서버 재조회).
+             위젯 provider가 이 클래스를 직접 지정한 자기 PendingIntent로만 부르므로
+             외부 앱에 열 필요가 없다 — 열어 두면 다른 앱이 갱신(Firestore 읽기)을 반복 유발할 수 있다. -->
         <receiver
             android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
             </intent-filter>
