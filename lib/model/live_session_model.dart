@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecti_fan_app/utils/date_label.dart';
+import 'package:projecti_fan_app/utils/number_format.dart';
 
 /// 서버(pollLiveStatus)가 방송 종료 시 기록하는 지난 방송 세션.
 /// `live_history/{memberKey}/sessions/{id}` 문서에 매핑된다.
@@ -76,10 +77,6 @@ class LiveSessionModel {
   String get peakViewerText {
     final count = peakConcurrentUserCount;
     if (count == null) return '';
-    final formatted = count.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '최고 $formatted명';
+    return '최고 ${formatCount(count)}명';
   }
 }

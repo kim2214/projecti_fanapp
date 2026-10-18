@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/model/follower_point_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
+import 'package:projecti_fan_app/utils/number_format.dart';
 
 /// 치지직 팔로워 수 추이 (헤드라인 숫자 + 미니 선 그래프).
 ///
@@ -58,11 +59,6 @@ class FollowerTrendChart extends StatelessWidget {
     }
     return [for (final p in points) p.date.difference(start).inHours / span];
   }
-
-  static String formatCount(int count) => count.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]},',
-      );
 
   static const double _plotHeight = 56;
 

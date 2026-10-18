@@ -1,3 +1,5 @@
+import 'package:projecti_fan_app/utils/number_format.dart';
+
 class LiveCheckModel {
   final String? liveTitle;
   final String? status;
@@ -71,10 +73,6 @@ class LiveCheckModel {
   String get viewerCountText {
     final count = concurrentUserCount;
     if (count == null) return '';
-    final formatted = count.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
-    return '$formatted명';
+    return '${formatCount(count)}명';
   }
 }

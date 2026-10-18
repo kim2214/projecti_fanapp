@@ -47,13 +47,14 @@ class StreamerCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isLive
-                  ? Colors.green.withAlpha(40)
+                  ? AppColors.live.withAlpha(40)
                   : themeColor.withAlpha(25),
               blurRadius: 15,
               offset: const Offset(0, 6),
             ),
           ],
-          border: isLive ? Border.all(color: Colors.green, width: 2.5) : null,
+          border:
+              isLive ? Border.all(color: AppColors.live, width: 2.5) : null,
         ),
         child: Stack(
           children: [
@@ -123,7 +124,7 @@ class StreamerCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.green,
+                                color: AppColors.live,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Row(

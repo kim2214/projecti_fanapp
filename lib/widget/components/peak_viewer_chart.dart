@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
+import 'package:projecti_fan_app/utils/number_format.dart';
 
 /// 최근 방송의 최고 동시 시청자 추이 미니 막대 차트.
 ///
@@ -34,13 +35,8 @@ class PeakViewerChart extends StatelessWidget {
   static String averageLabel(List<LiveSessionModel> points) {
     if (points.isEmpty) return '';
     final sum = points.fold<int>(0, (a, s) => a + s.peakConcurrentUserCount!);
-    return '평균 ${_formatCount(sum ~/ points.length)}명';
+    return '평균 ${formatCount(sum ~/ points.length)}명';
   }
-
-  static String _formatCount(int count) => count.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]},',
-      );
 
   static const double _plotHeight = 72;
   static const double _labelHeight = 16;
@@ -60,7 +56,7 @@ class PeakViewerChart extends StatelessWidget {
     return Semantics(
       // 스크린리더에는 막대 대신 요약 문장을 준다. 개별 값은 아래 목록이 읽힌다.
       label: '최근 ${points.length}회 방송 최고 동시 시청자 추이, '
-          '최고 ${_formatCount(maxCount)}명, ${averageLabel(points)}',
+          '최고 ${formatCount(maxCount)}명, ${averageLabel(points)}',
       child: ExcludeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +123,7 @@ class PeakViewerChart extends StatelessWidget {
       children: [
         if (isMax)
           Text(
-            _formatCount(session.peakConcurrentUserCount!),
+            formatCount(session.peakConcurrentUserCount!),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
