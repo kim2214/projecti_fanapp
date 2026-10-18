@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class YouTubeVideoModel {
   final String? videoId;
   final String? title;
@@ -45,9 +47,11 @@ class YouTubeVideoModel {
   }
 
   /// 상대적 시간 표시 (예: 3일 전, 2주 전)
-  String get relativeTime {
+  String get relativeTime => relativeTimeFrom(DateTime.now());
+
+  @visibleForTesting
+  String relativeTimeFrom(DateTime now) {
     if (publishedAt == null) return '';
-    final now = DateTime.now();
     final difference = now.difference(publishedAt!);
 
     if (difference.inDays > 365) {

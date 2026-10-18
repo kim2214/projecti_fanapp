@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class StreamerModel {
   final String? name;
   final String? profileName;
@@ -74,10 +76,12 @@ class StreamerModel {
   }
 
   /// 오늘 포함, 가장 가까운 미래의 생일 날짜 (올해 또는 내년). 미설정/오류면 null.
-  DateTime? get nextBirthday {
+  DateTime? get nextBirthday => nextBirthdayFrom(DateTime.now());
+
+  @visibleForTesting
+  DateTime? nextBirthdayFrom(DateTime now) {
     final md = _monthDay;
     if (md == null) return null;
-    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     var date = DateTime(now.year, md.$1, md.$2);
     if (date.isBefore(today)) {
@@ -87,10 +91,12 @@ class StreamerModel {
   }
 
   /// 생일까지 남은 일수 (오늘 0, 내일 1 …). 미설정/오류면 null.
-  int? get daysUntilBirthday {
-    final date = nextBirthday;
+  int? get daysUntilBirthday => daysUntilBirthdayFrom(DateTime.now());
+
+  @visibleForTesting
+  int? daysUntilBirthdayFrom(DateTime now) {
+    final date = nextBirthdayFrom(now);
     if (date == null) return null;
-    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     return date.difference(today).inDays;
   }
