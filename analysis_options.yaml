@@ -9,6 +9,11 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  language:
+    # 타입 인자 없는 제네릭(AsyncSnapshot 등)·추론 실패를 경고로 잡는다.
+    strict-raw-types: true
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
@@ -26,6 +31,11 @@ linter:
     prefer_const_constructors: true
     prefer_const_literals_to_create_immutables: true
     prefer_const_constructors_in_immutables: true
+    # 기다리지 않은 Future는 예외가 PlatformDispatcher로 새 fatal로 집계된다 —
+    # 의도한 fire-and-forget은 unawaited()로 명시한다.
+    unawaited_futures: true
+    cancel_subscriptions: true
+    close_sinks: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

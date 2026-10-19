@@ -9,6 +9,7 @@ import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
+import 'package:projecti_fan_app/widget/components/live_stats_row.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
@@ -90,9 +91,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark =
-          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColor = AppColors.group(isHoneyz);
+      final themeColorDark = AppColors.groupDark(isHoneyz);
 
       return Container(
         decoration: BoxDecoration(
@@ -521,34 +521,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             // 시청자 수 / 업타임
             Row(
               children: [
-                if (status.viewerCountText.isNotEmpty) ...[
-                  Icon(Icons.visibility_rounded,
-                      size: 14, color: context.textFaint),
-                  const SizedBox(width: 4),
-                  Text(
-                    status.viewerCountText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: context.textSub,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                if (status.uptime.isNotEmpty) ...[
-                  Icon(Icons.schedule_rounded,
-                      size: 14, color: context.textFaint),
-                  const SizedBox(width: 4),
-                  Text(
-                    status.uptime,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: context.textSub,
-                    ),
-                  ),
-                ],
-                const Spacer(),
+                Expanded(child: LiveStatsRow(status: status)),
+                const SizedBox(width: 8),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 12,
@@ -956,7 +930,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               padding: const EdgeInsets.only(bottom: 8),
               child: YouTubeVideoCard(
                 video: videos[index],
-                index: index,
               ),
             );
           },

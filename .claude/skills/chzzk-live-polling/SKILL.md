@@ -42,6 +42,8 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 `AppLifecycleListener`로 제어한다. **백그라운드에서 폴링을 돌리지 않는 것이 의도**다.
 
 - `onResume`: 즉시 1회 갱신 + 주기 폴링 재개 (`refreshAllLiveStatus` → `_startLiveRefreshTimer`).
+  단 **실제로 pause돼 타이머가 멈췄던 경우에만** — onResume은 inactive→resumed
+  (알림창·권한/리뷰 다이얼로그)에도 불리므로, 타이머가 돌고 있으면 아무것도 하지 않는다.
 - `onPause`: 주기 폴링 중단 (`_stopLiveRefreshTimer`).
 - `onClose`: 타이머·리스너 정리.
 
@@ -52,6 +54,12 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 - `refreshLiveStatus()` — 현재 선택 그룹만.
 - `refreshAllLiveStatus()` — 허니즈+아카시아 동시 (통합 LIVE 화면용).
 - `liveCheck({forceRefresh})` — 캐시 우선, 비었거나 강제 시 갱신.
+- **진행 중 갱신 공유**: `refreshLiveStatus`/`refreshAllLiveStatus`는 범위가 겹치는
+  갱신이 진행 중이면 그 Future를 반환한다(`_liveRefreshInFlight`). 전체 갱신은
+  진행 중인 단일 그룹 갱신이 끝난 뒤 시작해 결과 순서가 뒤집히지 않는다.
+- **openDate 해석**: 시간대 없는 KST 문자열이라 `parseChzzkOpenDate`
+  (`lib/utils/chzzk_date.dart`)로만 읽는다 — `DateTime.tryParse`는 기기 로컬로 해석해
+  해외 기기에서 경과 시간이 틀어진다.
 
 ### key 기반 매칭 (member.key로 조회)
 
@@ -77,6 +85,9 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
   로그만, Crashlytics 기록 **안 함** (노이즈).
 - **HTTP 비정상 응답 / 파싱 예외** → `FirebaseCrashlytics.recordError(fatal:
   false)`로 기록. 이건 **엔드포인트 계약이 바뀐 신호**이므로 반드시 남긴다.
+- **200인데 `content: null`** → 비방송(null 반환)으로 두고, 별도 reason
+  (`content 없음 (채널 정지·삭제 가능성)`)으로 **채널당 앱 실행 1회만** 기록한다.
+  파싱 실패와 섞여 2분마다 쌓이면 진짜 형식 변경 신호가 묻힌다.
 
 chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashlytics 로그
 (`reason: 'chzzk ... 형식 변경 가능성'`)부터 확인한다.

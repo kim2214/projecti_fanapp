@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:projecti_fan_app/utils/chzzk_date.dart';
 import 'package:projecti_fan_app/utils/date_label.dart';
 import 'package:projecti_fan_app/utils/number_format.dart';
 
@@ -10,7 +11,7 @@ class LiveSessionModel {
 
   /// 방송 시작 시각. 서버가 저장한 `startedAt` Timestamp(절대 시각)를 우선하고,
   /// 구버전 기록엔 없으므로 chzzk openDate("yyyy-MM-dd HH:mm:ss", KST) 문자열을
-  /// 기기 로컬 시간으로 해석해 폴백한다 (KST 기기에서만 정확).
+  /// KST로 해석해 폴백한다 ([parseChzzkOpenDate]).
   final DateTime? startedAt;
 
   /// 방송 종료 시각 — 서버 폴링의 마지막 OPEN 관측과 CLOSE 관측의 중간값
@@ -37,7 +38,7 @@ class LiveSessionModel {
       liveCategoryValue: json['liveCategoryValue'] as String?,
       startedAt: startedAt is Timestamp
           ? startedAt.toDate()
-          : (openDate is String ? DateTime.tryParse(openDate) : null),
+          : (openDate is String ? parseChzzkOpenDate(openDate) : null),
       endedAt: endedAt is Timestamp ? endedAt.toDate() : null,
       peakConcurrentUserCount:
           (json['peakConcurrentUserCount'] as num?)?.toInt(),

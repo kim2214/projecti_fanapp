@@ -1,10 +1,9 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
-import 'package:go_router/go_router.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
-import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
+import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 
 /// 스케줄 상세 화면 인자.
 ///
@@ -25,7 +24,7 @@ class ScheduleDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final globalController = Get.find<GlobalController>();
     final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-    final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+    final themeColor = AppColors.group(isHoneyz);
     // 글자·아이콘용 (배경 틴트·그림자는 themeColor 유지)
     final inkColor = isHoneyz ? AppColors.honeyz : context.acaxiaInk;
 
@@ -195,31 +194,7 @@ class ScheduleDetail extends StatelessWidget {
       child: Row(
         children: [
           // 뒤로가기 버튼
-          TapSemantics(
-              label: '뒤로가기',
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: context.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: inkColor,
-                    size: 22,
-                  ),
-                ),
-              )),
+          RoundIconButton.back(context, color: inkColor),
           const SizedBox(width: 16),
           // 타이틀
           Expanded(

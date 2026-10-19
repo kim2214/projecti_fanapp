@@ -115,7 +115,6 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                     padding: const EdgeInsets.only(bottom: 8),
                     child: YouTubeVideoCard(
                       video: youtubeController.videoList[index],
-                      index: index,
                     ),
                   );
                 },

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +19,19 @@ import 'package:projecti_fan_app/utils/external_link.dart';
 ///   ('all' 전체 / 'favorites' 최애만(기본) / 'off' 끄기)가 정하고, 최애 목록이
 ///   바뀌면 [FavoritesController]가 [syncLiveSubscriptions]로 알려준다.
 class NotificationController extends GetxController {
+  // 토픽 구독/해제는 테스트에서 주입할 수 있게 함수로 받는다.
+  // 프로덕션(main)은 인자 없이 생성하므로 FCM을 그대로 쓴다.
+  NotificationController({
+    Future<void> Function(String topic)? subscribeToTopic,
+    Future<void> Function(String topic)? unsubscribeFromTopic,
+  })  : _subscribe = subscribeToTopic ??
+            ((topic) => FirebaseMessaging.instance.subscribeToTopic(topic)),
+        _unsubscribe = unsubscribeFromTopic ??
+            ((topic) => FirebaseMessaging.instance.unsubscribeFromTopic(topic));
+
+  final Future<void> Function(String topic) _subscribe;
+  final Future<void> Function(String topic) _unsubscribe;
+
   static const String _prefsPrefix = 'noti_schedule_'; // + group
 
   /// 라이브 알림 모드 영속화 키 ('all' | 'favorites' | 'off')
@@ -83,12 +98,12 @@ class NotificationController extends GetxController {
     try {
       await action();
     } catch (e, st) {
-      FirebaseCrashlytics.instance.recordError(
+      unawaited(FirebaseCrashlytics.instance.recordError(
         e,
         st,
         reason: '알림 초기화 실패: $label',
         fatal: false,
-      );
+      ));
     }
   }
 
@@ -142,7 +157,7 @@ class NotificationController extends GetxController {
     }
     // 홈 위젯 즉시 갱신용 무음 data 푸시 토픽 — 알림을 띄우지 않으므로 사용자
     // 설정과 무관하게 항상 구독한다 (위젯 미설치 기기는 수신 후 바로 무시).
-    await FirebaseMessaging.instance.subscribeToTopic(widgetRefreshTopic);
+    await _subscribe(widgetRefreshTopic);
   }
 
   /// 서버(pollLiveStatus)가 방송 중 멤버 집합이 바뀔 때 보내는 무음 푸시 토픽.
@@ -152,9 +167,9 @@ class NotificationController extends GetxController {
   Future<void> _applySubscription(String group, bool enabled) async {
     final topic = 'schedule_$group';
     if (enabled) {
-      await FirebaseMessaging.instance.subscribeToTopic(topic);
+      await _subscribe(topic);
     } else {
-      await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+      await _unsubscribe(topic);
     }
   }
 
@@ -236,10 +251,10 @@ class NotificationController extends GetxController {
     final current = (prefs.getStringList(_liveTopicsKey) ?? const []).toSet();
 
     for (final key in desired.difference(current)) {
-      await FirebaseMessaging.instance.subscribeToTopic('live_$key');
+      await _subscribe('live_$key');
     }
     for (final key in current.difference(desired)) {
-      await FirebaseMessaging.instance.unsubscribeFromTopic('live_$key');
+      await _unsubscribe('live_$key');
     }
     await prefs.setStringList(_liveTopicsKey, desired.toList());
   }

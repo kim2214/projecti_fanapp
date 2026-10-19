@@ -34,7 +34,7 @@ void main() async {
 
   // Android 15(SDK 35)부터 강제되는 edge-to-edge를 모든 버전에서 켠다.
   // (이전 버전과의 호환성을 위해 enableEdgeToEdge()를 호출하라는 권장사항 대응)
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
 
   // google-services Gradle 플러그인을 적용하면서 네이티브(FirebaseInitProvider)가
   // 기본 앱을 자동 생성한다. 그 상태에서 옵션으로 다시 초기화하면 [core/duplicate-app]이

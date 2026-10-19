@@ -34,4 +34,18 @@ void main() {
           LiveCheckModel.fromJson(m.toJson()).liveImageUrl, 'https://x/{type}');
     });
   });
+
+  group('LiveCheckModel.uptimeFrom', () {
+    // openDate는 KST 벽시계 — now는 절대 시각으로 줘서 기기 타임존과 무관하게 검증.
+    final m = LiveCheckModel(openDate: '2026-08-23 20:00:00');
+
+    test('KST 시작 시각 기준 경과 시간', () {
+      expect(m.uptimeFrom(DateTime.utc(2026, 8, 23, 13, 30)), '2시간 30분');
+      expect(m.uptimeFrom(DateTime.utc(2026, 8, 23, 11, 45)), '45분');
+    });
+
+    test('시작 전(시계 불일치)이면 빈 문자열', () {
+      expect(m.uptimeFrom(DateTime.utc(2026, 8, 23, 10, 59)), '');
+    });
+  });
 }

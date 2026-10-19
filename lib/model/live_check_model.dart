@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:projecti_fan_app/utils/chzzk_date.dart';
 import 'package:projecti_fan_app/utils/number_format.dart';
 
 class LiveCheckModel {
@@ -57,11 +59,14 @@ class LiveCheckModel {
   }
 
   /// 방송 경과 시간 (예: 2시간 30분)
-  String get uptime {
+  String get uptime => uptimeFrom(DateTime.now());
+
+  @visibleForTesting
+  String uptimeFrom(DateTime now) {
     if (openDate == null) return '';
-    final start = DateTime.tryParse(openDate!);
+    final start = parseChzzkOpenDate(openDate!);
     if (start == null) return '';
-    final diff = DateTime.now().difference(start);
+    final diff = now.difference(start);
     if (diff.isNegative) return '';
     if (diff.inHours > 0) {
       return '${diff.inHours}시간 ${diff.inMinutes % 60}분';

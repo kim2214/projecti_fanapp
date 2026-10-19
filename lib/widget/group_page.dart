@@ -90,7 +90,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
 
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+      final themeColor = AppColors.group(isHoneyz);
       // 글자(MEMBERS·카드 그룹명)·새로고침 표시에 쓰인다 — 아카시아는
       // acaxiaDark(흰 배경 대비 1.8:1) 대신 글자용 톤.
       final themeColorDark =
@@ -287,13 +287,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
             decoration: BoxDecoration(
               color: context.surface,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: AppColors.softShadow,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

@@ -34,6 +34,12 @@ flutter test          # 단위 테스트
   (`test/youtube_controller_test.dart`의 Completer 기반)로 검증한다 — 캐시 복원
   await 때문에 요청은 `pumpEventQueue()` 뒤에 나간다.
 - 모델(`LiveCheckModel` 등)의 파생 getter는 결정적이므로 직접 검증한다.
+  `DateTime.now()`를 쓰는 getter는 `@visibleForTesting ...From(now)` seam으로 검증한다.
+- `NotificationController`는 토픽 구독/해제 함수를 생성자로 주입해 재조정
+  (`syncLiveSubscriptions`) 경로를 FCM 없이 검증한다 (`test/notification_controller_test.dart`).
+- **시간대 독립**: 치지직 openDate(KST)와 비교하는 시각은 `DateTime.utc`로 준다.
+  CI는 UTC라 로컬(KST)에서만 통과하는 테스트가 생기기 쉽다 —
+  `TZ=UTC flutter test`로도 돌려 본다.
 
 ## 주의: CI Firebase 스텁
 

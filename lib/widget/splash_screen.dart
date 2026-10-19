@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
     // 그룹 선택 화면을 스택 아래에 깔아 두어야 메인의 뒤로가기(pop)가 기존
     // 선택 흐름과 동일하게 그룹 선택으로 돌아간다 (pop 대상 없음 크래시 방지).
     context.pushReplacement('/groupSelect');
-    context.push('/baseScreen');
+    unawaited(context.push('/baseScreen'));
   }
 
   @override
@@ -213,13 +213,7 @@ class _SplashScreenState extends State<SplashScreen>
             decoration: BoxDecoration(
               color: context.surface,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: AppColors.softShadow,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -285,7 +279,7 @@ class _SplashScreenState extends State<SplashScreen>
           SizedBox(
             width: 160,
             child: LinearProgressIndicator(
-              backgroundColor: Colors.grey[200],
+              backgroundColor: context.divider,
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.honeyz),
               minHeight: 3,
               borderRadius: BorderRadius.circular(2),

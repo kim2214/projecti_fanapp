@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
+import 'package:projecti_fan_app/widget/components/live_stats_row.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 import 'package:projecti_fan_app/widget/components/live_thumbnail.dart';
 
@@ -23,7 +24,7 @@ class LiveMemberCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = entry.status;
-    final groupColor = entry.isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+    final groupColor = AppColors.group(entry.isHoneyz);
     final borderColor = isFavorite
         ? AppColors.favorite.withAlpha(160)
         : AppColors.live.withAlpha(60);
@@ -157,50 +158,8 @@ class LiveMemberCard extends StatelessWidget {
             // 시청자 수 / 업타임 / 바로가기
             Row(
               children: [
-                // 시청자 수·업타임은 남는 폭 안에서 줄바꿈한다 — 큰 글꼴·좁은
-                // 화면에서 오른쪽 "치지직에서 보기"와 한 줄에 다 안 들어가 넘쳤다.
-                Expanded(
-                  child: Wrap(
-                    spacing: 14,
-                    runSpacing: 4,
-                    children: [
-                      if (status.viewerCountText.isNotEmpty)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.visibility_rounded,
-                                size: 14, color: context.textFaint),
-                            const SizedBox(width: 4),
-                            Text(
-                              status.viewerCountText,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: context.textSub,
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (status.uptime.isNotEmpty)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.schedule_rounded,
-                                size: 14, color: context.textFaint),
-                            const SizedBox(width: 4),
-                            Text(
-                              status.uptime,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: context.textSub,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
+                // 남는 폭 안에서 줄바꿈 — 오른쪽 "치지직에서 보기"와 겹쳐 넘치지 않게.
+                Expanded(child: LiveStatsRow(status: status)),
                 const SizedBox(width: 8),
                 Text(
                   '치지직에서 보기',

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -10,12 +9,14 @@ import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
+import 'package:projecti_fan_app/widget/components/live_stats_row.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/model/follower_point_model.dart';
 import 'package:projecti_fan_app/widget/components/follower_trend_chart.dart';
 import 'package:projecti_fan_app/widget/components/peak_viewer_chart.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
+import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class StreamerDetail extends StatefulWidget {
@@ -124,31 +125,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            TapSemantics(
-                label: '뒤로가기',
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: context.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(8),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.arrow_back_rounded,
-                      color: themeColor,
-                      size: 22,
-                    ),
-                  ),
-                )),
+            RoundIconButton.back(context, color: themeColor),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -172,31 +149,13 @@ class _StreamerDetailState extends State<StreamerDetail> {
     if (widget.memberKey.isEmpty) return const SizedBox.shrink();
     return Obx(() {
       final isFav = _favorites.isFavorite(widget.group, widget.memberKey);
-      return TapSemantics(
-          label: isFav ? '최애 해제' : '최애 지정',
-          child: GestureDetector(
-            onTap: () => _favorites.toggle(widget.group, widget.memberKey),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                isFav ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isFav ? AppColors.favorite : context.textFaint,
-                size: 24,
-              ),
-            ),
-          ));
+      return RoundIconButton(
+        icon: isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+        color: isFav ? AppColors.favorite : context.textFaint,
+        label: isFav ? '최애 해제' : '최애 지정',
+        iconSize: 24,
+        onTap: () => _favorites.toggle(widget.group, widget.memberKey),
+      );
     });
   }
 
@@ -417,37 +376,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 ),
               ],
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  if (status.viewerCountText.isNotEmpty) ...[
-                    Icon(Icons.visibility_rounded,
-                        size: 14, color: context.textFaint),
-                    const SizedBox(width: 4),
-                    Text(
-                      status.viewerCountText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: context.textSub,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                  ],
-                  if (status.uptime.isNotEmpty) ...[
-                    Icon(Icons.schedule_rounded,
-                        size: 14, color: context.textFaint),
-                    const SizedBox(width: 4),
-                    Text(
-                      status.uptime,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: context.textSub,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              LiveStatsRow(status: status),
             ],
           ),
         ),
@@ -474,13 +403,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
           decoration: BoxDecoration(
             color: context.surface,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(8),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: AppColors.softShadow,
           ),
           child: FollowerTrendChart(
             history: history,
@@ -537,13 +460,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   decoration: BoxDecoration(
                     color: context.surface,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: AppColors.softShadow,
                   ),
                   child: PeakViewerChart(
                     sessions: all,
@@ -555,13 +472,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 decoration: BoxDecoration(
                   color: context.surface,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(8),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: AppColors.softShadow,
                 ),
                 child: Column(
                   children: [
@@ -745,13 +656,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
       decoration: BoxDecoration(
         color: context.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppColors.softShadow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -891,7 +796,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   for (int i = 0; i < top.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: YouTubeVideoCard(video: top[i], index: i),
+                      child: YouTubeVideoCard(video: top[i]),
                     ),
                 ],
               );

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
-import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
+import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 
 /// 도움말·문의·앱 정보. 홈 대시보드 맨 아래 링크로 진입한다.
 ///
@@ -168,31 +167,7 @@ class _HelpPageState extends State<HelpPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          TapSemantics(
-              label: '뒤로가기',
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: context.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: context.textMain,
-                    size: 22,
-                  ),
-                ),
-              )),
+          RoundIconButton.back(context, color: context.textMain),
           const SizedBox(width: 16),
           Text(
             '도움말',
@@ -227,13 +202,7 @@ class _HelpPageState extends State<HelpPage> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppColors.softShadow,
       ),
       child: Material(
         color: context.surface,

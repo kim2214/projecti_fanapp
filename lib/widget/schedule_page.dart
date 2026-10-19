@@ -24,9 +24,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
     return Obx(() {
       final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark =
-          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColor = AppColors.group(isHoneyz);
+      final themeColorDark = AppColors.groupDark(isHoneyz);
       final group = globalController.selectedGroup.value;
       final members = globalController.membersOf(group);
       // 카탈로그가 순서·구성의 단일 소스이고, URL은 같은 순서로 펼쳐져 온다.
@@ -175,13 +174,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
             decoration: BoxDecoration(
               color: context.surface,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: AppColors.softShadow,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

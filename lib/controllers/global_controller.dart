@@ -294,12 +294,12 @@ class GlobalController extends GetxController {
       // 타임아웃은 일시적 네트워크 문제 — Crashlytics 노이즈로 남기지 않는다
       // (치지직 폴링의 일시 오류 정책과 동일).
       if (e is! TimeoutException) {
-        FirebaseCrashlytics.instance.recordError(
+        unawaited(FirebaseCrashlytics.instance.recordError(
           e,
           st,
           reason: 'Firestore 컬렉션 조회 실패 ($collection)',
           fatal: false,
-        );
+        ));
       }
       return null;
     }
@@ -361,6 +361,9 @@ class GlobalController extends GetxController {
     return cache;
   }
 
+  /// content가 null로 온 채널 (Crashlytics에 앱 실행당 한 번만 기록).
+  final Set<String> _nullContentReported = {};
+
   Future<LiveCheckModel?> _fetchLiveStatus(String broadcastId) async {
     final url = Uri.parse(
         'https://api.chzzk.naver.com/polling/v2/channels/$broadcastId/live-status');
@@ -369,7 +372,22 @@ class GlobalController extends GetxController {
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = json.decode(decodedBody);
-        return LiveCheckModel.fromJson(data['content']);
+        final content = data['content'];
+        if (content == null) {
+          // 정상 응답인데 content가 비었다 — 채널 정지·삭제 등 계약 변경이 아닌
+          // 경우일 수 있다. 파싱 실패(형식 변경)로 섞여 2분마다 쌓이지 않게
+          // 별도 사유로 채널당 한 번만 기록하고 비방송으로 둔다.
+          if (_nullContentReported.add(broadcastId)) {
+            unawaited(FirebaseCrashlytics.instance.recordError(
+              'chzzk live-status content null: $broadcastId',
+              null,
+              reason: 'chzzk 라이브 상태 content 없음 (채널 정지·삭제 가능성)',
+              fatal: false,
+            ));
+          }
+          return null;
+        }
+        return LiveCheckModel.fromJson(content as Map<String, dynamic>);
       }
       // 비공식 polling 엔드포인트라 응답 형식이 바뀌면 무증상 실패할 수 있다.
       // HTTP 비정상 응답은 엔드포인트 계약이 바뀐 신호이므로 Crashlytics에 기록한다.
@@ -377,12 +395,12 @@ class GlobalController extends GetxController {
         'chzzk 라이브 상태 조회 실패 (HTTP ${response.statusCode}): $broadcastId',
         name: 'GlobalController',
       );
-      FirebaseCrashlytics.instance.recordError(
+      unawaited(FirebaseCrashlytics.instance.recordError(
         'chzzk live-status HTTP ${response.statusCode}',
         null,
         reason: 'chzzk 라이브 상태 엔드포인트 비정상 응답',
         fatal: false,
-      );
+      ));
     } catch (e, st) {
       developer.log(
         'chzzk 라이브 상태 조회 예외: $broadcastId',
@@ -396,12 +414,12 @@ class GlobalController extends GetxController {
           e is SocketException ||
           e is http.ClientException;
       if (!isTransient) {
-        FirebaseCrashlytics.instance.recordError(
+        unawaited(FirebaseCrashlytics.instance.recordError(
           e,
           st,
           reason: 'chzzk 라이브 상태 응답 파싱 실패 (형식 변경 가능성)',
           fatal: false,
-        );
+        ));
       }
     }
     return null;
@@ -682,8 +700,6 @@ class GlobalController extends GetxController {
     ];
   }
 
-  /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
-  /// Member(이름/에셋)와 StreamerModel(생일)을 member.key로 매칭한다.
   /// 집계 문서의 lastSessions(멤버 key → 세션 맵)를 모델 맵으로 변환한다.
   /// 필드가 없거나(구버전 서버) 형식이 다르면 빈 맵. (순수 변환 — 테스트 대상)
   @visibleForTesting
@@ -722,6 +738,8 @@ class GlobalController extends GetxController {
     return result;
   }
 
+  /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
+  /// Member(이름/에셋)와 StreamerModel(생일)을 member.key로 매칭한다.
   List<BirthdayEntry> upcomingBirthdays(String group) {
     final streamers = group == 'honeyz' ? honeyz : acaxia;
 

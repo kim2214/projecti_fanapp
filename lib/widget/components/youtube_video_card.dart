@@ -8,7 +8,6 @@ import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class YouTubeVideoCard extends StatelessWidget {
   final YouTubeVideoModel video;
-  final int index;
 
   // YouTube 브랜드 색상
   static const Color youtubeRed = Color(0xFFFF0000);
@@ -16,7 +15,6 @@ class YouTubeVideoCard extends StatelessWidget {
   const YouTubeVideoCard({
     super.key,
     required this.video,
-    required this.index,
   });
 
   Future<void> _openYouTube() async {

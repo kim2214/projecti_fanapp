@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -57,12 +59,12 @@ class ReviewController extends GetxService {
       await prefs.setInt(_kLastRequestEpochDay, _todayEpochDay());
     } catch (e, st) {
       // 리뷰 요청 실패가 앱 사용을 방해해선 안 된다. non-fatal로만 관측.
-      FirebaseCrashlytics.instance.recordError(
+      unawaited(FirebaseCrashlytics.instance.recordError(
         e,
         st,
         reason: '인앱 리뷰 요청 실패',
         fatal: false,
-      );
+      ));
     }
   }
 

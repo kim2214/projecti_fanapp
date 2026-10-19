@@ -59,4 +59,35 @@ void main() {
       expect(withBirthday('13-01').daysUntilBirthdayFrom(now), isNull);
     });
   });
+
+  group('그 달에 없는 날짜', () {
+    test('"02-30"·"04-31"은 다음 달로 넘기지 않고 오류(null)', () {
+      expect(withBirthday('02-30').birthdayLabel, isNull);
+      expect(withBirthday('04-31').birthdayLabel, isNull);
+      expect(withBirthday('02-30').daysUntilBirthdayFrom(DateTime(2026, 1, 1)),
+          isNull);
+    });
+
+    test('2월 29일생은 평년엔 2월 28일, 윤년엔 2월 29일', () {
+      final m = withBirthday('02-29');
+      expect(m.birthdayLabel, '2월 29일');
+      expect(m.nextBirthdayFrom(DateTime(2026, 1, 1)), DateTime(2026, 2, 28));
+      expect(m.nextBirthdayFrom(DateTime(2027, 3, 1)), DateTime(2028, 2, 29));
+    });
+  });
+
+  group('fromJson 타입 방어', () {
+    test('문자열이 아닌 필드는 크래시 없이 null로 본다', () {
+      final m = StreamerModel.fromJson({
+        'name': '이름',
+        'birthday': 315, // 숫자로 잘못 입력
+        'youtube': ['잘못된', '값'],
+        'chzzk': 'https://chzzk.naver.com/x',
+      });
+      expect(m.name, '이름');
+      expect(m.birthday, isNull);
+      expect(m.youtube, isNull);
+      expect(m.chzzk, 'https://chzzk.naver.com/x');
+    });
+  });
 }

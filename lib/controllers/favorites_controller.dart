@@ -37,7 +37,7 @@ class FavoritesController extends GetxController {
     // 최애를 '새로 지정'한 순간은 명확한 만족 신호 → 리뷰 요청을 시도한다
     // (실제 노출 여부·빈도는 ReviewController가 판정).
     if (added && Get.isRegistered<ReviewController>()) {
-      Get.find<ReviewController>().maybeRequestReview();
+      unawaited(Get.find<ReviewController>().maybeRequestReview());
     }
   }
 

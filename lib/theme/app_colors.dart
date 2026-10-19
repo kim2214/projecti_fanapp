@@ -41,6 +41,12 @@ class AppColors {
   static const Color darkTextFaint = Color(0xFF787C84);
   static const Color darkDivider = Color(0xFF33363F);
 
+  // ── 그림자 ──
+  /// 카드·둥근 버튼의 옅은 그림자 (여러 화면 공통).
+  static const List<BoxShadow> softShadow = [
+    BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 2)),
+  ];
+
   // ── 그룹 헬퍼 (isHoneyz 분기 반복 제거) ──
   static Color group(bool isHoneyz) => isHoneyz ? honeyz : acaxia;
   static Color groupDark(bool isHoneyz) => isHoneyz ? honeyzDark : acaxiaDark;

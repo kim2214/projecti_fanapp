@@ -78,9 +78,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   Widget build(BuildContext context) {
     return Obx(() {
       final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
-      final themeColorDark =
-          isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaDark;
+      final themeColor = AppColors.group(isHoneyz);
+      final themeColorDark = AppColors.groupDark(isHoneyz);
 
       return Scaffold(
         backgroundColor: context.bg,
