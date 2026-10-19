@@ -43,7 +43,7 @@ if (keystorePropertiesFile.exists()) {
 
 // key.properties 없이 릴리스를 빌드하면 조용히 debug 서명 산출물이 나온다
 // (Play 업로드 시점에야 실패가 드러남). 릴리스 태스크가 요청된 경우에만
-// 명시적으로 실패시킨다 — debug 빌드·CI(analyze/test)에는 영향 없음.
+// 명시적으로 실패시킨다 — debug 빌드·analyze/test에는 영향 없음.
 gradle.taskGraph.whenReady { graph ->
     if (!keystorePropertiesFile.exists()
             && graph.allTasks.any { it.name.contains('Release') }) {

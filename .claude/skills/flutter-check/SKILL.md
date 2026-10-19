@@ -1,23 +1,30 @@
 ---
 name: flutter-check
-description: 코드 변경 후 CI와 동일하게 정적분석·테스트를 돌려 회귀를 막는다. Dart/Flutter 코드를 수정한 뒤, 커밋/PR 전, "분석 돌려줘", "테스트 실행", "CI 통과 확인" 요청 시 사용.
+description: 코드 변경 후 정적분석·테스트를 돌려 회귀를 막는다(CI 없음 — 이게 유일한 검증 관문). Dart/Flutter 코드나 functions를 수정한 뒤, 커밋 전, "분석 돌려줘", "테스트 실행" 요청 시 사용.
 ---
 
-# 정적분석 & 테스트 (CI 동기화)
+# 정적분석 & 테스트 (커밋 전 로컬 검증)
 
-CI(`.github/workflows/ci.yml`)는 master 푸시·PR에서 `flutter analyze`와
-`flutter test`를 돌린다. **로컬에서 미리 같은 걸 돌려** CI 실패를 막는다.
+이 프로젝트는 **CI를 쓰지 않는다** (1인 개발·master 직접 푸시라 26.10.19 GitHub
+Actions 제거). 커밋·푸시 전에 아래를 로컬에서 돌리는 것이 유일한 회귀 방지책이다.
 
 ## 실행
 
 ```bash
 flutter pub get       # 의존성 변경/최초 1회
-flutter analyze       # 정적 분석 (lint 포함)
+flutter analyze       # 정적 분석 (lint 포함) — 0건 유지
 flutter test          # 단위 테스트
+TZ=UTC flutter test   # 시간대 의존 버그 확인 (날짜·openDate 관련 변경 시)
 ```
 
-- CI 고정 버전: **Flutter 3.44.8 stable**. 로컬 버전이 다르면 분석 결과가
-  어긋날 수 있으니 `flutter --version`으로 확인.
+functions(`functions/`)를 고쳤다면 Node 쪽도 따로 돌린다 (Flutter 검사가 못 잡는다):
+
+```bash
+(cd functions && npm run lint && npm test)
+```
+
+- 기준 버전: **Flutter 3.44.8 stable** (릴리스 빌드 환경). 버전이 다르면 분석
+  결과가 어긋날 수 있으니 `flutter --version`으로 확인.
 - lint 설정은 `analysis_options.yaml` — `prefer_const_*` 룰이 켜져 있어
   const 누락도 경고로 잡힌다. analyze 경고는 0으로 유지한다.
 
@@ -38,11 +45,10 @@ flutter test          # 단위 테스트
 - `NotificationController`는 토픽 구독/해제 함수를 생성자로 주입해 재조정
   (`syncLiveSubscriptions`) 경로를 FCM 없이 검증한다 (`test/notification_controller_test.dart`).
 - **시간대 독립**: 치지직 openDate(KST)와 비교하는 시각은 `DateTime.utc`로 준다.
-  CI는 UTC라 로컬(KST)에서만 통과하는 테스트가 생기기 쉽다 —
+  개발 기기가 KST라 KST에서만 통과하는 테스트가 생기기 쉽다 —
   `TZ=UTC flutter test`로도 돌려 본다.
 
-## 주의: CI Firebase 스텁
+## 주의: Firebase 설정 파일
 
-`lib/default_firebase_options.dart`는 실제 키를 담고 있어 gitignore된다. CI는
-이 파일을 placeholder 스텁으로 **자동 생성**하므로, 이 파일을 커밋하거나
-스텁 생성 스텝을 건드리지 않는다.
+`lib/default_firebase_options.dart`는 실제 키를 담고 있어 gitignore된다.
+커밋하지 않는다 (analyze/test는 로컬의 이 파일로 돈다).

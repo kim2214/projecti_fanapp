@@ -1,5 +1,5 @@
 // live_logic.js 순수 판정 로직 테스트 — `npm test`(node --test)로 실행.
-// I/O가 없으므로 emulator·네트워크 없이 돈다 (CI functions 잡에 포함).
+// I/O가 없으므로 emulator·네트워크 없이 돈다 (`npm test`).
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {

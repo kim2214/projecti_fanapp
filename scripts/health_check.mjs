@@ -1,8 +1,8 @@
-// 서버(Cloud Functions) 멈춤 감지 — GitHub Actions(.github/workflows/health.yml)가 주기 실행한다.
+// 서버(Cloud Functions) 멈춤 감지 — 수동 점검 도구 (주기 실행하던 GitHub Actions는 26.10.19 제거).
 //
 // 빌링 중단 등으로 Functions가 멈추면 GCP 안의 알림도 함께 멈출 수 있어, GCP 밖에서
 // Firestore 공개 읽기(REST, 자격 증명 불필요 — firestore.rules가 read: true)로 서버가
-// 남긴 흔적의 신선도를 본다. 문제가 있으면 exit 1 → 워크플로 실패 → GitHub 메일 알림.
+// 남긴 흔적의 신선도를 본다. 문제가 있으면 exit 1.
 //
 // 로컬 실행: node scripts/health_check.mjs
 

@@ -124,7 +124,7 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 `maxInstances: 1`)가 백그라운드 라이브 감지를 담당한다. 멤버 정보는
 `MEMBER_CATALOG`에 있으며 dart 카탈로그와 동기화 필수([[add-member]]).
 **판정 로직(파싱·전이·심야 완화)은 `functions/live_logic.js` 순수 함수**로
-분리되어 `functions/test/live_logic.test.js`(node --test, CI 포함)로 검증한다 —
+분리되어 `functions/test/live_logic.test.js`(node --test, `cd functions && npm test`)로 검증한다 —
 알림 판정을 고칠 땐 index.js가 아니라 여기부터.
 
 - **썸네일**: polling 응답엔 썸네일이 없다. 방송 중인데 `liveImageUrl`이 없는

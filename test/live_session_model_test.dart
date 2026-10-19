@@ -7,7 +7,7 @@ import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/utils/date_label.dart';
 
 /// KST 벽시계 시각 → 절대 시각. openDate 문자열(KST)과 같은 기준으로 맞춰
-/// 기기·CI 타임존과 무관하게 결정적으로 검증한다.
+/// 기기 타임존과 무관하게 결정적으로 검증한다.
 DateTime _kst(int y, int mo, int d, int h, int mi) =>
     DateTime.utc(y, mo, d, h - 9, mi);
 
