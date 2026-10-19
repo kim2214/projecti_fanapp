@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 리소스 선택에서 night 한정자가 v31보다 우선하므로, 이 파일이 없으면
+         Android 12+ 다크 모드 기기가 values-night의 하위 버전용 대체 정의를 집어
+         시스템 스플래시가 다시 보인다. values-v31의 Theme.Transparent와 같게 유지한다. -->
+    <style name="Theme.Transparent" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowSplashScreenBackground">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>

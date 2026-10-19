@@ -41,6 +41,7 @@
 <!--&lt;!&ndash;        <item name="android:windowIsTranslucent">true</item>&ndash;&gt;-->
 <!--    </style>-->
 
+    <!-- 수정 시 values-night-v31/styles.xml의 같은 스타일도 함께 고친다. -->
     <style name="Theme.Transparent" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@android:color/transparent</item>
 <!--        <item name="android:windowIsTranslucent">true</item>-->

@@ -13,4 +13,12 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- MainActivity 시작 창 테마 (AndroidManifest의 @style/Theme.Transparent).
+         Android 12+(values-v31)는 시스템 스플래시를 투명하게 지우는 정의를 쓰고,
+         여기는 그 아래(API 24~30) 대체 정의다 — 예전엔 v31에만 있어 Android 11
+         이하에서는 테마를 찾지 못하고 기기 기본 테마로 시작 창이 그려졌다.
+         NormalTheme과 같은 라이트 바탕으로 두어 Flutter 첫 화면까지 깜빡임이 없다. -->
+    <style name="Theme.Transparent" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
 </resources>
