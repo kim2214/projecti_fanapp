@@ -11,8 +11,14 @@ class AppColors {
   static const Color acaxia = Color(0xFFCCD1F9);
   static const Color acaxiaDark = Color(0xFFB8BEF0);
 
-  /// 라일락(acaxia)은 텍스트로 쓰기엔 흐려서 별도 톤 사용
+  /// 라일락(acaxia)은 텍스트로 쓰기엔 흐려서 별도 톤 사용 (다크 배경 대비 5.4:1)
   static const Color acaxiaText = Color(0xFF8A90D8);
+
+  /// 밝은 배경 위 아카시아 글자·아이콘 (흰 배경 대비 5.5:1 — acaxiaText는 3:1).
+  static const Color acaxiaTextLight = Color(0xFF5A60B8);
+
+  /// 아카시아 브랜드색(라일락) 면 위의 글자 (대비 6:1 — 흰 글자는 1.5:1).
+  static const Color onAcaxia = Color(0xFF3D4380);
 
   // ── 시맨틱 (라이트) ──
   static const Color textPrimary = Color(0xFF1A3A4A);
@@ -38,6 +44,10 @@ class AppColors {
   // ── 그룹 헬퍼 (isHoneyz 분기 반복 제거) ──
   static Color group(bool isHoneyz) => isHoneyz ? honeyz : acaxia;
   static Color groupDark(bool isHoneyz) => isHoneyz ? honeyzDark : acaxiaDark;
+
+  /// 그룹 브랜드색 면 위의 글자색 (허니즈는 흰색, 아카시아 라일락은 [onAcaxia]).
+  static Color onBrand(Color brand) =>
+      brand == acaxia ? onAcaxia : Colors.white;
 }
 
 /// 밝기(brightness)에 따라 전환되는 시맨틱 컬러.
@@ -66,6 +76,11 @@ extension AppColorsX on BuildContext {
   /// 흐린 텍스트 (기존 grey[500]/[400])
   Color get textFaint =>
       isDark ? AppColors.darkTextFaint : AppColors.lightTextFaint;
+
+  /// 아카시아 글자·아이콘색. 라일락 브랜드색은 밝은 배경에서 대비가 1.5~1.8:1
+  /// 수준이라 글자로 쓰지 않는다 — 라이트는 진한 톤, 다크는 acaxiaText.
+  Color get acaxiaInk =>
+      isDark ? AppColors.acaxiaText : AppColors.acaxiaTextLight;
 
   /// 구분선/연한 보더 (기존 grey[300])
   Color get divider => isDark ? AppColors.darkDivider : AppColors.lightDivider;

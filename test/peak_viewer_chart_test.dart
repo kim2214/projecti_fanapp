@@ -73,4 +73,35 @@ void main() {
     ));
     expect(find.byType(Text), findsNothing);
   });
+
+  testWidgets('글꼴 2배·좁은 화면(360dp)에서도 오버플로 없이 그린다', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: const MediaQueryData(
+            size: Size(360, 640), textScaler: TextScaler.linear(2)),
+        child: Scaffold(
+          body: Padding(
+            // 프로필 화면의 카드 안쪽 여백과 비슷한 폭으로 그린다.
+            padding: const EdgeInsets.symmetric(horizontal: 36),
+            child: PeakViewerChart(
+              sessions: [
+                _session(10, 123456),
+                _session(9, 1384),
+                _session(8, 500)
+              ],
+              color: Colors.pink,
+              colorDark: Colors.red,
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('123,456'), findsOneWidget);
+  });
 }

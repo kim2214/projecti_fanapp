@@ -38,8 +38,14 @@ class PeakViewerChart extends StatelessWidget {
     return '평균 ${formatCount(sum ~/ points.length)}명';
   }
 
-  static const double _plotHeight = 72;
-  static const double _labelHeight = 16;
+  /// 막대가 가장 높을 때의 높이.
+  static const double _maxBarHeight = 54;
+
+  // 글자 칸(최고값 라벨·날짜 라벨) 높이는 글꼴 배율을 따라 늘린다 — 고정하면
+  // 큰 글꼴에서 막대 칸 Column이 넘친다. 배율 1.0에서 최고값 칸 18(글자 ≤14 +
+  // 간격 2 + 여유), 날짜 칸 16.
+  static double _valueLabelSpace(TextScaler scaler) => scaler.scale(16) + 2;
+  static double _dateLabelHeight(TextScaler scaler) => scaler.scale(16);
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +58,7 @@ class PeakViewerChart extends StatelessWidget {
         .reduce((a, b) => a > b ? a : b);
     final maxIndex =
         points.indexWhere((s) => s.peakConcurrentUserCount == maxCount);
+    final scaler = MediaQuery.textScalerOf(context);
 
     return Semantics(
       // 스크린리더에는 막대 대신 요약 문장을 준다. 개별 값은 아래 목록이 읽힌다.
@@ -63,15 +70,19 @@ class PeakViewerChart extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  '최고 동시 시청자 · 최근 ${points.length}회',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: context.textSub,
+                Expanded(
+                  child: Text(
+                    '최고 동시 시청자 · 최근 ${points.length}회',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.textSub,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   averageLabel(points),
                   style: TextStyle(fontSize: 12, color: context.textFaint),
@@ -80,7 +91,9 @@ class PeakViewerChart extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: _plotHeight + _labelHeight,
+              height: _maxBarHeight +
+                  _valueLabelSpace(scaler) +
+                  _dateLabelHeight(scaler),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -93,6 +106,7 @@ class PeakViewerChart extends StatelessWidget {
                         isMax: i == maxIndex,
                         isLatest: i == points.length - 1,
                         showDate: i == 0 || i == points.length - 1,
+                        dateLabelHeight: _dateLabelHeight(scaler),
                       ),
                     ),
                 ],
@@ -111,10 +125,10 @@ class PeakViewerChart extends StatelessWidget {
     required bool isMax,
     required bool isLatest,
     required bool showDate,
+    required double dateLabelHeight,
   }) {
-    // 값 라벨(최고점, 글자 높이 ≤14) + 2px 간격이 들어갈 자리를 위에 남긴다.
-    const labelSpace = 18.0;
-    final barHeight = (_plotHeight - labelSpace) * ratio;
+    // 값 라벨(최고점) 자리는 build의 높이 계산에서 이미 위에 남겨 두었다.
+    final barHeight = _maxBarHeight * ratio;
     // 최신 방송만 진한 강조색, 나머지는 같은 색조의 연한 단계.
     final barColor = isLatest ? colorDark : color.withAlpha(120);
 
@@ -145,7 +159,7 @@ class PeakViewerChart extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: _labelHeight,
+          height: dateLabelHeight,
           child: showDate
               ? Align(
                   alignment: Alignment.bottomCenter,

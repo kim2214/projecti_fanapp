@@ -145,4 +145,68 @@ void main() {
       expect(c.isLoading.value, isFalse);
     });
   });
+
+  group('loadGroupLatestVideos 그룹 전환', () {
+    late _FakeYouTubeService service;
+    late GlobalController global;
+    late YouTubeController c;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      service = _FakeYouTubeService();
+      global = GlobalController();
+      global.selectedGroup.value = 'honeyz';
+      c = YouTubeController(globalController: global, service: service);
+    });
+
+    void completeAll(List<String> channelIds, String prefix) {
+      for (final id in channelIds) {
+        service.pending[id]!.complete(_videos('$prefix$id'));
+      }
+    }
+
+    final honeyzChannels = [
+      for (final m in GlobalController.honeyzMembers) m.youtubeChannelId,
+    ];
+    final acaxiaChannels = [
+      for (final m in GlobalController.acaxiaMembers) m.youtubeChannelId,
+    ];
+
+    test('캐시 없는 그룹으로 바꾸면 이전 그룹 영상을 비우고 스켈레톤 유지', () async {
+      final honeyzLoad = c.loadGroupLatestVideos();
+      await pumpEventQueue();
+      completeAll(honeyzChannels, 'h');
+      await honeyzLoad;
+      expect(c.groupLatestVideos, isNotEmpty);
+
+      global.selectedGroup.value = 'acaxia';
+      final acaxiaLoad = c.loadGroupLatestVideos();
+      await pumpEventQueue();
+      expect(c.groupLatestVideos, isEmpty);
+      expect(c.isGroupVideosLoading.value, isTrue);
+
+      completeAll(acaxiaChannels, 'a');
+      await acaxiaLoad;
+      expect(c.groupLatestVideos.first.videoId, startsWith('a'));
+      expect(c.isGroupVideosLoading.value, isFalse);
+    });
+
+    test('늦게 끝난 이전 그룹 조회는 새 그룹 스켈레톤을 끄지 않음', () async {
+      final honeyzLoad = c.loadGroupLatestVideos();
+      await pumpEventQueue();
+
+      global.selectedGroup.value = 'acaxia';
+      final acaxiaLoad = c.loadGroupLatestVideos();
+      await pumpEventQueue();
+
+      completeAll(honeyzChannels, 'h');
+      await honeyzLoad;
+      expect(c.groupLatestVideos, isEmpty);
+      expect(c.isGroupVideosLoading.value, isTrue);
+
+      completeAll(acaxiaChannels, 'a');
+      await acaxiaLoad;
+      expect(c.isGroupVideosLoading.value, isFalse);
+    });
+  });
 }

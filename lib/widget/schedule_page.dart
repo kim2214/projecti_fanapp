@@ -250,6 +250,8 @@ class ScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSchedule = imageURL.isNotEmpty;
+    // 헤더 그라데이션(브랜드색) 위 글자색 — 라일락 위 흰 글자는 대비 1.5:1.
+    final onHeader = AppColors.onBrand(themeColor);
 
     return TapSemantics(
         child: GestureDetector(
@@ -305,10 +307,10 @@ class ScheduleCard extends StatelessWidget {
                     child: Center(
                       child: Text(
                         memberName.isNotEmpty ? memberName[0] : '?',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: onHeader,
                         ),
                       ),
                     ),
@@ -320,17 +322,17 @@ class ScheduleCard extends StatelessWidget {
                       children: [
                         Text(
                           memberName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: onHeader,
                           ),
                         ),
                         Text(
                           hasSchedule ? '스케줄 등록됨' : '스케줄 등록 전',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withAlpha(180),
+                            color: onHeader.withAlpha(180),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -344,10 +346,10 @@ class ScheduleCard extends StatelessWidget {
                         color: Colors.white.withAlpha(50),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.open_in_full_rounded,
                         size: 18,
-                        color: Colors.white,
+                        color: onHeader,
                       ),
                     ),
                 ],

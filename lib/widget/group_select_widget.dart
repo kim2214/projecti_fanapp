@@ -262,6 +262,8 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
     required String logoAsset,
     required bool isLoading,
   }) {
+    // 라일락 위 흰 글자는 대비 1.5:1이라 거의 안 읽힌다.
+    final foreground = AppColors.onBrand(color);
     return TapSemantics(
         child: GestureDetector(
       onTap: isLoading ? null : () => _selectGroup(group),
@@ -333,86 +335,91 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget>
                     ),
                   ),
                   const SizedBox(width: 20),
-                  // 텍스트 정보
+                  // 텍스트 정보 — 작은 화면·큰 글꼴에서 카드 높이를 넘으면
+                  // 넘치는 대신 통째로 줄여 그린다.
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 2,
-                            color: Colors.white.withAlpha(180),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        // const SizedBox(height: 8),
-                        // Text(
-                        //   description,
-                        //   style: TextStyle(
-                        //     fontSize: 13,
-                        //     color: Colors.white.withAlpha(200),
-                        //     fontWeight: FontWeight.w500,
-                        //   ),
-                        // ),
-                        const SizedBox(height: 12),
-                        // 스케줄 보기 버튼
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(50),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withAlpha(100),
-                              width: 1,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 2,
+                              color: foreground.withAlpha(180),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isLoading)
-                                const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              else
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isLoading ? '로딩 중...' : '스케줄 보기',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 4),
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: foreground,
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                        ),
-                      ],
+                          // const SizedBox(height: 8),
+                          // Text(
+                          //   description,
+                          //   style: TextStyle(
+                          //     fontSize: 13,
+                          //     color: Colors.white.withAlpha(200),
+                          //     fontWeight: FontWeight.w500,
+                          //   ),
+                          // ),
+                          const SizedBox(height: 12),
+                          // 스케줄 보기 버튼
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(50),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withAlpha(100),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isLoading)
+                                  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: foreground,
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 16,
+                                    color: foreground,
+                                  ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isLoading ? '로딩 중...' : '스케줄 보기',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: foreground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

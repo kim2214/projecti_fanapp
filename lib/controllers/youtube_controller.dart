@@ -250,7 +250,12 @@ class YouTubeController extends GetxController {
     final cached = _groupCache[group];
     if (cached != null) {
       groupLatestVideos.value = List.from(cached.videos);
+      // 이전 그룹 조회가 진행 중이었어도 이 그룹은 캐시로 표시되므로 스켈레톤을 끈다.
+      isGroupVideosLoading.value = false;
       if (!forceRefresh && !cached.isStale) return;
+    } else {
+      // 이전 그룹의 영상을 비운다 — 남겨두면 첫 채널 응답 전까지 홈에 이전 그룹 영상이 보인다.
+      groupLatestVideos.clear();
     }
 
     try {
@@ -303,7 +308,10 @@ class YouTubeController extends GetxController {
       }
       // 빈 결과 + 기존 캐시 있음: 보여주던 캐시를 유지한다.
     } finally {
-      isGroupVideosLoading.value = false;
+      // 다른 그룹으로 바뀌었으면 그 그룹의 스켈레톤을 건드리지 않는다.
+      if (_globalController.selectedGroup.value == group) {
+        isGroupVideosLoading.value = false;
+      }
     }
   }
 

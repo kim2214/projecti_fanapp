@@ -166,14 +166,16 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   }
 
   /// 로딩 중일 때도 멤버 셀렉터는 표시하고, 본문은 스켈레톤으로 채운다.
+  // 로딩·에러 화면도 헤더·셀렉터까지 한 스크롤로 묶는다 — 고정 Column이면
+  // 가로 모드·큰 글꼴에서 헤더+셀렉터만으로 높이를 넘겨 오버플로가 났다.
   Widget _buildLoadingWithSelector() {
-    return Column(
-      children: [
-        _buildHeader(),
-        _buildMemberSelector(),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: _buildHeader()),
+        SliverToBoxAdapter(child: _buildMemberSelector()),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          sliver: SliverList.separated(
             itemCount: 6,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, __) => const VideoCardSkeleton(),
@@ -361,72 +363,80 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   }
 
   Widget _buildErrorState() {
-    return Column(
-      children: [
-        _buildHeader(),
-        _buildMemberSelector(),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: context.surfaceAlt,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.error_outline_rounded,
-                      size: 50,
-                      color: context.textSub.withAlpha(100),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    '오류가 발생했습니다',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: context.textMain,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    youtubeController.errorMessage.value,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: context.textSub,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: youtubeController.loadVideos,
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('다시 시도'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: youtubeRed,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+    // 당겨서 새로고침으로도 다시 시도할 수 있다.
+    return RefreshIndicator(
+      onRefresh: youtubeController.refresh,
+      color: youtubeRed,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeader()),
+          SliverToBoxAdapter(child: _buildMemberSelector()),
+          // 남는 높이를 채우되, 내용이 더 크면 그만큼 늘어나 스크롤된다.
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: context.surfaceAlt,
+                        shape: BoxShape.circle,
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        size: 50,
+                        color: context.textSub.withAlpha(100),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    Text(
+                      '오류가 발생했습니다',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: context.textMain,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      youtubeController.errorMessage.value,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: context.textSub,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: youtubeController.loadVideos,
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('다시 시도'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: youtubeRed,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

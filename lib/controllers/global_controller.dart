@@ -468,22 +468,57 @@ class GlobalController extends GetxController {
     return cache;
   }
 
+  // 진행 중인 라이브 갱신과 그 범위(그룹 key, 양쪽이면 _allGroups).
+  // 홈 진입·LIVE 탭·2분 타이머·포그라운드 복귀·위젯 갱신 푸시가 겹치면 같은
+  // 요청이 여러 벌 나가고, 늦게 끝난 직접 폴링이 그 사이 받은 더 새로운
+  // 서버 집계를 덮어썼다 — 범위가 겹치면 진행 중인 갱신을 공유한다.
+  static const String _allGroups = '*';
+  Future<void>? _liveRefreshInFlight;
+  String _liveRefreshScope = '';
+
   /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체.
   /// 서버 집계 문서는 양쪽 그룹을 한 번에 채우므로, 성공 시 그대로 반환하고
   /// 실패(문서 없음/오래됨/오류) 시에만 선택 그룹을 직접 폴링한다.
-  Future<void> refreshLiveStatus() async {
-    if (await _refreshFromServerAggregate()) return;
-    await _refreshGroupLiveStatus(selectedGroup.value);
+  Future<void> refreshLiveStatus() {
+    final group = selectedGroup.value;
+    final inFlight = _liveRefreshInFlight;
+    if (inFlight != null &&
+        (_liveRefreshScope == _allGroups || _liveRefreshScope == group)) {
+      return inFlight;
+    }
+    return _trackLiveRefresh(group, () async {
+      if (await _refreshFromServerAggregate()) return;
+      await _refreshGroupLiveStatus(group);
+    });
   }
 
   /// 양쪽 그룹(허니즈+아카시아)의 라이브 상태를 동시에 갱신 (통합 LIVE 화면용).
   /// 서버 집계 우선, 실패 시 두 그룹을 직접 폴링으로 폴백.
-  Future<void> refreshAllLiveStatus() async {
-    if (await _refreshFromServerAggregate()) return;
-    await Future.wait([
-      _refreshGroupLiveStatus('honeyz'),
-      _refreshGroupLiveStatus('acaxia'),
-    ]);
+  Future<void> refreshAllLiveStatus() {
+    final inFlight = _liveRefreshInFlight;
+    if (inFlight != null && _liveRefreshScope == _allGroups) return inFlight;
+    return _trackLiveRefresh(_allGroups, () async {
+      // 단일 그룹 갱신이 진행 중이면 끝난 뒤 시작해 결과 순서가 뒤집히지 않게 한다.
+      if (inFlight != null) await inFlight.catchError((Object _) {});
+      if (await _refreshFromServerAggregate()) return;
+      await Future.wait([
+        _refreshGroupLiveStatus('honeyz'),
+        _refreshGroupLiveStatus('acaxia'),
+      ]);
+    });
+  }
+
+  Future<void> _trackLiveRefresh(
+      String scope, Future<void> Function() refresh) {
+    late final Future<void> tracked;
+    tracked = refresh().whenComplete(() {
+      if (identical(_liveRefreshInFlight, tracked)) {
+        _liveRefreshInFlight = null;
+      }
+    });
+    _liveRefreshInFlight = tracked;
+    _liveRefreshScope = scope;
+    return tracked;
   }
 
   /// 서버 집계 문서(`live_status/current`)에서 양쪽 그룹 상태를 채운다.

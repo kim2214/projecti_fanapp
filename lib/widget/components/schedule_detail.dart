@@ -26,6 +26,8 @@ class ScheduleDetail extends StatelessWidget {
     final globalController = Get.find<GlobalController>();
     final isHoneyz = globalController.selectedGroup.value == 'honeyz';
     final themeColor = isHoneyz ? AppColors.honeyz : AppColors.acaxia;
+    // 글자·아이콘용 (배경 틴트·그림자는 themeColor 유지)
+    final inkColor = isHoneyz ? AppColors.honeyz : context.acaxiaInk;
 
     return Scaffold(
       backgroundColor: context.bg,
@@ -33,7 +35,7 @@ class ScheduleDetail extends StatelessWidget {
         child: Column(
           children: [
             // 커스텀 앱바
-            _buildAppBar(context, themeColor),
+            _buildAppBar(context, themeColor, inkColor),
             // 이미지 영역
             Expanded(
               child: Container(
@@ -74,7 +76,7 @@ class ScheduleDetail extends StatelessWidget {
                                     children: [
                                       CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: themeColor,
+                                        color: inkColor,
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
@@ -113,12 +115,12 @@ class ScheduleDetail extends StatelessWidget {
                                         icon: Icon(
                                           Icons.refresh_rounded,
                                           size: 18,
-                                          color: themeColor,
+                                          color: inkColor,
                                         ),
                                         label: Text(
                                           '다시 시도',
                                           style: TextStyle(
-                                            color: themeColor,
+                                            color: inkColor,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -187,7 +189,7 @@ class ScheduleDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, Color themeColor) {
+  Widget _buildAppBar(BuildContext context, Color themeColor, Color inkColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -213,7 +215,7 @@ class ScheduleDetail extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.arrow_back_rounded,
-                    color: themeColor,
+                    color: inkColor,
                     size: 22,
                   ),
                 ),
@@ -256,7 +258,7 @@ class ScheduleDetail extends StatelessWidget {
                 Icon(
                   Icons.calendar_today_rounded,
                   size: 14,
-                  color: themeColor,
+                  color: inkColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -265,7 +267,7 @@ class ScheduleDetail extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
-                    color: themeColor,
+                    color: inkColor,
                   ),
                 ),
               ],

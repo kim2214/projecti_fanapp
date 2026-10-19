@@ -122,40 +122,25 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   icon: Icons.podcasts_rounded,
                   title: '지금 방송 중',
                   color: AppColors.live,
-                  trailing: TapSemantics(
-                      child: GestureDetector(
-                    onTap: () => context.push('/livePage'),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '전체보기',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.textFaint,
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: context.textFaint,
-                        ),
-                      ],
-                    ),
-                  )),
+                  trailing:
+                      _buildMoreLink('전체보기', () => context.push('/livePage')),
                 ),
               ),
               SliverToBoxAdapter(
-                child: _buildLiveSection(isHoneyz, themeColor, themeColorDark),
+                // 섹션별 Obx — 라이브 맵이 2분마다 바뀌어도 헤더·배너·영상은 다시 빌드하지
+                // 않는다. 바깥 Obx는 선택 그룹만 구독한다.
+                child: Obx(() =>
+                    _buildLiveSection(isHoneyz, themeColor, themeColorDark)),
               ),
               // 오늘 방송했어요 (기록 없으면 통째로 생략)
               SliverToBoxAdapter(
-                child: _buildEndedTodaySection(themeColor, themeColorDark),
+                child: Obx(
+                    () => _buildEndedTodaySection(themeColor, themeColorDark)),
               ),
               // 다가오는 생일 (데이터 없으면 통째로 생략)
               SliverToBoxAdapter(
-                child: _buildBirthdaySection(themeColor, themeColorDark),
+                child: Obx(
+                    () => _buildBirthdaySection(themeColor, themeColorDark)),
               ),
               // 주간 스케줄 바로가기
               SliverToBoxAdapter(
@@ -167,31 +152,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   icon: Icons.play_circle_fill_rounded,
                   title: '최신 영상',
                   color: const Color(0xFFFF0000),
-                  trailing: TapSemantics(
-                      child: GestureDetector(
-                    onTap: () => widget.onNavigateToTab(3),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '더보기',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.textFaint,
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: context.textFaint,
-                        ),
-                      ],
-                    ),
-                  )),
+                  trailing:
+                      _buildMoreLink('더보기', () => widget.onNavigateToTab(3)),
                 ),
               ),
-              _buildLatestVideos(),
+              Obx(() => _buildLatestVideos()),
               // 도움말·문의·앱 정보 입구 (상단 바는 좁아 여기에 둔다)
               SliverToBoxAdapter(child: _buildHelpLink()),
               // 하단 여백
@@ -287,7 +252,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     Widget? trailing,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      // trailing 링크는 터치 영역(48dp)을 위해 상하 12·우 8만큼 커지므로 그만큼
+      // 바깥 여백을 줄여 보이는 위치를 유지한다.
+      padding: trailing == null
+          ? const EdgeInsets.fromLTRB(24, 16, 24, 12)
+          : const EdgeInsets.fromLTRB(24, 4, 16, 0),
       child: Row(
         children: [
           Icon(icon, size: 20, color: color),
@@ -304,6 +273,40 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           ),
           if (trailing != null) trailing,
         ],
+      ),
+    );
+  }
+
+  /// 섹션 제목 오른쪽의 "전체보기/더보기" 링크. 글자는 작지만 터치 영역은 48dp.
+  Widget _buildMoreLink(String label, VoidCallback onTap) {
+    return TapSemantics(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: context.textFaint,
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: context.textFaint,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

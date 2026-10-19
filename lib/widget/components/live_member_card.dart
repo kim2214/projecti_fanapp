@@ -92,7 +92,7 @@ class LiveMemberCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildGroupBadge(entry.isHoneyz, groupColor),
+                          _buildGroupBadge(context, entry.isHoneyz, groupColor),
                         ],
                       ),
                       if (status.liveCategoryValue?.isNotEmpty == true) ...[
@@ -157,34 +157,51 @@ class LiveMemberCard extends StatelessWidget {
             // 시청자 수 / 업타임 / 바로가기
             Row(
               children: [
-                if (status.viewerCountText.isNotEmpty) ...[
-                  Icon(Icons.visibility_rounded,
-                      size: 14, color: context.textFaint),
-                  const SizedBox(width: 4),
-                  Text(
-                    status.viewerCountText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: context.textSub,
-                    ),
+                // 시청자 수·업타임은 남는 폭 안에서 줄바꿈한다 — 큰 글꼴·좁은
+                // 화면에서 오른쪽 "치지직에서 보기"와 한 줄에 다 안 들어가 넘쳤다.
+                Expanded(
+                  child: Wrap(
+                    spacing: 14,
+                    runSpacing: 4,
+                    children: [
+                      if (status.viewerCountText.isNotEmpty)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.visibility_rounded,
+                                size: 14, color: context.textFaint),
+                            const SizedBox(width: 4),
+                            Text(
+                              status.viewerCountText,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: context.textSub,
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (status.uptime.isNotEmpty)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.schedule_rounded,
+                                size: 14, color: context.textFaint),
+                            const SizedBox(width: 4),
+                            Text(
+                              status.uptime,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: context.textSub,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 14),
-                ],
-                if (status.uptime.isNotEmpty) ...[
-                  Icon(Icons.schedule_rounded,
-                      size: 14, color: context.textFaint),
-                  const SizedBox(width: 4),
-                  Text(
-                    status.uptime,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: context.textSub,
-                    ),
-                  ),
-                ],
-                const Spacer(),
+                ),
+                const SizedBox(width: 8),
                 Text(
                   '치지직에서 보기',
                   style: TextStyle(
@@ -204,7 +221,8 @@ class LiveMemberCard extends StatelessWidget {
     ));
   }
 
-  Widget _buildGroupBadge(bool isHoneyz, Color groupColor) {
+  Widget _buildGroupBadge(
+      BuildContext context, bool isHoneyz, Color groupColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -216,7 +234,7 @@ class LiveMemberCard extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isHoneyz ? AppColors.honeyzDark : AppColors.acaxiaText,
+          color: isHoneyz ? AppColors.honeyzDark : context.acaxiaInk,
         ),
       ),
     );

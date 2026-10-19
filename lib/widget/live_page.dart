@@ -234,15 +234,20 @@ class _LivePageWidgetState extends State<LivePageWidget> {
             color: count > 0 ? AppColors.live : context.textFaint,
           ),
           const SizedBox(width: 8),
-          Text(
-            count > 0 ? '지금 $count명 방송 중' : '방송 중인 멤버 없음',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: context.textMain,
+          // 큰 글꼴에서 오른쪽 안내 문구와 겹쳐 넘치지 않게 남는 폭만 쓴다.
+          Expanded(
+            child: Text(
+              count > 0 ? '지금 $count명 방송 중' : '방송 중인 멤버 없음',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: context.textMain,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           Text(
             '당겨서 새로고침',
             style: TextStyle(

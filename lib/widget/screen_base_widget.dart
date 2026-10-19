@@ -166,9 +166,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     return IconButton(
       icon: Icon(Icons.notifications_outlined, color: context.textSub),
       tooltip: '알림 설정',
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(),
-      padding: const EdgeInsets.all(8),
+      // 높이는 터치 기준 48dp, 폭은 44dp — 앱바가 좁아 48로 넓히면 그룹명이 잘린다.
+      constraints: _appBarIconConstraints,
       onPressed: _showNotificationSettings,
     );
   }
@@ -443,40 +442,62 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       () => IconButton(
         icon: Icon(_themeController.icon, color: context.textSub),
         tooltip: '테마 변경',
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints(),
-        padding: const EdgeInsets.all(8),
+        constraints: _appBarIconConstraints,
         onPressed: _themeController.cycle,
       ),
     );
   }
 
   Widget _buildGroupSwitcher(bool isHoneyz, Color themeColor) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    // 각 토글의 터치 영역은 위아래 투명 여백으로 48dp를 넘기고, 회색 배경은
+    // 토글 바로 바깥(4dp)까지만 그린다 — 보이는 모양은 그대로, 누르기만 쉬워진다.
+    // 라벨은 앱바 공간이 좁아 글꼴 배율을 1.3배까지만 따른다.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Stack(
         children: [
-          _buildGroupToggle(
-            isSelected: isHoneyz,
-            label: '허니즈',
-            color: AppColors.honeyz,
-            onTap: () => _switchGroup('honeyz'),
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  vertical: _groupToggleTapInset - 4),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: context.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
-          _buildGroupToggle(
-            isSelected: !isHoneyz,
-            label: '아카시아',
-            color: AppColors.acaxia,
-            onTap: () => _switchGroup('acaxia'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildGroupToggle(
+                  isSelected: isHoneyz,
+                  label: '허니즈',
+                  color: AppColors.honeyz,
+                  onTap: () => _switchGroup('honeyz'),
+                ),
+                _buildGroupToggle(
+                  isSelected: !isHoneyz,
+                  label: '아카시아',
+                  color: AppColors.acaxia,
+                  onTap: () => _switchGroup('acaxia'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  static const BoxConstraints _appBarIconConstraints =
+      BoxConstraints(minWidth: 44, minHeight: 48);
+
+  /// 그룹 토글의 보이는 알약 위아래에 더하는 투명 터치 여백.
+  static const double _groupToggleTapInset = 11;
 
   Widget _buildGroupToggle({
     required bool isSelected,
@@ -488,19 +509,24 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
         selected: isSelected,
         child: GestureDetector(
           onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isSelected ? color : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : context.textSub,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: _groupToggleTapInset),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? color : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      isSelected ? AppColors.onBrand(color) : context.textSub,
+                ),
               ),
             ),
           ),
@@ -528,12 +554,16 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
               final item = _navItems[index];
               final isSelected = _currentIndex == index;
 
-              return _buildNavItem(
-                item: item,
-                isSelected: isSelected,
-                themeColor: themeColor,
-                themeColorDark: themeColorDark,
-                onTap: () => _onNavTap(index),
+              // Flexible — 큰 글꼴에서 선택 탭 라벨이 길어져도 Row가 넘치지 않게
+              // 남는 폭만큼만 쓰고 라벨을 말줄임한다.
+              return Flexible(
+                child: _buildNavItem(
+                  item: item,
+                  isSelected: isSelected,
+                  themeColor: themeColor,
+                  themeColorDark: themeColorDark,
+                  onTap: () => _onNavTap(index),
+                ),
               );
             }),
           ),
@@ -579,12 +609,16 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
               ),
               if (isSelected) ...[
                 const SizedBox(width: 8),
-                Text(
-                  item.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: themeColorDark,
+                Flexible(
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: themeColorDark,
+                    ),
                   ),
                 ),
               ],
