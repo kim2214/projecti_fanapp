@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
-import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
@@ -150,8 +149,7 @@ class LiveStatusWidgetProvider : HomeWidgetProvider() {
 
     private fun openUrlIntent(context: Context, url: String, index: Int): PendingIntent {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= 23) flags = flags or PendingIntent.FLAG_IMMUTABLE
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         // 행(100+i)·빈 영역(99)마다 requestCode를 달리 해야 PendingIntent가 서로 덮어쓰지 않는다.
         return PendingIntent.getActivity(context, 100 + index, intent, flags)
     }
