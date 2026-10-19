@@ -203,9 +203,22 @@ class NotificationController extends GetxController {
         for (final m in GlobalController.acaxiaMembers) m.key,
       ];
 
+  /// 진행 중인 재조정의 끝. 다음 재조정은 이 뒤에 이어 붙는다.
+  Future<void> _reconcileQueue = Future.value();
+
+  /// 재조정을 직렬로 실행한다. 겹쳐 돌면 두 호출이 같은 저장 집합을 읽은 뒤
+  /// 마지막에 끝난 쪽이 덮어써, 최애를 빠르게 해제→재지정하면 구독이 빠졌다.
+  /// 각 실행은 시작 시점의 최신 모드·최애를 읽으므로 마지막 실행이 최종 상태가 된다.
+  Future<void> _reconcileLiveTopics() {
+    final run = _reconcileQueue.then((_) => _reconcileLiveTopicsNow());
+    // 실패는 호출부(run)로 전달하고, 체인은 끊기지 않게 삼킨다.
+    _reconcileQueue = run.catchError((Object _) {});
+    return run;
+  }
+
   /// 원하는 구독 집합(모드×최애)과 영속된 실제 구독 집합을 diff해 추가/해제할
   /// 토픽만 처리한다 — 중복 구독이나 불필요한 네트워크 호출이 없다.
-  Future<void> _reconcileLiveTopics() async {
+  Future<void> _reconcileLiveTopicsNow() async {
     final prefs = await SharedPreferences.getInstance();
 
     // 저장된 모드는 첫 재조정 시점에 지연 로드한다 — FavoritesController의

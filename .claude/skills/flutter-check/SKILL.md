@@ -29,8 +29,10 @@ flutter test          # 단위 테스트
 - `GlobalController`는 `_fireStore`가 `late final`이라 **Firestore 호출 전까지
   초기화되지 않는다** → 그냥 `GlobalController()`로 생성해 RxList에 값을 주입하고
   getter(필터/정렬/페어링)만 검증한다.
-- `YouTubeController`는 `GlobalController`를 생성자로 주입해 테스트한다
-  (`loadVideos` 등 네트워크 경로는 호출하지 않는다).
+- `YouTubeController`는 `GlobalController`·`YouTubeService`를 생성자로 주입해
+  테스트한다. `loadVideos` 경로는 `implements YouTubeService`인 가짜 서비스
+  (`test/youtube_controller_test.dart`의 Completer 기반)로 검증한다 — 캐시 복원
+  await 때문에 요청은 `pumpEventQueue()` 뒤에 나간다.
 - 모델(`LiveCheckModel` 등)의 파생 getter는 결정적이므로 직접 검증한다.
 
 ## 주의: CI Firebase 스텁

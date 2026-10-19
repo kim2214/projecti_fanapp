@@ -34,13 +34,16 @@ class _MemberVideoCache {
 }
 
 class YouTubeController extends GetxController {
-  // globalController는 테스트에서 주입할 수 있도록 생성자 파라미터로 받는다.
-  // 프로덕션(바인딩)은 인자 없이 생성하므로 기본값으로 기존 동작(Get.find)을 유지한다.
-  YouTubeController({GlobalController? globalController})
-      : _globalController = globalController ?? Get.find<GlobalController>();
+  // globalController·service는 테스트에서 주입할 수 있도록 생성자 파라미터로 받는다.
+  // 프로덕션(바인딩)은 인자 없이 생성하므로 기본값으로 기존 동작을 유지한다.
+  YouTubeController({
+    GlobalController? globalController,
+    YouTubeService? service,
+  })  : _globalController = globalController ?? Get.find<GlobalController>(),
+        _service = service ?? YouTubeService.instance;
 
   final GlobalController _globalController;
-  final YouTubeService _service = YouTubeService.instance;
+  final YouTubeService _service;
 
   // 상태 변수들
   RxString selectedMemberKey = ''.obs;
@@ -137,6 +140,7 @@ class YouTubeController extends GetxController {
 
     final channelId = _memberByKey(memberKey)?.youtubeChannelId;
     if (channelId == null || channelId.isEmpty) {
+      videoList.clear();
       hasError.value = true;
       errorMessage.value = '채널 ID를 찾을 수 없습니다';
       return;
@@ -146,8 +150,14 @@ class YouTubeController extends GetxController {
     final cached = _cache[memberKey];
     if (cached != null) {
       videoList.value = List.from(cached.videos);
+      // 이전 멤버 조회가 진행 중이었어도 이 멤버는 캐시로 표시되므로 스피너를 끈다.
+      isLoading.value = false;
       // 신선하고 강제 새로고침이 아니면 네트워크 없이 종료
       if (!forceRefresh && !cached.isStale) return;
+    } else {
+      // 이전 멤버의 목록을 비운다 — 화면은 목록이 비었을 때만 스피너·에러를
+      // 보여주므로, 남겨두면 새 멤버 칩 아래에 이전 멤버 영상이 계속 보인다.
+      videoList.clear();
     }
 
     try {
@@ -188,7 +198,8 @@ class YouTubeController extends GetxController {
         errorMessage.value = '알 수 없는 오류가 발생했습니다';
       }
     } finally {
-      isLoading.value = false;
+      // 다른 멤버로 바뀌었으면 그 멤버의 로딩 상태를 건드리지 않는다.
+      if (effectiveSelectedMemberKey == memberKey) isLoading.value = false;
     }
   }
 

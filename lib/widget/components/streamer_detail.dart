@@ -14,6 +14,7 @@ import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/model/follower_point_model.dart';
 import 'package:projecti_fan_app/widget/components/follower_trend_chart.dart';
 import 'package:projecti_fan_app/widget/components/peak_viewer_chart.dart';
+import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
@@ -758,7 +759,13 @@ class _StreamerDetailState extends State<StreamerDetail> {
           borderRadius: BorderRadius.circular(16),
           onTap: link.url != null && link.url!.isNotEmpty
               ? () async {
-                  final uri = Uri.parse(link.url!);
+                  // Firestore 값이라 형식이 보장되지 않는다 — parse 예외가
+                  // onTap 밖으로 새면 fatal로 집계되므로 tryParse로 받는다.
+                  final uri = Uri.tryParse(link.url!);
+                  if (uri == null) {
+                    showAppSnackBar('링크 주소가 올바르지 않습니다.');
+                    return;
+                  }
                   await openExternalUrl(uri);
                 }
               : null,

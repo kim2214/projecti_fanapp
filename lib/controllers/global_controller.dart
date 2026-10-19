@@ -80,7 +80,12 @@ class GlobalController extends GetxController {
   }
 
   /// 포그라운드 복귀: 즉시 1회 갱신하고 주기 폴링을 재개한다.
+  ///
+  /// onResume은 inactive→resumed(알림창 내림, 권한·리뷰 다이얼로그 등)에도
+  /// 불린다. 그때는 폴링이 계속 돌고 있으므로 갱신·타이머 리셋을 하지 않고,
+  /// 실제로 pause돼 타이머가 멈췄던 경우에만 갱신한다.
   void _handleResume() {
+    if (_liveRefreshTimer != null) return;
     refreshAllLiveStatus();
     _startLiveRefreshTimer();
   }

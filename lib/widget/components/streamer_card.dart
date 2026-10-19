@@ -29,6 +29,22 @@ class StreamerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 최애 버튼은 카드의 병합 시맨틱(TapSemantics) 밖 형제로 둔다 — 안에 두면
+    // 카드 노드에 합쳐져 스크린리더가 버튼에 따로 초점을 줄 수 없다.
+    return Stack(
+      children: [
+        _buildCard(context),
+        // 최애(즐겨찾기) 토글 버튼
+        Positioned(
+          top: 0,
+          right: 0,
+          child: _buildFavoriteButton(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
     final isLive = status.status == 'OPEN';
     final birthdayDays = streamer.daysUntilBirthday;
     final showBirthday = birthdayDays != null && birthdayDays <= 7;
@@ -193,12 +209,6 @@ class StreamerCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // 최애(즐겨찾기) 토글 버튼
-            Positioned(
-              top: 8,
-              right: 8,
-              child: _buildFavoriteButton(),
-            ),
             // 생일 임박 배지 (7일 이내)
             if (showBirthday)
               Positioned(
@@ -216,35 +226,42 @@ class StreamerCard extends StatelessWidget {
     final favorites = Get.find<FavoritesController>();
     final group = isHoneyz ? 'honeyz' : 'acaxia';
 
-    return TapSemantics(
-        label: favorites.isFavorite(group, assetName) ? '최애 해제' : '최애 지정',
+    // 라벨·아이콘 모두 Obx 안에서 읽어야 토글 즉시 갱신된다 (부모는 최애를 구독하지 않음).
+    return Obx(() {
+      final isFav = favorites.isFavorite(group, assetName);
+      return TapSemantics(
+        label: isFav ? '최애 해제' : '최애 지정',
+        selected: isFav,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => favorites.toggle(group, assetName),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withAlpha(220),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Obx(() {
-              final isFav = favorites.isFavorite(group, assetName);
-              return Icon(
+          // 보이는 원은 32dp, 투명 패딩으로 터치 영역을 48dp로 넓힌다.
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(220),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
                 isFav ? Icons.star_rounded : Icons.star_outline_rounded,
                 size: 20,
                 color: isFav ? AppColors.favorite : Colors.grey[400],
-              );
-            }),
+              ),
+            ),
           ),
-        ));
+        ),
+      );
+    });
   }
 
   Widget _buildBirthdayBadge(int days) {
