@@ -8,8 +8,10 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/default_firebase_options.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
+import 'package:projecti_fan_app/services/chzzk_service.dart';
 
 /// Android 홈스크린 위젯("지금 방송 중")에 데이터를 공급한다.
 ///
@@ -22,10 +24,11 @@ import 'package:projecti_fan_app/model/member.dart';
 /// 네이티브(LiveStatusWidgetProvider.kt)는 [dataKey]에 저장된 JSON만 읽는다 —
 /// 페이로드 형식을 바꾸면 양쪽을 함께 고친다.
 ///
-/// 2·3번 경로는 서버 집계 문서만 읽고 치지직 직접 폴링 폴백이 없으므로,
-/// 집계가 오래됐으면(서버 폴링 중단) 페이로드에 `stale: true`를 실어
-/// 네이티브가 "상태 확인 불가"를 그리게 한다 — 얼어붙은 목록을 그대로 두는 것도,
-/// 빈 목록으로 "모두 휴식 중"이라고 단정하는 것도 둘 다 거짓이 되기 때문이다.
+/// 2·3번 경로는 서버 집계 문서를 우선 읽고, 집계가 없거나 오래됐거나(서버
+/// 폴링 중단·빌링 중단) 읽지 못하면 치지직을 직접 조회한다 ([resolveStatus]).
+/// 직접 조회도 전부 실패했는데 집계가 오래된 경우엔 페이로드에 `stale: true`를
+/// 실어 네이티브가 "상태 확인 불가"를 그리게 한다 — 얼어붙은 목록을 그대로 두는
+/// 것도, 빈 목록으로 "모두 휴식 중"이라고 단정하는 것도 둘 다 거짓이 되기 때문이다.
 ///
 /// 클래스에도 `vm:entry-point`가 필요하다 — 네이티브(home_widget 백그라운드
 /// 워커)가 콜백 핸들로 정적 메서드에 접근할 때 메서드 pragma만으로는
@@ -37,6 +40,10 @@ class LiveWidgetService {
   static const String androidProviderName = 'LiveStatusWidgetProvider';
 
   static bool get _supported => !kIsWeb && Platform.isAndroid;
+
+  static List<Member> get _allMembers => [
+        for (final group in Group.values) ...GlobalController.catalogOf(group),
+      ];
 
   /// 위젯에 그릴 JSON 페이로드. 방송 중인 멤버만 시청자 수 내림차순.
   ///
@@ -79,7 +86,7 @@ class LiveWidgetService {
     if (!_supported) return;
     try {
       final payload = buildPayload(
-        [...GlobalController.honeyzMembers, ...GlobalController.acaxiaMembers],
+        _allMembers,
         statusByKey,
         DateTime.now(),
         stale: stale,
@@ -91,39 +98,93 @@ class LiveWidgetService {
     }
   }
 
-  /// 백그라운드 isolate(위젯 주기 갱신·FCM)에서 서버 집계 문서를 직접 읽어
-  /// 위젯을 갱신한다. GetX 컨트롤러 없이 동작해야 하므로 Firestore를 바로 읽는다.
+  /// 백그라운드 isolate(위젯 주기 갱신·FCM)에서 위젯을 갱신한다. GetX 컨트롤러
+  /// 없이 동작해야 하므로 Firestore·치지직을 직접 읽는다 ([resolveStatus]).
   @pragma('vm:entry-point')
   static Future<void> refreshFromServer() async {
     if (!_supported) return;
+    // 위젯을 하나도 놓지 않은 기기는 무음 푸시·주기 갱신 때 조회를 건너뛴다.
+    // 조회 자체가 실패하면(플러그인 미등록 등) 갱신 쪽으로 진행한다.
     try {
-      // 위젯을 하나도 놓지 않은 기기는 무음 푸시·주기 갱신 때 Firestore 읽기를
-      // 건너뛴다. 조회 자체가 실패하면(플러그인 미등록 등) 갱신 쪽으로 진행한다.
-      try {
-        if ((await HomeWidget.getInstalledWidgets()).isEmpty) return;
-      } catch (_) {}
+      if ((await HomeWidget.getInstalledWidgets()).isEmpty) return;
+    } catch (_) {}
 
-      if (Firebase.apps.isEmpty) {
-        // google-services가 네이티브에서 기본 앱을 이미 만들어 두므로, 이 isolate의
-        // 첫 초기화는 [core/duplicate-app]으로 실패할 수 있다 — main.dart와 동일하게
-        // 무시하고 기존 앱을 재사용한다 (실기기에서 확인, 26.08.28).
-        try {
-          await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
-        } on FirebaseException catch (e) {
-          if (e.code != 'duplicate-app') rethrow;
-        }
-      }
-      final snapshot = await FirebaseFirestore.instance
-          .doc('live_status/current')
-          .get()
-          .timeout(const Duration(seconds: 8));
-      final result = statusFromAggregate(snapshot.data(), DateTime.now());
-      await push(result.status, stale: result.stale);
-    } catch (e) {
-      // 오프라인 등 — 위젯은 기존 스냅샷을 유지한다. 원인은 로그캣으로만 남긴다
-      // (백그라운드 isolate라 Crashlytics 기록 경로가 보장되지 않음).
-      debugPrint('LiveWidgetService.refreshFromServer 실패: $e');
+    // 백그라운드 isolate라 Crashlytics 기록 경로가 보장되지 않는다 — 치지직
+    // 오류도 로그캣으로만 남긴다. 일회성 클라이언트라 끝나면 닫는다.
+    final chzzk = ChzzkService(
+      reportError: (error, _, reason) =>
+          debugPrint('LiveWidgetService 치지직 조회 오류 ($reason): $error'),
+    );
+    try {
+      final result = await resolveStatus(
+        readAggregate: _readAggregate,
+        chzzk: chzzk,
+        now: DateTime.now,
+      );
+      // null = 판단할 근거가 없음(오프라인 등) — 위젯은 기존 스냅샷을 유지한다.
+      if (result != null) await push(result.status, stale: result.stale);
+    } finally {
+      chzzk.close();
     }
+  }
+
+  /// 서버 집계 문서(`live_status/current`)를 읽는다. 이 isolate에서 Firebase가
+  /// 아직 초기화되지 않았으면 초기화한다.
+  static Future<Map<String, dynamic>?> _readAggregate() async {
+    if (Firebase.apps.isEmpty) {
+      // google-services가 네이티브에서 기본 앱을 이미 만들어 두므로, 이 isolate의
+      // 첫 초기화는 [core/duplicate-app]으로 실패할 수 있다 — main.dart와 동일하게
+      // 무시하고 기존 앱을 재사용한다 (실기기에서 확인, 26.08.28).
+      try {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+      } on FirebaseException catch (e) {
+        if (e.code != 'duplicate-app') rethrow;
+      }
+    }
+    final snapshot = await FirebaseFirestore.instance
+        .doc('live_status/current')
+        .get()
+        .timeout(ChzzkService.defaultTimeout);
+    return snapshot.data();
+  }
+
+  /// 위젯에 그릴 상태를 정한다 (B안 — 서버가 멈춰도 위젯이 정확하도록).
+  ///
+  /// 1. 서버 집계가 신선하면 그대로 쓴다 (치지직 요청 없음).
+  /// 2. 집계가 없거나 오래됐거나 읽기에 실패하면 치지직을 직접 조회한다.
+  ///    한 명이라도 성공하면 그 결과를 쓴다 — 실패한 멤버는 비방송으로 보인다.
+  /// 3. 직접 조회도 전원 실패하면: 집계를 읽었으나 오래된 경우 `stale`(확인
+  ///    불가), 집계도 못 읽은 경우(오프라인) null(기존 스냅샷 유지).
+  ///
+  /// [readAggregate]·[chzzk]·[now]를 주입받는다 — Firestore·네트워크 없이 테스트.
+  @visibleForTesting
+  static Future<({Map<String, LiveCheckModel> status, bool stale})?>
+      resolveStatus({
+    required Future<Map<String, dynamic>?> Function() readAggregate,
+    required ChzzkService chzzk,
+    required DateTime Function() now,
+  }) async {
+    ({Map<String, LiveCheckModel> status, bool stale})? aggregate;
+    try {
+      aggregate = statusFromAggregate(await readAggregate(), now());
+      if (!aggregate.stale) return aggregate;
+    } catch (e) {
+      debugPrint('LiveWidgetService 서버 집계 조회 실패 → 치지직 직접 조회: $e');
+    }
+
+    final members = _allMembers;
+    final results = await Future.wait(
+        members.map((m) => chzzk.fetchLiveStatus(m.chzzkBroadcastId)));
+    if (results.any((r) => r != null)) {
+      return (
+        status: {
+          for (var i = 0; i < members.length; i++)
+            if (results[i] case final status?) members[i].key: status,
+        },
+        stale: false,
+      );
+    }
+    return aggregate;
   }
 
   /// 집계 문서(`live_status/current`)를 위젯이 그릴 상태로 바꾼다.

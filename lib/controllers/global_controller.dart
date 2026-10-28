@@ -252,11 +252,14 @@ class GlobalController extends GetxController {
         youtubeChannelId: 'UC-9fPSlVjMqG3zwbRT2XhXA'),
   ];
 
-  /// 그룹별 멤버 목록
-  List<Member> membersOf(Group group) => switch (group) {
+  /// 그룹별 멤버 카탈로그 (인스턴스 없이 — 백그라운드 isolate의 위젯 갱신용)
+  static List<Member> catalogOf(Group group) => switch (group) {
         Group.honeyz => honeyzMembers,
         Group.acaxia => acaxiaMembers,
       };
+
+  /// 그룹별 멤버 목록
+  List<Member> membersOf(Group group) => catalogOf(group);
 
   /// 선택 그룹의 멤버 목록 (선택 전이면 빈 목록)
   List<Member> get selectedMembers {

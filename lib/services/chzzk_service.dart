@@ -36,6 +36,10 @@ class ChzzkService {
   final ChzzkErrorReporter _reportError;
   final Duration timeout;
 
+  /// 일회성 인스턴스(백그라운드 갱신 등)의 연결을 닫는다. 공유 인스턴스는
+  /// 앱 수명 동안 재사용하므로 닫지 않는다.
+  void close() => _client.close();
+
   /// content가 null로 온 채널 (인스턴스당 채널별 한 번만 기록).
   final Set<String> _nullContentReported = {};
 

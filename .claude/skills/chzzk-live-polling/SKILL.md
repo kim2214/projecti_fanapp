@@ -123,6 +123,13 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 - 주기 갱신: 위젯 `updatePeriodMillis`(30분) → 네이티브 `onUpdate`가 데이터가
   5분↑ 오래됐으면 `HomeWidgetBackgroundIntent`로 Dart `backgroundCallback` 호출.
   갱신 후 updatedAt이 신선해져 재요청되지 않는다(루프 방지).
+- **백그라운드 갱신 판단**(`LiveWidgetService.resolveStatus`, 순수·테스트 대상):
+  서버 집계가 신선하면 그대로(치지직 요청 없음). 집계가 없거나 오래됐거나 읽기
+  실패면 `ChzzkService`로 10명 직접 조회 — 한 명이라도 성공하면 그 결과(실패
+  멤버는 비방송으로 보임). 직접 조회도 전원 실패면 집계가 오래된 경우 `stale`
+  ("확인 불가"), 집계도 못 읽었으면(오프라인) 기존 스냅샷 유지. 서버·빌링이
+  멈춰도 위젯이 30분 주기로 정확해진다. 백그라운드 isolate라 치지직 오류는
+  Crashlytics 대신 로그캣(`debugPrint`)으로만 남기고, 일회성 `ChzzkService`는 끝나면 `close()`.
 - 위젯은 보조 UI — 실패는 전부 조용히 무시하고 기존 스냅샷을 유지한다.
 
 ## 통합 LIVE 정렬
