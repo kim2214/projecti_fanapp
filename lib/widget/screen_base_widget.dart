@@ -80,15 +80,24 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       final themeColor = AppColors.group(group);
       final themeColorDark = AppColors.groupDark(group);
 
-      return Scaffold(
-        backgroundColor: context.bg,
-        appBar: _buildAppBar(group, themeColor, themeColorDark),
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          children: _pages,
+      // 시스템 뒤로가기: 홈이 아닌 탭에서는 먼저 홈 탭으로 돌아가고, 홈에서만
+      // 화면을 닫는다(그룹 선택으로). 앱바 ← 버튼은 context.pop()이라 이 판단을
+      // 거치지 않고 지금처럼 바로 그룹 선택으로 간다.
+      return PopScope(
+        canPop: _currentIndex == 0,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _onNavTap(0);
+        },
+        child: Scaffold(
+          backgroundColor: context.bg,
+          appBar: _buildAppBar(group, themeColor, themeColorDark),
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            children: _pages,
+          ),
+          bottomNavigationBar: _buildBottomNav(themeColor, themeColorDark),
         ),
-        bottomNavigationBar: _buildBottomNav(themeColor, themeColorDark),
       );
     });
   }
