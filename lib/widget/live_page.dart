@@ -105,7 +105,10 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                         if (liveMembers.isEmpty)
                           SliverFillRemaining(
                             hasScrollBody: false,
-                            child: _buildEmptyState(),
+                            // 한 그룹이라도 상태를 못 받았으면 "없음"이 사실이
+                            // 아닐 수 있다 (Obx 구독을 위해 여기서 읽는다).
+                            child: _buildEmptyState(_globalController
+                                .liveUnavailableGroups.isNotEmpty),
                           )
                         else
                           SliverPadding(
@@ -236,19 +239,19 @@ class _LivePageWidgetState extends State<LivePageWidget> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool unavailable) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.nightlight_round,
+            unavailable ? Icons.wifi_off_rounded : Icons.nightlight_round,
             size: 48,
             color: AppColors.honeyz.withAlpha(120),
           ),
           const SizedBox(height: 14),
           Text(
-            '지금은 방송 중인 멤버가 없어요',
+            unavailable ? '방송 상태를 확인하지 못했어요' : '지금은 방송 중인 멤버가 없어요',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -257,7 +260,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
           ),
           const SizedBox(height: 6),
           Text(
-            '방송이 시작되면 여기에 표시됩니다',
+            unavailable ? '연결을 확인한 뒤 당겨서 새로고침해 주세요' : '방송이 시작되면 여기에 표시됩니다',
             style: TextStyle(
               fontSize: 12,
               color: context.textFaint,

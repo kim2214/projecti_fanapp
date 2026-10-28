@@ -71,9 +71,14 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 - **소비 규칙**: 맵에 없는 멤버는 "비방송(CLOSE)"으로 다룬다
   (`status?.isLive == true`인 멤버만 방송 중). `liveMembersAcrossGroups`·
   홈 대시보드·`group_page`·`streamer_detail` 모두 카탈로그를 순회하며 key로 상태를 조회한다.
-- **직접 폴링**(`_refreshGroupLiveStatus`)은 조회 실패 멤버도 `CLOSE`로 채운다 —
-  폴링을 한 번이라도 시도하면 맵이 비지 않아, UI가 "로딩 중(맵 비어있음)"과
-  "전원 비방송"을 구분할 수 있다.
+- **직접 폴링**(`_refreshGroupLiveStatus` → 순수 `mergeDirectPoll`)은 조회 실패
+  멤버를 **직전 값으로 유지**하고(서버와 같은 정책), 직전 값도 없으면 `CLOSE`로
+  채운다 — 맵이 비지 않아 UI가 "로딩 중(맵 비어있음)"을 벗어난다. `_fetchLiveStatus`의
+  null은 **조회 실패만** 뜻한다(content null 비방송은 CLOSE 모델 반환).
+- **전원 실패**(오프라인 등)면 그룹을 `liveUnavailableGroups`에 넣고 위젯 push를
+  건너뛴다. 홈 "지금 방송 중"·통합 LIVE 빈 화면은 이때 "방송 상태를 확인하지
+  못했어요"를 보여준다(전원 CLOSE를 "방송 없음"으로 단정하지 않게). 서버 집계
+  성공 또는 해당 그룹 직접 폴링이 하나라도 성공하면 해제된다.
 - **서버 집계 변환**(`liveStatusFromAggregate`)은 문서에 있는 멤버만 맵에 넣는다
   (없음 = 비방송). 순수 함수라 `test/global_controller_test.dart`에서 검증한다.
 

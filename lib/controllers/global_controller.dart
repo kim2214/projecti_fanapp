@@ -21,6 +21,9 @@ import 'package:projecti_fan_app/services/live_widget_service.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// 화면에 보여줄 데이터의 로드 상태 (캐시가 비었을 때의 의미를 구분한다).
+enum LoadStatus { loading, loaded, failed }
+
 class GlobalController extends GetxController {
   // 지연 초기화: 생성 시점에 Firebase에 접근하지 않으므로, 순수 로직(정렬/필터)
   // 테스트에서 Firebase 초기화 없이 컨트롤러를 만들 수 있다. 첫 Firestore 호출 시 init.
@@ -134,6 +137,11 @@ class GlobalController extends GetxController {
   RxMap<String, ScheduleModel> honeyzSchedules = <String, ScheduleModel>{}.obs;
   RxMap<String, ScheduleModel> acaxiaSchedules = <String, ScheduleModel>{}.obs;
 
+  /// 그룹별 스케줄 로드 상태. 빈 캐시만으로는 "로딩 중·불러오기 실패·문서 없음
+  /// (등록 전)"을 구분할 수 없어, 오프라인에서도 전원 "등록 전"으로 보였다.
+  /// 키가 없으면 아직 요청 전(스플래시가 곧 시작한다) — 로딩 중으로 다룬다.
+  final RxMap<String, LoadStatus> scheduleStatus = <String, LoadStatus>{}.obs;
+
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
   //  문서/조회 결과가 없는 멤버는 맵에 없을 뿐이며, 소비 측은 "없음 = 비방송"으로 다룬다.)
@@ -143,6 +151,11 @@ class GlobalController extends GetxController {
       <String, LiveCheckModel>{}.obs;
   RxMap<String, LiveCheckModel> acaxiaLiveStatus =
       <String, LiveCheckModel>{}.obs;
+
+  /// 마지막 라이브 갱신에서 상태를 하나도 받지 못한 그룹 (서버 집계·직접 폴링
+  /// 모두 실패 — 오프라인 등). 이때 캐시는 직전 값이거나(있으면) 전원 CLOSE라,
+  /// 화면이 "방송 중인 멤버가 없어요"를 사실처럼 보여주지 않도록 참고한다.
+  final RxSet<String> liveUnavailableGroups = <String>{}.obs;
 
   // 멤버별 마지막 방송 세션 요약 (서버 집계 문서의 lastSessions). 홈 "오늘
   // 방송했어요" 섹션용 — 서버가 종료 시 함께 써주므로 추가 읽기가 없다.
@@ -319,6 +332,8 @@ class GlobalController extends GetxController {
 
     final cache = _scheduleCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
+      // 보여줄 캐시가 있으면 새로고침 중에도 화면은 그대로 둔다.
+      if (cache.isEmpty) scheduleStatus[group] = LoadStatus.loading;
       final docsByKey = await _fetchDocsByKey(collection);
       // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
       if (docsByKey != null) {
@@ -329,7 +344,9 @@ class GlobalController extends GetxController {
             if (docsByKey[member.key] != null)
               member.key: ScheduleModel.fromJson(docsByKey[member.key]!),
         };
+        scheduleStatus[group] = LoadStatus.loaded;
       } else if (cache.isEmpty) {
+        scheduleStatus[group] = LoadStatus.failed;
         _notifyLoadFailed();
       }
     }
@@ -364,6 +381,8 @@ class GlobalController extends GetxController {
   /// content가 null로 온 채널 (Crashlytics에 앱 실행당 한 번만 기록).
   final Set<String> _nullContentReported = {};
 
+  /// 단일 멤버 라이브 상태 조회. null은 **조회 실패**만 뜻한다 — 정상 응답의
+  /// 비방송(content null 포함)은 CLOSE 모델로 돌려준다.
   Future<LiveCheckModel?> _fetchLiveStatus(String broadcastId) async {
     final url = Uri.parse(
         'https://api.chzzk.naver.com/polling/v2/channels/$broadcastId/live-status');
@@ -385,7 +404,7 @@ class GlobalController extends GetxController {
               fatal: false,
             ));
           }
-          return null;
+          return LiveCheckModel(status: 'CLOSE', liveTitle: null);
         }
         return LiveCheckModel.fromJson(content as Map<String, dynamic>);
       }
@@ -570,6 +589,7 @@ class GlobalController extends GetxController {
       if (caches == null) return false;
       _liveCacheOf('honeyz').value = caches.honeyz;
       _liveCacheOf('acaxia').value = caches.acaxia;
+      if (liveUnavailableGroups.isNotEmpty) liveUnavailableGroups.clear();
       lastSessions.value = lastSessionsFromAggregate(data['lastSessions']);
       _pushLiveWidget();
       return true;
@@ -630,9 +650,8 @@ class GlobalController extends GetxController {
     };
   }
 
-  /// 지정한 그룹의 라이브 상태를 새로 조회해서 교체.
-  /// 조회에 실패한 멤버는 `CLOSE` 기본값으로 채운다 — 폴링을 한 번이라도 시도하면
-  /// 맵이 비지 않아, UI가 "로딩 중(맵 비어있음)"과 "전원 비방송"을 구분할 수 있다.
+  /// 지정한 그룹의 라이브 상태를 직접 폴링해 갱신한다 ([mergeDirectPoll] 참고).
+  /// 전원 실패면 [liveUnavailableGroups]에 표시하고, 위젯은 기존 스냅샷을 둔다.
   Future<void> _refreshGroupLiveStatus(String group) async {
     if (group != 'honeyz' && group != 'acaxia') return;
 
@@ -641,12 +660,41 @@ class GlobalController extends GetxController {
       members.map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
-    _liveCacheOf(group).value = {
-      for (var i = 0; i < members.length; i++)
-        members[i].key:
-            results[i] ?? LiveCheckModel(status: 'CLOSE', liveTitle: null),
-    };
+    final cache = _liveCacheOf(group);
+    final merged = mergeDirectPoll(members, results, cache);
+    cache.value = merged.statuses;
+    if (merged.allFailed) {
+      if (!liveUnavailableGroups.contains(group)) {
+        liveUnavailableGroups.add(group);
+      }
+      return;
+    }
+    if (liveUnavailableGroups.contains(group)) {
+      liveUnavailableGroups.remove(group);
+    }
     _pushLiveWidget();
+  }
+
+  /// 직접 폴링 결과([results], 실패는 null)를 기존 캐시([previous])와 합친다.
+  ///
+  /// 실패한 멤버는 직전 값을 유지하고(서버 폴링과 같은 정책 — 일시 오류로 방송
+  /// 중인 멤버가 사라졌다 나타나지 않게), 직전 값도 없으면 `CLOSE`로 채운다.
+  /// 맵을 비우지 않아야 UI가 "로딩 중(맵 비어있음)"을 벗어난다. 전원 실패
+  /// 여부는 [allFailed]로 알려 화면이 "확인 불가"를 표시하게 한다.
+  /// (네트워크와 분리된 순수 병합 — 테스트 대상)
+  @visibleForTesting
+  static ({Map<String, LiveCheckModel> statuses, bool allFailed})
+      mergeDirectPoll(List<Member> members, List<LiveCheckModel?> results,
+          Map<String, LiveCheckModel> previous) {
+    return (
+      statuses: {
+        for (var i = 0; i < members.length; i++)
+          members[i].key: results[i] ??
+              previous[members[i].key] ??
+              LiveCheckModel(status: 'CLOSE', liveTitle: null),
+      },
+      allFailed: results.every((r) => r == null),
+    );
   }
 
   /// 홈스크린 위젯에 현재 라이브 상태(양 그룹 합본)를 반영한다. 라이브 캐시가

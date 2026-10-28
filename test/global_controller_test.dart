@@ -198,6 +198,63 @@ void main() {
     });
   });
 
+  group('mergeDirectPoll (직접 폴링 실패 처리)', () {
+    const members = GlobalController.honeyzMembers;
+
+    test('성공한 멤버는 새 값, 실패한 멤버는 직전 값 유지', () {
+      // 일시 오류로 방송 중인 멤버가 목록에서 사라졌다 나타나지 않게 한다.
+      final previous = {'ayauke': _live(status: 'OPEN', viewers: 50)};
+      final results = <LiveCheckModel?>[
+        _live(status: 'OPEN', viewers: 10), // honeychurros
+        null, // ayauke 실패
+        _live(), null, _live(),
+      ];
+
+      final merged =
+          GlobalController.mergeDirectPoll(members, results, previous);
+      expect(merged.allFailed, isFalse);
+      expect(merged.statuses['honeychurros']!.isLive, isTrue);
+      expect(merged.statuses['ayauke']!.concurrentUserCount, 50);
+      // 실패했고 직전 값도 없으면 CLOSE — 맵이 비지 않아 로딩 스피너를 벗어난다.
+      expect(merged.statuses['ddddragon']!.isLive, isFalse);
+      expect(merged.statuses.length, members.length);
+    });
+
+    test('전원 실패면 allFailed — 직전 캐시가 그대로 남는다', () {
+      final previous = {
+        for (final m in members) m.key: _live(),
+      }..['damyui'] = _live(status: 'OPEN', viewers: 7);
+
+      final merged = GlobalController.mergeDirectPoll(members,
+          List<LiveCheckModel?>.filled(members.length, null), previous);
+      expect(merged.allFailed, isTrue);
+      expect(merged.statuses['damyui']!.isLive, isTrue);
+    });
+
+    test('첫 폴링부터 전원 실패면 전원 CLOSE + allFailed (확인 불가 표시용)', () {
+      final merged = GlobalController.mergeDirectPoll(
+          members, List<LiveCheckModel?>.filled(members.length, null), {});
+      expect(merged.allFailed, isTrue);
+      expect(merged.statuses.values.every((s) => !s.isLive), isTrue);
+      expect(merged.statuses.length, members.length);
+    });
+
+    test('하나라도 성공하면 allFailed가 아니다', () {
+      final results = List<LiveCheckModel?>.filled(members.length, null);
+      results[0] = _live();
+      expect(GlobalController.mergeDirectPoll(members, results, {}).allFailed,
+          isFalse);
+    });
+  });
+
+  group('로드 실패 상태 초기값', () {
+    test('liveUnavailableGroups·scheduleStatus는 비어 있다 (관측 전)', () {
+      final c = GlobalController();
+      expect(c.liveUnavailableGroups, isEmpty);
+      expect(c.scheduleStatus, isEmpty);
+    });
+  });
+
   group('lastSessionsFromAggregate / endedTodaySessions (오늘 방송했어요)', () {
     final now = DateTime(2026, 8, 28, 22, 0);
     Timestamp ts(DateTime d) => Timestamp.fromDate(d);

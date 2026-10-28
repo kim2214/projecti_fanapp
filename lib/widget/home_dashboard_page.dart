@@ -345,6 +345,47 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         if (liveStatus[member.key]?.isLive == true) member
     ];
 
+    // 마지막 갱신에서 상태를 하나도 받지 못했다(오프라인 등) — 캐시는 직전 값이거나
+    // 전원 CLOSE라 "방송 중인 멤버가 없어요"는 사실이 아닐 수 있다.
+    final unavailable = _globalController.liveUnavailableGroups
+        .contains(_globalController.selectedGroup.value);
+
+    if (liveMembers.isEmpty && unavailable) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+        decoration: BoxDecoration(
+          color: context.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 32,
+              color: themeColor.withAlpha(150),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '방송 상태를 확인하지 못했어요',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: context.textFaint,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '연결을 확인한 뒤 당겨서 새로고침해 주세요',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: context.textFaint),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (liveMembers.isEmpty) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -385,7 +426,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     // 썸네일이 있으면 줄 전체를 그만큼 키운다 (가로 스크롤 줄은 높이가 하나).
     final hasThumbnail =
         liveMembers.any((m) => liveStatus[m.key]?.thumbnailUrl() != null);
-    return SizedBox(
+    final cards = SizedBox(
       height: _scaledHeight(200) + (hasThumbnail ? 146 : 0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -403,6 +444,22 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           );
         },
       ),
+    );
+    if (!unavailable) return cards;
+
+    // 직전에 받은 방송 목록은 남겨 두되, 지금 상태가 아닐 수 있음을 알린다.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+          child: Text(
+            '연결이 불안정해 최신 상태가 아닐 수 있어요',
+            style: TextStyle(fontSize: 12, color: context.textFaint),
+          ),
+        ),
+        cards,
+      ],
     );
   }
 

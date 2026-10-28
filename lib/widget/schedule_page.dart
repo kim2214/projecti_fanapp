@@ -32,6 +32,11 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
       // 지연 빌더(SliverChildBuilderDelegate) 안에서 읽으면 Obx가 스케줄 갱신을
       // 감지하지 못하므로, 여기서 미리 읽어 의존성을 등록한다.
       final scheduleUrls = globalController.scheduleImageUrlsOf(group);
+      // 키가 없으면 아직 요청 전(스플래시가 곧 시작한다) — 로딩으로 본다.
+      final status =
+          globalController.scheduleStatus[group] ?? LoadStatus.loading;
+      // 스케줄이 하나라도 있으면 상태와 무관하게 목록을 보여준다 (새로고침 중 등).
+      final hasAny = scheduleUrls.any((url) => url.isNotEmpty);
 
       return Container(
         decoration: BoxDecoration(
@@ -57,27 +62,46 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 child: _buildHeader(
                     isHoneyz, themeColor, themeColorDark, members.length),
               ),
-              // 멤버 스케줄 리스트
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      // 스케줄 문서가 없는 멤버는 빈 URL → "스케줄 등록 전"으로 표시된다.
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: ScheduleCard(
-                          imageURL: scheduleUrls[index],
-                          memberName: members[index].name,
-                          themeColor: themeColor,
-                          themeColorDark: themeColorDark,
+              // 불러오는 중·실패는 "스케줄 등록 전" 카드 대신 상태를 그대로 알린다.
+              if (!hasAny && status != LoadStatus.loaded)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: status == LoadStatus.failed
+                      // 글자용 톤 — acaxiaDark는 흰 배경 대비가 낮다(group_page와 동일).
+                      ? _buildLoadFailed(globalController,
+                          isHoneyz ? AppColors.honeyzDark : context.acaxiaInk)
+                      : Padding(
+                          padding: const EdgeInsets.only(bottom: 100),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: themeColorDark,
+                              strokeWidth: 2,
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    childCount: members.length,
+                )
+              else
+                // 멤버 스케줄 리스트
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        // 스케줄 문서가 없는 멤버는 빈 URL → "스케줄 등록 전"으로 표시된다.
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ScheduleCard(
+                            imageURL: scheduleUrls[index],
+                            memberName: members[index].name,
+                            themeColor: themeColor,
+                            themeColorDark: themeColorDark,
+                          ),
+                        );
+                      },
+                      childCount: members.length,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -89,6 +113,46 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
   Future<void> _onRefresh(
       GlobalController globalController, bool isHoneyz) async {
     await globalController.loadScheduleFireStore(forceRefresh: true);
+  }
+
+  /// 스케줄 조회에 실패했고 보여줄 캐시도 없을 때 (오프라인 등).
+  Widget _buildLoadFailed(GlobalController globalController, Color inkColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.wifi_off_rounded,
+              size: 40, color: inkColor.withAlpha(150)),
+          const SizedBox(height: 12),
+          Text(
+            '스케줄을 불러오지 못했어요',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: context.textMain,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '네트워크 연결을 확인한 뒤 다시 시도해 주세요',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: context.textFaint),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () =>
+                globalController.loadScheduleFireStore(forceRefresh: true),
+            icon: Icon(Icons.refresh_rounded, color: inkColor),
+            label: Text(
+              '다시 시도',
+              style: TextStyle(color: inkColor, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildHeader(
