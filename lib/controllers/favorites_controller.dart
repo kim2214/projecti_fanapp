@@ -22,6 +22,14 @@ class FavoritesController extends GetxController {
   bool isFavorite(String group, String key) =>
       favoriteIds.contains(_id(group, key));
 
+  /// [items]를 최애 먼저, 나머지는 뒤로 재배치한다 (각 묶음 안의 순서는 유지).
+  /// 홈 "지금 방송 중"과 통합 LIVE가 같은 규칙으로 최애를 앞세운다.
+  List<T> favoritesFirst<T>(
+      Iterable<T> items, String Function(T) groupOf, String Function(T) keyOf) {
+    bool fav(T e) => isFavorite(groupOf(e), keyOf(e));
+    return [...items.where(fav), ...items.where((e) => !fav(e))];
+  }
+
   /// 최애 지정/해제 토글 후 영속화
   Future<void> toggle(String group, String key) async {
     final id = _id(group, key);

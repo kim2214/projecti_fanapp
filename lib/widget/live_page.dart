@@ -75,13 +75,11 @@ class _LivePageWidgetState extends State<LivePageWidget> {
               Expanded(
                 child: Obx(() {
                   // 시청자순 정렬된 통합 목록을 받아 최애 멤버를 맨 위로 재배치
-                  final base = _globalController.liveMembersAcrossGroups;
-                  final liveMembers = [
-                    ...base.where(
-                        (e) => _favorites.isFavorite(e.group, e.memberKey)),
-                    ...base.where(
-                        (e) => !_favorites.isFavorite(e.group, e.memberKey)),
-                  ];
+                  final liveMembers = _favorites.favoritesFirst(
+                    _globalController.liveMembersAcrossGroups,
+                    (e) => e.group,
+                    (e) => e.memberKey,
+                  );
 
                   // 첫 폴링 중이고 아직 데이터가 없으면 로딩 표시
                   if (_initialLoading.value && liveMembers.isEmpty) {

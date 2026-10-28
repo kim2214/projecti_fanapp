@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
@@ -31,6 +32,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     with AutomaticKeepAliveClientMixin {
   final GlobalController _globalController = Get.find<GlobalController>();
   final YouTubeController _youtubeController = Get.find<YouTubeController>();
+  final FavoritesController _favorites = Get.find<FavoritesController>();
 
   // 그룹별 테마 컬러
 
@@ -339,11 +341,16 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       );
     }
 
-    // 방송 중인 멤버 (카탈로그 순서, key로 상태 조회)
-    final liveMembers = [
-      for (final member in members)
-        if (liveStatus[member.key]?.isLive == true) member
-    ];
+    // 방송 중인 멤버 — 최애 먼저, 그다음 카탈로그 순서 (key로 상태 조회).
+    // 최애 목록을 Obx 안에서 읽으므로 최애를 바꾸면 순서도 바로 바뀐다.
+    final liveMembers = _favorites.favoritesFirst(
+      [
+        for (final member in members)
+          if (liveStatus[member.key]?.isLive == true) member
+      ],
+      (m) => m.group,
+      (m) => m.key,
+    );
 
     // 마지막 갱신에서 상태를 하나도 받지 못했다(오프라인 등) — 캐시는 직전 값이거나
     // 전원 CLOSE라 "방송 중인 멤버가 없어요"는 사실이 아닐 수 있다.
@@ -439,6 +446,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             memberName: member.name,
             assetPath: member.profileAssetPath,
             broadcastId: member.chzzkBroadcastId,
+            isFavorite: _favorites.isFavorite(member.group, member.key),
             themeColor: themeColor,
             themeColorDark: themeColorDark,
           );
@@ -468,9 +476,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     required String memberName,
     required String assetPath,
     required String broadcastId,
+    required bool isFavorite,
     required Color themeColor,
     required Color themeColorDark,
   }) {
+    // 최애 강조는 통합 LIVE 카드(LiveMemberCard)와 같은 테두리·별 표시.
+    final accent = isFavorite ? AppColors.favorite : AppColors.live;
     return TapSemantics(
         child: GestureDetector(
       onTap: () => _openChzzkLive(broadcastId),
@@ -481,10 +492,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         decoration: BoxDecoration(
           color: context.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.live.withAlpha(60), width: 1.5),
+          border: Border.all(
+            color: accent.withAlpha(isFavorite ? 160 : 60),
+            width: isFavorite ? 2 : 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.live.withAlpha(25),
+              color: accent.withAlpha(25),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -515,15 +529,26 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        memberName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: context.textMain,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          if (isFavorite) ...[
+                            const Icon(Icons.star_rounded,
+                                size: 16, color: AppColors.favorite),
+                            const SizedBox(width: 4),
+                          ],
+                          Flexible(
+                            child: Text(
+                              memberName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: context.textMain,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       if (status.liveCategoryValue?.isNotEmpty == true)
                         Text(

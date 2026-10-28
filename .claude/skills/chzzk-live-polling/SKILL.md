@@ -121,7 +121,7 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 ## 통합 LIVE 정렬
 
 `liveMembersAcrossGroups`: 양쪽 그룹에서 `isLive`인 멤버만 모아 **시청자 수
-내림차순**(null=0, 뒤로) 정렬. 최애 우선 노출은 화면단(live_page)에서 처리.
+내림차순**(null=0, 뒤로) 정렬. 최애 우선 노출은 화면단에서 `FavoritesController.favoritesFirst`로 처리 (통합 LIVE·홈 "지금 방송 중" 공통).
 
 ## 서버 폴링 & 라이브 방송 시작 푸시
 
