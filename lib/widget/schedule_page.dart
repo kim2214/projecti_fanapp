@@ -15,8 +15,6 @@ class SchedulePageWidget extends StatefulWidget {
 
 class _SchedulePageWidgetState extends State<SchedulePageWidget>
     with AutomaticKeepAliveClientMixin {
-  // 그룹별 테마 컬러
-
   @override
   Widget build(BuildContext context) {
     super.build(context);

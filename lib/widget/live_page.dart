@@ -3,7 +3,6 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
-import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
@@ -44,11 +43,6 @@ class _LivePageWidgetState extends State<LivePageWidget> {
 
   Future<void> _onRefresh() async {
     await _globalController.refreshAllLiveStatus();
-  }
-
-  Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await openExternalUrl(uri);
   }
 
   @override
@@ -120,7 +114,7 @@ class _LivePageWidgetState extends State<LivePageWidget> {
                                     isFavorite: _favorites.isFavorite(
                                         entry.group, entry.memberKey),
                                     onTap: () =>
-                                        _openChzzkLive(entry.broadcastId),
+                                        openChzzkLive(entry.broadcastId),
                                   );
                                 },
                                 childCount: liveMembers.length,

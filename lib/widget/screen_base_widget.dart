@@ -27,8 +27,6 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   final NotificationController _notificationController =
       Get.find<NotificationController>();
 
-  // 그룹별 테마 컬러
-
   late final List<Widget> _pages = [
     HomeDashboardWidget(onNavigateToTab: _onNavTap),
     const SchedulePageWidget(),

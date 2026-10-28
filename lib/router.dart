@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:projecti_fan_app/bindings.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/schedule_detail.dart';
 import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
@@ -14,7 +13,6 @@ final router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) {
-        BindingClass().dependencies();
         return const SplashScreen();
       },
     ),

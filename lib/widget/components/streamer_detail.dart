@@ -63,16 +63,6 @@ class _StreamerDetailState extends State<StreamerDetail> {
     }
   }
 
-  Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await openExternalUrl(uri);
-  }
-
-  Future<void> _openChzzkReplay(String broadcastId) async {
-    final uri = Uri.parse(Member.replayUrlOf(broadcastId));
-    await openExternalUrl(uri);
-  }
-
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
   LiveCheckModel? get _liveStatus {
     final statuses =
@@ -301,7 +291,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
       return TapSemantics(
           child: GestureDetector(
         onTap: () {
-          if (_member != null) _openChzzkLive(_member!.chzzkBroadcastId);
+          if (_member != null) openChzzkLive(_member!.chzzkBroadcastId);
         },
         child: Container(
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -514,7 +504,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap:
-              broadcastId == null ? null : () => _openChzzkReplay(broadcastId),
+              broadcastId == null ? null : () => openChzzkReplay(broadcastId),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:projecti_fan_app/bindings.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
@@ -91,6 +92,9 @@ void main() async {
   // 인앱 리뷰: 실행 횟수·요청 간격을 판정해 적절한 순간에만 스토어 리뷰를 요청한다.
   final reviewController = ReviewController();
   Get.put(reviewController, permanent: true);
+
+  // 화면용 컨트롤러(lazy) 등록. 라우트 빌더 안에서 부르면 재빌드마다 다시 호출된다.
+  BindingClass().dependencies();
 
   runApp(const MyApp());
 

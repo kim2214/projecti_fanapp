@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
-import 'package:projecti_fan_app/model/member.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 
@@ -319,18 +318,18 @@ class NotificationController extends GetxController {
 
   void _handleRemoteTap(RemoteMessage message) {
     if (message.data['type'] == 'live') {
-      _openChzzkLive(message.data['broadcastId']);
+      _openLive(message.data['broadcastId']);
     }
   }
 
   void _onLocalNotificationTap(NotificationResponse response) {
     // 포그라운드 로컬 알림의 payload = broadcastId (라이브 알림에만 존재)
-    _openChzzkLive(response.payload);
+    _openLive(response.payload);
   }
 
-  Future<void> _openChzzkLive(String? broadcastId) async {
+  /// 알림 데이터의 broadcastId는 없거나 비어 있을 수 있다 (라이브 알림에만 존재).
+  void _openLive(String? broadcastId) {
     if (broadcastId == null || broadcastId.isEmpty) return;
-    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await openExternalUrl(uri);
+    unawaited(openChzzkLive(broadcastId));
   }
 }

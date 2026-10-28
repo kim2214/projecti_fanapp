@@ -1,4 +1,5 @@
 import 'package:url_launcher/url_launcher.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 
 /// 외부 앱/브라우저로 URL을 연다.
@@ -17,3 +18,11 @@ Future<void> openExternalUrl(
     showAppSnackBar(message);
   }
 }
+
+/// 치지직 라이브 시청 페이지를 연다 (URL 형식은 [Member.liveUrlOf]가 소유).
+Future<void> openChzzkLive(String broadcastId) =>
+    openExternalUrl(Uri.parse(Member.liveUrlOf(broadcastId)));
+
+/// 치지직 채널 다시보기 목록을 연다 (URL 형식은 [Member.replayUrlOf]가 소유).
+Future<void> openChzzkReplay(String broadcastId) =>
+    openExternalUrl(Uri.parse(Member.replayUrlOf(broadcastId)));

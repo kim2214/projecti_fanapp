@@ -17,8 +17,6 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     with AutomaticKeepAliveClientMixin {
   final GlobalController _globalController = Get.find<GlobalController>();
 
-  // 그룹별 테마 컬러
-
   // 로딩 상태 관리 (Rx로 변경하여 Obx에서 감지)
   final RxBool _isLoading = true.obs;
   String? _lastLoadedGroup;
@@ -56,12 +54,13 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     _isLoading.value = true;
 
     try {
-      // 멤버 데이터와 라이브 체크 데이터를 순차적으로 로드
-      await _globalController.loadStreamerFireStore();
-      await _globalController.liveCheck();
+      // 두 조회는 서로 독립적이라 병렬로 기다린다. 둘 다 실패를 내부에서
+      // 흡수(캐시 유지·스낵바)하므로 예외를 던지지 않는다.
+      await Future.wait([
+        _globalController.loadStreamerFireStore(),
+        _globalController.liveCheck(),
+      ]);
       _lastLoadedGroup = currentGroup;
-    } catch (e) {
-      // error handled by loading state
     } finally {
       _isLoadingInProgress = false;
       if (mounted) {
@@ -75,10 +74,10 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     if (_isLoadingInProgress) return;
     _isLoadingInProgress = true;
     try {
-      await _globalController.loadStreamerFireStore(forceRefresh: true);
-      await _globalController.refreshLiveStatus();
-    } catch (e) {
-      // error handled by loading state
+      await Future.wait([
+        _globalController.loadStreamerFireStore(forceRefresh: true),
+        _globalController.refreshLiveStatus(),
+      ]);
     } finally {
       _isLoadingInProgress = false;
     }

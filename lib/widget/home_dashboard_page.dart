@@ -34,8 +34,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   final YouTubeController _youtubeController = Get.find<YouTubeController>();
   final FavoritesController _favorites = Get.find<FavoritesController>();
 
-  // 그룹별 테마 컬러
-
   Worker? _groupChangeWorker;
 
   @override
@@ -75,16 +73,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       _youtubeController.loadGroupLatestVideos(forceRefresh: true),
       _globalController.loadStreamerFireStore(forceRefresh: true),
     ]);
-  }
-
-  Future<void> _openChzzkLive(String broadcastId) async {
-    final uri = Uri.parse(Member.liveUrlOf(broadcastId));
-    await openExternalUrl(uri);
-  }
-
-  Future<void> _openChzzkReplay(String broadcastId) async {
-    final uri = Uri.parse(Member.replayUrlOf(broadcastId));
-    await openExternalUrl(uri);
   }
 
   @override
@@ -484,7 +472,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     final accent = isFavorite ? AppColors.favorite : AppColors.live;
     return TapSemantics(
         child: GestureDetector(
-      onTap: () => _openChzzkLive(broadcastId),
+      onTap: () => openChzzkLive(broadcastId),
       child: Container(
         width: 270,
         margin: const EdgeInsets.only(right: 14),
@@ -618,8 +606,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     ));
   }
 
-  // ---------------- 다가오는 생일 ----------------
-
   // ---------------- 오늘 방송했어요 ----------------
 
   /// 오늘 방송을 마친 멤버 목록 (서버 집계의 lastSessions 기반). 놓친 방송을
@@ -685,7 +671,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () => _openChzzkReplay(member.chzzkBroadcastId),
+          onTap: () => openChzzkReplay(member.chzzkBroadcastId),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
@@ -738,6 +724,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       ),
     );
   }
+
+  // ---------------- 다가오는 생일 ----------------
 
   Widget _buildBirthdaySection(Color themeColor, Color themeColorDark) {
     final group = _globalController.selectedGroup.value;
@@ -933,7 +921,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     );
   }
 
-  // ---------------- 최신 영상 ----------------
+  // ---------------- 도움말 링크 ----------------
 
   Widget _buildHelpLink() {
     return Padding(
@@ -967,6 +955,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       ),
     );
   }
+
+  // ---------------- 최신 영상 ----------------
 
   Widget _buildLatestVideos() {
     final videos = _youtubeController.groupLatestVideos;

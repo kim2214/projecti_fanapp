@@ -18,8 +18,6 @@ class ScheduleDetail extends StatelessWidget {
 
   const ScheduleDetail({super.key, required this.imageURL, required this.name});
 
-  // 그룹별 테마 컬러
-
   @override
   Widget build(BuildContext context) {
     final globalController = Get.find<GlobalController>();
