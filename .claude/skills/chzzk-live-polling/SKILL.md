@@ -8,7 +8,12 @@ description: 치지직(CHZZK) 비공식 폴링 API로 멤버 라이브 상태를
 멤버별 실시간 방송 상태는 **치지직 비공식 polling 엔드포인트**를 호출해 얻는다.
 폴링 경로가 **두 곳**이며 로직·에러 정책을 공유한다:
 
-- **클라 포그라운드 폴링** — `lib/controllers/global_controller.dart`.
+- **클라 포그라운드 폴링** — 주기·캐시·폴백은 `lib/controllers/global_controller.dart`,
+  단일 채널 조회·파싱·에러 정책은 `lib/services/chzzk_service.dart`(`ChzzkService`).
+  서비스는 GetX·Firestore 비의존이고 `http.Client`·오류 기록(`reportError`, 기본
+  Crashlytics)을 주입받는다 — 백그라운드 isolate(위젯 직접 폴링)에선 Crashlytics가
+  보장되지 않으니 기록 함수를 바꿔 넣는다. 앱은 공유 인스턴스(`ChzzkService.instance`,
+  클라이언트 재사용)를 쓰고, `GlobalController({chzzk})`로 주입할 수 있다.
   화면에 보이는 라이브 현황 갱신용(2분 주기, 포그라운드만).
 - **서버 폴링** — `functions/index.js`의 `pollLiveStatus`(1분 스케줄러, 밤 2분·심야 3분 실효 주기).
   백그라운드 라이브 감지 → 방송 시작 푸시. 아래 "서버 폴링" 절 참고.
@@ -31,10 +36,11 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 (및 인스턴스 getter `member.liveUrl`) **한 곳에 단일화**되어 있으니, URL 형식이
 바뀌면 `lib/model/member.dart`만 고친다.
 
-## 폴링 주기·타임아웃 (`GlobalController` 상수)
+## 폴링 주기·타임아웃
 
 - `_liveRefreshInterval = 2분` — 포그라운드에서 `Timer.periodic`으로 갱신.
-- `_requestTimeout = 8초` — 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을 방지.
+- `ChzzkService.defaultTimeout = 8초` — 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을
+  방지. `GlobalController._requestTimeout`(Firestore 조회)도 이 값을 쓴다.
   이 두 값은 서로 맞물려 있으니(타임아웃 < 주기) 함께 조정한다.
 
 ## 라이프사이클 (배터리·네트워크 절약)
@@ -49,7 +55,7 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 
 ## 조회 함수 계층
 
-- `_fetchLiveStatus(broadcastId)` — 단일 멤버 조회. 실패 시 `null` 반환.
+- `ChzzkService.fetchLiveStatus(broadcastId)` — 단일 멤버 조회. 실패 시 `null` 반환.
 - `_refreshGroupLiveStatus(group)` — 그룹 전체를 `Future.wait`로 병렬 조회 후 캐시 교체.
 - `refreshLiveStatus()` — 현재 선택 그룹만.
 - `refreshAllLiveStatus()` — 허니즈+아카시아 동시 (통합 LIVE 화면용).
@@ -73,7 +79,7 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
   홈 대시보드·`group_page`·`streamer_detail` 모두 카탈로그를 순회하며 key로 상태를 조회한다.
 - **직접 폴링**(`_refreshGroupLiveStatus` → 순수 `mergeDirectPoll`)은 조회 실패
   멤버를 **직전 값으로 유지**하고(서버와 같은 정책), 직전 값도 없으면 `CLOSE`로
-  채운다 — 맵이 비지 않아 UI가 "로딩 중(맵 비어있음)"을 벗어난다. `_fetchLiveStatus`의
+  채운다 — 맵이 비지 않아 UI가 "로딩 중(맵 비어있음)"을 벗어난다. `fetchLiveStatus`의
   null은 **조회 실패만** 뜻한다(content null 비방송은 CLOSE 모델 반환).
 - **전원 실패**(오프라인 등)면 그룹을 `liveUnavailableGroups`에 넣고 위젯 push를
   건너뛴다. 홈 "지금 방송 중"·통합 LIVE 빈 화면은 이때 "방송 상태를 확인하지
@@ -84,7 +90,8 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 
 ## 에러 처리 정책 (노이즈 vs 계약 변경 구분)
 
-`_fetchLiveStatus`는 두 종류를 다르게 다룬다:
+`ChzzkService.fetchLiveStatus`는 두 종류를 다르게 다룬다
+(`test/chzzk_service_test.dart`가 MockClient로 검증):
 
 - **일시적 오류**(`TimeoutException`/`SocketException`/`http.ClientException`) →
   로그만, Crashlytics 기록 **안 함** (노이즈).

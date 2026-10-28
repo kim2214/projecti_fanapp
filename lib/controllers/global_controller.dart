@@ -1,13 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
@@ -18,6 +15,7 @@ import 'package:projecti_fan_app/utils/timed_cache.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
+import 'package:projecti_fan_app/services/chzzk_service.dart';
 import 'package:projecti_fan_app/services/live_widget_service.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,6 +24,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum LoadStatus { loading, loaded, failed }
 
 class GlobalController extends GetxController {
+  // 치지직 조회는 테스트에서 주입할 수 있도록 생성자로 받는다 (기본: 공유 인스턴스).
+  GlobalController({ChzzkService? chzzk})
+      : _chzzk = chzzk ?? ChzzkService.instance;
+
+  final ChzzkService _chzzk;
+
   // 지연 초기화: 생성 시점에 Firebase에 접근하지 않으므로, 순수 로직(정렬/필터)
   // 테스트에서 Firebase 초기화 없이 컨트롤러를 만들 수 있다. 첫 Firestore 호출 시 init.
   late final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
@@ -33,9 +37,9 @@ class GlobalController extends GetxController {
   // 라이브 상태 주기 갱신
   static const Duration _liveRefreshInterval = Duration(minutes: 2);
 
-  // 네트워크가 멈췄을 때 무한 대기하지 않도록 하는 요청 타임아웃.
-  // 2분마다 폴링되므로, 멈춘 요청이 다음 폴링과 겹쳐 쌓이는 것을 방지한다.
-  static const Duration _requestTimeout = Duration(seconds: 8);
+  // Firestore 조회가 네트워크 멈춤에 무한 대기하지 않도록 하는 타임아웃.
+  // 2분 폴링과 겹쳐 쌓이지 않게 치지직 조회(ChzzkService)와 같은 8초를 쓴다.
+  static const Duration _requestTimeout = ChzzkService.defaultTimeout;
 
   // 서버(Cloud Function pollLiveStatus)가 1분 주기로 10명 상태를 집계하는 문서.
   // 클라는 이 문서를 우선 읽어 치지직 직접 폴링(클라 수 × 11요청)을 대체한다.
@@ -393,72 +397,6 @@ class GlobalController extends GetxController {
     return cache;
   }
 
-  /// content가 null로 온 채널 (Crashlytics에 앱 실행당 한 번만 기록).
-  final Set<String> _nullContentReported = {};
-
-  /// 단일 멤버 라이브 상태 조회. null은 **조회 실패**만 뜻한다 — 정상 응답의
-  /// 비방송(content null 포함)은 CLOSE 모델로 돌려준다.
-  Future<LiveCheckModel?> _fetchLiveStatus(String broadcastId) async {
-    final url = Uri.parse(
-        'https://api.chzzk.naver.com/polling/v2/channels/$broadcastId/live-status');
-    try {
-      final response = await http.get(url).timeout(_requestTimeout);
-      if (response.statusCode == 200) {
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        final Map<String, dynamic> data = json.decode(decodedBody);
-        final content = data['content'];
-        if (content == null) {
-          // 정상 응답인데 content가 비었다 — 채널 정지·삭제 등 계약 변경이 아닌
-          // 경우일 수 있다. 파싱 실패(형식 변경)로 섞여 2분마다 쌓이지 않게
-          // 별도 사유로 채널당 한 번만 기록하고 비방송으로 둔다.
-          if (_nullContentReported.add(broadcastId)) {
-            unawaited(FirebaseCrashlytics.instance.recordError(
-              'chzzk live-status content null: $broadcastId',
-              null,
-              reason: 'chzzk 라이브 상태 content 없음 (채널 정지·삭제 가능성)',
-              fatal: false,
-            ));
-          }
-          return LiveCheckModel(status: 'CLOSE', liveTitle: null);
-        }
-        return LiveCheckModel.fromJson(content as Map<String, dynamic>);
-      }
-      // 비공식 polling 엔드포인트라 응답 형식이 바뀌면 무증상 실패할 수 있다.
-      // HTTP 비정상 응답은 엔드포인트 계약이 바뀐 신호이므로 Crashlytics에 기록한다.
-      developer.log(
-        'chzzk 라이브 상태 조회 실패 (HTTP ${response.statusCode}): $broadcastId',
-        name: 'GlobalController',
-      );
-      unawaited(FirebaseCrashlytics.instance.recordError(
-        'chzzk live-status HTTP ${response.statusCode}',
-        null,
-        reason: 'chzzk 라이브 상태 엔드포인트 비정상 응답',
-        fatal: false,
-      ));
-    } catch (e, st) {
-      developer.log(
-        'chzzk 라이브 상태 조회 예외: $broadcastId',
-        name: 'GlobalController',
-        error: e,
-        stackTrace: st,
-      );
-      // 일시적 연결 오류(타임아웃/소켓)는 노이즈이므로 제외하고, 응답 파싱 실패 등
-      // 엔드포인트 형식 변경을 시사하는 예외만 기록한다.
-      final isTransient = e is TimeoutException ||
-          e is SocketException ||
-          e is http.ClientException;
-      if (!isTransient) {
-        unawaited(FirebaseCrashlytics.instance.recordError(
-          e,
-          st,
-          reason: 'chzzk 라이브 상태 응답 파싱 실패 (형식 변경 가능성)',
-          fatal: false,
-        ));
-      }
-    }
-    return null;
-  }
-
   // 멤버 프로필 보조 데이터(지난 방송 10건 + 팔로워 30건) 세션 캐시. 프로필을
   // 열 때마다 Firestore를 40건씩 읽지 않게 10분간 재사용한다 — 값이 바뀌는
   // 주기(방송 종료·하루 1회 기록)보다 짧아 신선도 문제는 없다. 앱 재시작 시 비움.
@@ -670,7 +608,7 @@ class GlobalController extends GetxController {
   Future<void> _refreshGroupLiveStatus(Group group) async {
     final members = membersOf(group);
     final results = await Future.wait(
-      members.map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
+      members.map((m) => _chzzk.fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
     final cache = liveStatusOf(group);
