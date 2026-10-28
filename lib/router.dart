@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/widget/components/schedule_detail.dart';
 import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
 import 'package:projecti_fan_app/widget/group_select_widget.dart';
@@ -55,14 +54,10 @@ final router = GoRouter(
     GoRoute(
       path: '/streamerDetail',
       builder: (context, state) {
-        // extra가 없는 진입(상태 복원·딥링크)에서도 널 캐스트로 죽지 않는다.
-        // 프로필 이미지·영상은 group/key(쿼리)에서 파생되므로 빈 모델로도 그려진다.
-        final pjiMember =
-            (state.extra as StreamerModel?) ?? StreamerModel.empty();
+        // 프로필 데이터는 화면이 group/key로 캐시에서 읽는다 (extra 불필요).
         final group = state.uri.queryParameters['group'] ?? 'honeyz';
         final memberKey = state.uri.queryParameters['key'] ?? '';
         return StreamerDetail(
-          pjiMember: pjiMember,
           group: group,
           memberKey: memberKey,
         );

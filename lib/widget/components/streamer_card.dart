@@ -53,8 +53,7 @@ class StreamerCard extends StatelessWidget {
         child: GestureDetector(
       onTap: () {
         final group = isHoneyz ? 'honeyz' : 'acaxia';
-        context.push('/streamerDetail?group=$group&key=$assetName',
-            extra: streamer);
+        context.push('/streamerDetail?group=$group&key=$assetName');
       },
       child: Container(
         decoration: BoxDecoration(

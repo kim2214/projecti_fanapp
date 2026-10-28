@@ -19,14 +19,15 @@ import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
+/// 멤버 프로필. 프로필 데이터(이름·생일·SNS)는 [group]/[memberKey]로
+/// [GlobalController]의 캐시에서 읽는다 — 경로가 쿼리만으로 완결되고, 화면
+/// 사이에 모델을 넘기지 않아도 된다. 캐시가 없으면 빈 프로필로 그린다.
 class StreamerDetail extends StatefulWidget {
-  final StreamerModel pjiMember;
   final String group;
   final String memberKey;
 
   const StreamerDetail({
     super.key,
-    required this.pjiMember,
     required this.group,
     required this.memberKey,
   });
@@ -46,6 +47,10 @@ class _StreamerDetailState extends State<StreamerDetail> {
   Future<List<FollowerPointModel>>? _followersFuture;
 
   bool get _isHoneyz => widget.group == 'honeyz';
+
+  StreamerModel get _streamer =>
+      _global.streamerOf(widget.group, widget.memberKey) ??
+      StreamerModel.empty();
 
   @override
   void initState() {
@@ -151,8 +156,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   Widget _buildProfileSection(
       BuildContext context, Color themeColor, Color themeColorDark) {
-    final birthdayLabel = widget.pjiMember.birthdayLabel;
-    final days = widget.pjiMember.daysUntilBirthday;
+    final birthdayLabel = _streamer.birthdayLabel;
+    final days = _streamer.daysUntilBirthday;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -221,7 +226,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  widget.pjiMember.name ?? '',
+                  _streamer.name ?? '',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -572,39 +577,39 @@ class _StreamerDetailState extends State<StreamerDetail> {
       SocialLink(
         name: '치지직',
         icon: 'assets/icons/chzzk_icon.png',
-        url: widget.pjiMember.chzzk,
+        url: _streamer.chzzk,
         color: const Color(0xFF00FFA3),
         description: '라이브 방송 시청',
       ),
       SocialLink(
         name: 'YouTube',
         icon: 'assets/icons/youtube_icon.png',
-        url: widget.pjiMember.youtube,
+        url: _streamer.youtube,
         color: const Color(0xFFFF0000),
         description: '영상 콘텐츠',
       ),
       SocialLink(
         name: 'X (Twitter)',
         icon: 'assets/icons/x_icon.png',
-        url: widget.pjiMember.twitter,
+        url: _streamer.twitter,
         color: const Color(0xFF000000),
         description: '소식 및 업데이트',
       ),
       // 팬 커뮤니티 — Firestore 프로필에 값이 있는 멤버만 표시한다 (기본 3개 링크와
       // 달리 없는 멤버가 대부분이라 빈 카드를 늘어놓지 않는다).
-      if (widget.pjiMember.cafe?.isNotEmpty == true)
+      if (_streamer.cafe?.isNotEmpty == true)
         SocialLink(
           name: '네이버 카페',
           iconData: Icons.forum_rounded,
-          url: widget.pjiMember.cafe,
+          url: _streamer.cafe,
           color: const Color(0xFF03C75A),
           description: '팬 커뮤니티',
         ),
-      if (widget.pjiMember.discord?.isNotEmpty == true)
+      if (_streamer.discord?.isNotEmpty == true)
         SocialLink(
           name: '디스코드',
           iconData: Icons.discord,
-          url: widget.pjiMember.discord,
+          url: _streamer.discord,
           color: const Color(0xFF5865F2),
           description: '팬 디스코드 서버',
         ),
