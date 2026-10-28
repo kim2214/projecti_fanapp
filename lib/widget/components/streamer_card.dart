@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +16,7 @@ class StreamerCard extends StatelessWidget {
   final String memberName;
   final Color themeColor;
   final Color themeColorDark;
-  final bool isHoneyz;
+  final Group group;
 
   const StreamerCard({
     super.key,
@@ -24,7 +26,7 @@ class StreamerCard extends StatelessWidget {
     required this.memberName,
     required this.themeColor,
     required this.themeColorDark,
-    required this.isHoneyz,
+    required this.group,
   });
 
   @override
@@ -52,8 +54,7 @@ class StreamerCard extends StatelessWidget {
     return TapSemantics(
         child: GestureDetector(
       onTap: () {
-        final group = isHoneyz ? 'honeyz' : 'acaxia';
-        context.push('/streamerDetail?group=$group&key=$assetName');
+        context.push('/streamerDetail?group=${group.id}&key=$assetName');
       },
       child: Container(
         decoration: BoxDecoration(
@@ -96,9 +97,7 @@ class StreamerCard extends StatelessWidget {
                         ),
                       ),
                       child: Image.asset(
-                        isHoneyz
-                            ? 'assets/honeyz/${assetName}_profile.png'
-                            : 'assets/acaxia/${assetName}_profile.png',
+                        Member.profileAssetPathOf(group, assetName),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -167,7 +166,7 @@ class StreamerCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isHoneyz ? '허니즈' : '아카시아',
+                        group.label,
                         style: TextStyle(
                           fontSize: 12,
                           color: themeColorDark,
@@ -223,7 +222,6 @@ class StreamerCard extends StatelessWidget {
 
   Widget _buildFavoriteButton() {
     final favorites = Get.find<FavoritesController>();
-    final group = isHoneyz ? 'honeyz' : 'acaxia';
 
     // 라벨·아이콘 모두 Obx 안에서 읽어야 토글 즉시 갱신된다 (부모는 최애를 구독하지 않음).
     return Obx(() {

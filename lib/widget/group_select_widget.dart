@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
@@ -18,17 +19,14 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
   final globalController = Get.find<GlobalController>();
 
   // 로딩 상태
-  bool _isLoadingHoneyz = false;
-  bool _isLoadingAcaxia = false;
+  /// 처리 중인 그룹 (없으면 null)
+  Group? _loadingGroup;
 
-  Future<void> _selectGroup(String group) async {
+  Future<void> _selectGroup(Group group) async {
     // 한 그룹을 처리하는 동안 다른 카드 탭도 무시한다 — 연타하면 두 호출이
     // 모두 끝까지 돌아 /baseScreen이 두 겹으로 push됐다.
-    if (_isLoadingHoneyz || _isLoadingAcaxia) return;
-    setState(() {
-      _isLoadingHoneyz = group == 'honeyz';
-      _isLoadingAcaxia = group == 'acaxia';
-    });
+    if (_loadingGroup != null) return;
+    setState(() => _loadingGroup = group);
     try {
       await globalController.selectGroup(group);
 
@@ -41,10 +39,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
       unawaited(context.push('/baseScreen'));
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoadingHoneyz = false;
-          _isLoadingAcaxia = false;
-        });
+        setState(() => _loadingGroup = null);
       }
     }
   }
@@ -90,26 +85,16 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
                 // 허니즈 카드
                 Expanded(
                   child: _buildGroupCard(
-                    group: 'honeyz',
-                    name: '허니즈',
-                    subtitle: 'HONEYZ',
+                    group: Group.honeyz,
                     description: '달콤한 매력의 버츄얼 아이돌',
-                    color: AppColors.honeyz,
-                    logoAsset: 'assets/honeyz_logo.png',
-                    isLoading: _isLoadingHoneyz,
                   ),
                 ),
                 const SizedBox(height: 20),
                 // 아카시아 카드
                 Expanded(
                   child: _buildGroupCard(
-                    group: 'acaxia',
-                    name: '아카시아',
-                    subtitle: 'ACAXIA',
+                    group: Group.acaxia,
                     description: '신비로운 매력의 버츄얼 아이돌',
-                    color: AppColors.acaxia,
-                    logoAsset: 'assets/acaxia_logo.png',
-                    isLoading: _isLoadingAcaxia,
                   ),
                 ),
               ],
@@ -193,14 +178,14 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
   }
 
   Widget _buildGroupCard({
-    required String group,
-    required String name,
-    required String subtitle,
+    required Group group,
     required String description,
-    required Color color,
-    required String logoAsset,
-    required bool isLoading,
   }) {
+    final name = group.label;
+    final subtitle = group.labelEn;
+    final color = AppColors.group(group);
+    final logoAsset = group.logoAsset;
+    final isLoading = _loadingGroup == group;
     // 라일락 위 흰 글자는 대비 1.5:1이라 거의 안 읽힌다.
     final foreground = AppColors.onBrand(color);
     return TapSemantics(

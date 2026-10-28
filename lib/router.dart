@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/widget/components/schedule_detail.dart';
 import 'package:projecti_fan_app/widget/components/streamer_detail.dart';
 import 'package:projecti_fan_app/widget/group_select_widget.dart';
@@ -55,7 +56,8 @@ final router = GoRouter(
       path: '/streamerDetail',
       builder: (context, state) {
         // 프로필 데이터는 화면이 group/key로 캐시에서 읽는다 (extra 불필요).
-        final group = state.uri.queryParameters['group'] ?? 'honeyz';
+        final group =
+            Group.fromId(state.uri.queryParameters['group']) ?? Group.honeyz;
         final memberKey = state.uri.queryParameters['key'] ?? '';
         return StreamerDetail(
           group: group,

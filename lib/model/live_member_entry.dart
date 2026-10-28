@@ -1,10 +1,11 @@
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 
 /// 통합 LIVE 화면에서 그룹 구분 없이 방송 중인 멤버를 표시하기 위한 집계 모델.
 /// 카드 위젯이 추가 조회 없이 바로 그릴 수 있도록 필요한 정보를 한데 묶는다.
 class LiveMemberEntry {
-  /// 소속 그룹 ('honeyz' | 'acaxia')
-  final String group;
+  /// 소속 그룹
+  final Group group;
 
   /// 멤버 키 (예: 'ohwayo') — 즐겨찾기 식별용
   final String memberKey;
@@ -29,6 +30,4 @@ class LiveMemberEntry {
     required this.broadcastId,
     required this.status,
   });
-
-  bool get isHoneyz => group == 'honeyz';
 }

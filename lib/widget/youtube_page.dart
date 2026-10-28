@@ -185,7 +185,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   }
 
   Widget _buildHeader() {
-    final isHoneyz = globalController.selectedGroup.value == 'honeyz';
+    final group = globalController.currentGroup;
     final members = youtubeController.currentMembers;
     final selectedKey = youtubeController.effectiveSelectedMemberKey;
     final selectedIndex = members.indexWhere((m) => m.key == selectedKey);
@@ -241,7 +241,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${isHoneyz ? "허니즈" : "아카시아"} YouTube',
+                  '${group.label} YouTube',
                   style: TextStyle(
                     fontSize: 14,
                     color: context.textSub,

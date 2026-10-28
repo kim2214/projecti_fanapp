@@ -4,10 +4,12 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 최애 멤버(즐겨찾기)를 기기 로컬에 영속화하는 컨트롤러.
-/// 멤버는 'group:memberKey' 형식(예: 'honeyz:ohwayo')으로 식별한다.
+/// 멤버는 'group:memberKey' 형식(예: 'honeyz:ohwayo', group은 [Group.id])으로
+/// 식별한다 — 기기에 저장되는 값이므로 형식을 바꾸지 않는다.
 ///
 /// 최애가 바뀌면 [NotificationController]에 알려 라이브 알림 토픽(`live_<key>`)
 /// 구독을 동기화한다. (토픽/FCM 로직은 NotificationController가 소유)
@@ -17,21 +19,21 @@ class FavoritesController extends GetxController {
   /// 현재 최애로 지정된 멤버 ID 목록 (Obx 구독용)
   final RxList<String> favoriteIds = <String>[].obs;
 
-  String _id(String group, String key) => '$group:$key';
+  String _id(Group group, String key) => '${group.id}:$key';
 
-  bool isFavorite(String group, String key) =>
+  bool isFavorite(Group group, String key) =>
       favoriteIds.contains(_id(group, key));
 
   /// [items]를 최애 먼저, 나머지는 뒤로 재배치한다 (각 묶음 안의 순서는 유지).
   /// 홈 "지금 방송 중"과 통합 LIVE가 같은 규칙으로 최애를 앞세운다.
   List<T> favoritesFirst<T>(
-      Iterable<T> items, String Function(T) groupOf, String Function(T) keyOf) {
+      Iterable<T> items, Group Function(T) groupOf, String Function(T) keyOf) {
     bool fav(T e) => isFavorite(groupOf(e), keyOf(e));
     return [...items.where(fav), ...items.where((e) => !fav(e))];
   }
 
   /// 최애 지정/해제 토글 후 영속화
-  Future<void> toggle(String group, String key) async {
+  Future<void> toggle(Group group, String key) async {
     final id = _id(group, key);
     final added = !favoriteIds.contains(id);
     if (added) {

@@ -74,8 +74,7 @@ class YouTubeController extends GetxController {
   static const Duration _groupRequestTimeout = Duration(seconds: 5);
 
   // 현재 그룹의 멤버 목록 (단일 카탈로그 기반)
-  List<Member> get currentMembers =>
-      _globalController.membersOf(_globalController.selectedGroup.value);
+  List<Member> get currentMembers => _globalController.selectedMembers;
 
   // 유효한 선택된 멤버 키 (미설정이거나 다른 그룹이면 첫 번째 멤버)
   String get effectiveSelectedMemberKey {
@@ -113,7 +112,7 @@ class YouTubeController extends GetxController {
     ever(_globalController.selectedGroup, (_) => _onGroupChanged());
     // 컨트롤러는 lazy 생성이라 첫 홈 진입 시점엔 그룹이 이미 선택된 뒤다
     // (ever가 그 변경을 놓침) → 초기 1회는 여기서 직접 로드한다.
-    if (_globalController.selectedGroup.value.isNotEmpty) {
+    if (_globalController.selectedGroup.value != null) {
       loadGroupLatestVideos();
     }
   }
@@ -244,10 +243,11 @@ class YouTubeController extends GetxController {
     await _restoreFuture; // 영속 캐시 복원 완료 보장 (null이면 즉시 통과)
 
     final group = _globalController.selectedGroup.value;
-    if (group.isEmpty) return;
+    if (group == null) return;
 
     // 캐시(영속화 포함)가 있으면 즉시 표시 — 콜드스타트에서도 스피너 없이 바로 보인다.
-    final cached = _groupCache[group];
+    // 영속 캐시의 키는 그룹 id 문자열이다 (기존 저장 데이터와 호환).
+    final cached = _groupCache[group.id];
     if (cached != null) {
       groupLatestVideos.value = List.from(cached.videos);
       // 이전 그룹 조회가 진행 중이었어도 이 그룹은 캐시로 표시되므로 스켈레톤을 끈다.
@@ -298,7 +298,7 @@ class YouTubeController extends GetxController {
       if (latest.isNotEmpty) {
         groupLatestVideos.value = latest;
         // 캐시 저장 + 영속화 (전체 실패로 인한 빈 결과는 저장하지 않아 다음에 재시도)
-        _groupCache[group] = _MemberVideoCache(
+        _groupCache[group.id] = _MemberVideoCache(
           videos: List.from(latest),
           lastFetched: DateTime.now(),
         );

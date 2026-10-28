@@ -1,5 +1,6 @@
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
@@ -53,7 +54,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     );
   }
 
-  Future<void> _switchGroup(String group) async {
+  Future<void> _switchGroup(Group group) async {
     await _globalController.selectGroup(group);
 
     // 스케줄 데이터만 로드한다. 멤버·라이브 상태는 홈 대시보드의
@@ -75,13 +76,13 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = AppColors.group(isHoneyz);
-      final themeColorDark = AppColors.groupDark(isHoneyz);
+      final group = _globalController.currentGroup;
+      final themeColor = AppColors.group(group);
+      final themeColorDark = AppColors.groupDark(group);
 
       return Scaffold(
         backgroundColor: context.bg,
-        appBar: _buildAppBar(isHoneyz, themeColor, themeColorDark),
+        appBar: _buildAppBar(group, themeColor, themeColorDark),
         body: PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
@@ -93,7 +94,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   }
 
   PreferredSizeWidget _buildAppBar(
-      bool isHoneyz, Color themeColor, Color themeColorDark) {
+      Group group, Color themeColor, Color themeColorDark) {
     return AppBar(
       backgroundColor: context.bg,
       elevation: 0,
@@ -121,9 +122,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
               child: Padding(
                 padding: const EdgeInsets.all(4),
                 child: Image.asset(
-                  isHoneyz
-                      ? 'assets/honeyz_logo.png'
-                      : 'assets/acaxia_logo.png',
+                  group.logoAsset,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -132,7 +131,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
           const SizedBox(width: 10),
           Flexible(
             child: Text(
-              isHoneyz ? '허니즈' : '아카시아',
+              group.label,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -153,7 +152,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
         // 그룹 전환 버튼
         Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: _buildGroupSwitcher(isHoneyz, themeColor),
+          child: _buildGroupSwitcher(group, themeColor),
         ),
       ],
     );
@@ -260,22 +259,22 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                         activeThumbColor: AppColors.honeyz,
                         title: Text('허니즈 스케줄 알림',
                             style: TextStyle(color: context.textMain)),
-                        value:
-                            _notificationController.scheduleEnabled['honeyz'] ??
-                                true,
+                        value: _notificationController
+                                .scheduleEnabled[Group.honeyz] ??
+                            true,
                         onChanged: (v) => _notificationController
-                            .setScheduleEnabled('honeyz', v),
+                            .setScheduleEnabled(Group.honeyz, v),
                       )),
                   Obx(() => SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         activeThumbColor: AppColors.acaxia,
                         title: Text('아카시아 스케줄 알림',
                             style: TextStyle(color: context.textMain)),
-                        value:
-                            _notificationController.scheduleEnabled['acaxia'] ??
-                                true,
+                        value: _notificationController
+                                .scheduleEnabled[Group.acaxia] ??
+                            true,
                         onChanged: (v) => _notificationController
-                            .setScheduleEnabled('acaxia', v),
+                            .setScheduleEnabled(Group.acaxia, v),
                       )),
                   const SizedBox(height: 8),
                   down ? _buildServiceDownHelp() : _buildBatteryHelp(),
@@ -445,7 +444,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     );
   }
 
-  Widget _buildGroupSwitcher(bool isHoneyz, Color themeColor) {
+  Widget _buildGroupSwitcher(Group group, Color themeColor) {
     // 각 토글의 터치 영역은 위아래 투명 여백으로 48dp를 넘기고, 회색 배경은
     // 토글 바로 바깥(4dp)까지만 그린다 — 보이는 모양은 그대로, 누르기만 쉬워진다.
     // 라벨은 앱바 공간이 좁아 글꼴 배율을 1.3배까지만 따른다.
@@ -471,16 +470,16 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildGroupToggle(
-                  isSelected: isHoneyz,
-                  label: '허니즈',
+                  isSelected: group == Group.honeyz,
+                  label: Group.honeyz.label,
                   color: AppColors.honeyz,
-                  onTap: () => _switchGroup('honeyz'),
+                  onTap: () => _switchGroup(Group.honeyz),
                 ),
                 _buildGroupToggle(
-                  isSelected: !isHoneyz,
-                  label: '아카시아',
+                  isSelected: group == Group.acaxia,
+                  label: Group.acaxia.label,
                   color: AppColors.acaxia,
-                  onTap: () => _switchGroup('acaxia'),
+                  onTap: () => _switchGroup(Group.acaxia),
                 ),
               ],
             ),

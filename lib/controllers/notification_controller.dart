@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 
@@ -44,15 +45,12 @@ class NotificationController extends GetxController {
   /// 추가/해제만 수행하고, 앱 재시작 후에도 실제 구독 상태를 추적한다.
   static const String _liveTopicsKey = 'noti_live_topics';
 
-  static const List<String> _groups = ['honeyz', 'acaxia'];
-
   final FlutterLocalNotificationsPlugin _localNoti =
       FlutterLocalNotificationsPlugin();
 
   /// 그룹별 스케줄 알림 on/off 상태
-  final RxMap<String, bool> scheduleEnabled = <String, bool>{
-    'honeyz': true,
-    'acaxia': true,
+  final RxMap<Group, bool> scheduleEnabled = <Group, bool>{
+    for (final group in Group.values) group: true,
   }.obs;
 
   /// 라이브 알림 모드. 기본 'favorites'(최애만) — 기존 동작과 동일.
@@ -149,8 +147,10 @@ class NotificationController extends GetxController {
   /// 저장된 설정을 읽어 스케줄 토픽 구독 상태를 동기화한다.
   Future<void> _loadAndApplySubscriptions() async {
     final prefs = await SharedPreferences.getInstance();
-    for (final group in _groups) {
-      final enabled = prefs.getBool('$_prefsPrefix$group') ?? true; // 기본 ON
+    for (final group in Group.values) {
+      // 저장 키·토픽은 그룹 id 문자열 (기존 설정과 호환).
+      final enabled =
+          prefs.getBool('$_prefsPrefix${group.id}') ?? true; // 기본 ON
       scheduleEnabled[group] = enabled;
       await _applySubscription(group, enabled);
     }
@@ -163,8 +163,8 @@ class NotificationController extends GetxController {
   static const String widgetRefreshTopic = 'live_widget';
   static const String widgetRefreshType = 'widget_refresh';
 
-  Future<void> _applySubscription(String group, bool enabled) async {
-    final topic = 'schedule_$group';
+  Future<void> _applySubscription(Group group, bool enabled) async {
+    final topic = 'schedule_${group.id}';
     if (enabled) {
       await _subscribe(topic);
     } else {
@@ -173,12 +173,11 @@ class NotificationController extends GetxController {
   }
 
   /// 그룹별 스케줄 알림 켜기/끄기 — 토픽 구독과 설정 저장을 함께 처리한다.
-  Future<void> setScheduleEnabled(String group, bool enabled) async {
-    if (!_groups.contains(group)) return;
+  Future<void> setScheduleEnabled(Group group, bool enabled) async {
     scheduleEnabled[group] = enabled;
     await _applySubscription(group, enabled);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('$_prefsPrefix$group', enabled);
+    await prefs.setBool('$_prefsPrefix${group.id}', enabled);
   }
 
   /// 최애 멤버 목록 변경을 반영한다. [FavoritesController]가 로드/토글 후 호출한다.

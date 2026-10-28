@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -23,7 +24,7 @@ import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 /// [GlobalController]의 캐시에서 읽는다 — 경로가 쿼리만으로 완결되고, 화면
 /// 사이에 모델을 넘기지 않아도 된다. 캐시가 없으면 빈 프로필로 그린다.
 class StreamerDetail extends StatefulWidget {
-  final String group;
+  final Group group;
   final String memberKey;
 
   const StreamerDetail({
@@ -45,8 +46,6 @@ class _StreamerDetailState extends State<StreamerDetail> {
   Future<List<YouTubeVideoModel>>? _videosFuture;
   Future<List<LiveSessionModel>>? _sessionsFuture;
   Future<List<FollowerPointModel>>? _followersFuture;
-
-  bool get _isHoneyz => widget.group == 'honeyz';
 
   StreamerModel get _streamer =>
       _global.streamerOf(widget.group, widget.memberKey) ??
@@ -70,15 +69,13 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
   LiveCheckModel? get _liveStatus {
-    final statuses =
-        _isHoneyz ? _global.honeyzLiveStatus : _global.acaxiaLiveStatus;
-    return statuses[widget.memberKey];
+    return _global.liveStatusOf(widget.group)[widget.memberKey];
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = AppColors.group(_isHoneyz);
-    final themeColorDark = AppColors.groupDark(_isHoneyz);
+    final themeColor = AppColors.group(widget.group);
+    final themeColorDark = AppColors.groupDark(widget.group);
 
     return Scaffold(
       backgroundColor: context.bg,
@@ -215,7 +212,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    _isHoneyz ? 'HONEYZ' : 'ACAXIA',
+                    widget.group.labelEn,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -236,7 +233,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${_isHoneyz ? "허니즈" : "아카시아"} 소속',
+                  '${widget.group.label} 소속',
                   style: TextStyle(
                     fontSize: 14,
                     color: context.textSub,
@@ -403,7 +400,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
           child: FollowerTrendChart(
             history: history,
             color: themeColor,
-            colorDark: AppColors.groupDark(_isHoneyz),
+            colorDark: AppColors.groupDark(widget.group),
           ),
         );
       },
@@ -460,7 +457,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   child: PeakViewerChart(
                     sessions: all,
                     color: themeColor,
-                    colorDark: AppColors.groupDark(_isHoneyz),
+                    colorDark: AppColors.groupDark(widget.group),
                   ),
                 ),
               Container(

@@ -110,9 +110,9 @@ void main() {
         expect(js.name, dart.name,
             reason:
                 '[${dart.key}] name 불일치: Dart "${dart.name}" vs JS "${js.name}"');
-        expect(js.group, dart.group,
+        expect(js.group, dart.group.id,
             reason:
-                '[${dart.key}] group 불일치: Dart "${dart.group}" vs JS "${js.group}"');
+                '[${dart.key}] group 불일치: Dart "${dart.group.id}" vs JS "${js.group}"');
         expect(js.broadcastId, dart.chzzkBroadcastId,
             reason: '[${dart.key}] broadcastId 불일치: '
                 'Dart "${dart.chzzkBroadcastId}" vs JS "${js.broadcastId}"');

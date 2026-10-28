@@ -1,5 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
@@ -21,10 +22,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
     final globalController = Get.find<GlobalController>();
 
     return Obx(() {
-      final isHoneyz = globalController.selectedGroup.value == 'honeyz';
-      final themeColor = AppColors.group(isHoneyz);
-      final themeColorDark = AppColors.groupDark(isHoneyz);
-      final group = globalController.selectedGroup.value;
+      final group = globalController.currentGroup;
+      final themeColor = AppColors.group(group);
+      final themeColorDark = AppColors.groupDark(group);
       final members = globalController.membersOf(group);
       // 카탈로그가 순서·구성의 단일 소스이고, URL은 같은 순서로 펼쳐져 온다.
       // 지연 빌더(SliverChildBuilderDelegate) 안에서 읽으면 Obx가 스케줄 갱신을
@@ -51,14 +51,14 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
         ),
         child: RefreshIndicator(
           color: themeColorDark,
-          onRefresh: () => _onRefresh(globalController, isHoneyz),
+          onRefresh: () => _onRefresh(globalController, group),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               // 헤더
               SliverToBoxAdapter(
                 child: _buildHeader(
-                    isHoneyz, themeColor, themeColorDark, members.length),
+                    group, themeColor, themeColorDark, members.length),
               ),
               // 불러오는 중·실패는 "스케줄 등록 전" 카드 대신 상태를 그대로 알린다.
               if (!hasAny && status != LoadStatus.loaded)
@@ -66,8 +66,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                   hasScrollBody: false,
                   child: status == LoadStatus.failed
                       // 글자용 톤 — acaxiaDark는 흰 배경 대비가 낮다(group_page와 동일).
-                      ? _buildLoadFailed(globalController,
-                          isHoneyz ? AppColors.honeyzDark : context.acaxiaInk)
+                      ? _buildLoadFailed(
+                          globalController, context.groupInk(group))
                       : Padding(
                           padding: const EdgeInsets.only(bottom: 100),
                           child: Center(
@@ -109,7 +109,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
   /// 당겨서 새로고침 - 스케줄을 다시 불러옴
   Future<void> _onRefresh(
-      GlobalController globalController, bool isHoneyz) async {
+      GlobalController globalController, Group group) async {
     await globalController.loadScheduleFireStore(forceRefresh: true);
   }
 
@@ -154,7 +154,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
   }
 
   Widget _buildHeader(
-      bool isHoneyz, Color themeColor, Color themeColorDark, int memberCount) {
+      Group group, Color themeColor, Color themeColorDark, int memberCount) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
       child: Column(
@@ -183,9 +183,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Image.asset(
-                      isHoneyz
-                          ? 'assets/honeyz_logo.png'
-                          : 'assets/acaxia_logo.png',
+                      group.logoAsset,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -216,7 +214,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      isHoneyz ? '허니즈' : '아카시아',
+                      group.label,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,

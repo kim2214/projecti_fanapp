@@ -56,7 +56,7 @@ class LiveWidgetService {
       if (status == null || !status.isLive) continue;
       live.add({
         'name': member.name,
-        'group': member.group,
+        'group': member.group.id,
         'title': status.liveTitle ?? '',
         'viewers': status.concurrentUserCount ?? 0,
         'url': member.liveUrl,

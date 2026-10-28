@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 /// 앱 전역에서 쓰이는 커스텀 컬러 단일 정의.
 /// (여러 위젯에 중복돼 있던 그룹 브랜드/시맨틱 컬러를 한 곳으로 통합)
@@ -47,9 +48,15 @@ class AppColors {
     BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 2)),
   ];
 
-  // ── 그룹 헬퍼 (isHoneyz 분기 반복 제거) ──
-  static Color group(bool isHoneyz) => isHoneyz ? honeyz : acaxia;
-  static Color groupDark(bool isHoneyz) => isHoneyz ? honeyzDark : acaxiaDark;
+  // ── 그룹 헬퍼 (그룹 분기 반복 제거) ──
+  static Color group(Group group) => switch (group) {
+        Group.honeyz => honeyz,
+        Group.acaxia => acaxia,
+      };
+  static Color groupDark(Group group) => switch (group) {
+        Group.honeyz => honeyzDark,
+        Group.acaxia => acaxiaDark,
+      };
 
   /// 그룹 브랜드색 면 위의 글자색 (허니즈는 흰색, 아카시아 라일락은 [onAcaxia]).
   static Color onBrand(Color brand) =>
@@ -87,6 +94,12 @@ extension AppColorsX on BuildContext {
   /// 수준이라 글자로 쓰지 않는다 — 라이트는 진한 톤, 다크는 acaxiaText.
   Color get acaxiaInk =>
       isDark ? AppColors.acaxiaText : AppColors.acaxiaTextLight;
+
+  /// 그룹색 글자·아이콘 톤 (흰 배경 위). 아카시아는 [acaxiaInk].
+  Color groupInk(Group group) => switch (group) {
+        Group.honeyz => AppColors.honeyzDark,
+        Group.acaxia => acaxiaInk,
+      };
 
   /// 구분선/연한 보더 (기존 grey[300])
   Color get divider => isDark ? AppColors.darkDivider : AppColors.lightDivider;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/widget/components/live_stats_row.dart';
@@ -24,7 +25,7 @@ class LiveMemberCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = entry.status;
-    final groupColor = AppColors.group(entry.isHoneyz);
+    final groupColor = AppColors.group(entry.group);
     final borderColor = isFavorite
         ? AppColors.favorite.withAlpha(160)
         : AppColors.live.withAlpha(60);
@@ -93,7 +94,7 @@ class LiveMemberCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildGroupBadge(context, entry.isHoneyz, groupColor),
+                          _buildGroupBadge(context, entry.group, groupColor),
                         ],
                       ),
                       if (status.liveCategoryValue?.isNotEmpty == true) ...[
@@ -180,8 +181,7 @@ class LiveMemberCard extends StatelessWidget {
     ));
   }
 
-  Widget _buildGroupBadge(
-      BuildContext context, bool isHoneyz, Color groupColor) {
+  Widget _buildGroupBadge(BuildContext context, Group group, Color groupColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -189,11 +189,11 @@ class LiveMemberCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        isHoneyz ? '허니즈' : '아카시아',
+        group.label,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isHoneyz ? AppColors.honeyzDark : context.acaxiaInk,
+          color: context.groupInk(group),
         ),
       ),
     );

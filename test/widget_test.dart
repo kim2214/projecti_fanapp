@@ -6,6 +6,7 @@ import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 void main() {
   group('LiveCheckModel', () {
@@ -71,7 +72,7 @@ void main() {
     const member = Member(
       key: 'ohwayo',
       name: '오화요',
-      group: 'honeyz',
+      group: Group.honeyz,
       chzzkBroadcastId: 'abc123',
       youtubeChannelId: 'UC123',
     );
@@ -80,8 +81,8 @@ void main() {
       expect(member.profileAssetPath, 'assets/honeyz/ohwayo_profile.png');
     });
 
-    test('isHoneyz / assetName', () {
-      expect(member.isHoneyz, isTrue);
+    test('group / assetName', () {
+      expect(member.group, Group.honeyz);
       expect(member.assetName, 'ohwayo');
     });
   });

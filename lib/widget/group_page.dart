@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -19,7 +20,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
 
   // 로딩 상태 관리 (Rx로 변경하여 Obx에서 감지)
   final RxBool _isLoading = true.obs;
-  String? _lastLoadedGroup;
+  Group? _lastLoadedGroup;
   bool _isLoadingInProgress = false;
 
   @override
@@ -88,12 +89,11 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
     super.build(context);
 
     return Obx(() {
-      final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = AppColors.group(isHoneyz);
+      final group = _globalController.currentGroup;
+      final themeColor = AppColors.group(group);
       // 글자(MEMBERS·카드 그룹명)·새로고침 표시에 쓰인다 — 아카시아는
       // acaxiaDark(흰 배경 대비 1.8:1) 대신 글자용 톤.
-      final themeColorDark =
-          isHoneyz ? AppColors.honeyzDark : context.acaxiaInk;
+      final themeColorDark = context.groupInk(group);
 
       return Container(
         decoration: BoxDecoration(
@@ -108,14 +108,13 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
             stops: const [0.0, 0.4, 1.0],
           ),
         ),
-        child: _buildBody(isHoneyz, themeColor, themeColorDark),
+        child: _buildBody(group, themeColor, themeColorDark),
       );
     });
   }
 
-  Widget _buildBody(bool isHoneyz, Color themeColor, Color themeColorDark) {
-    final members =
-        isHoneyz ? _globalController.honeyz : _globalController.acaxia;
+  Widget _buildBody(Group group, Color themeColor, Color themeColorDark) {
+    final members = _globalController.streamersOf(group);
 
     // 첫 로딩(보여줄 데이터가 아직 없음)일 때만 스피너를 띄운다.
     // 조회에 실패해 members가 비어도 로딩이 끝나면 본문을 그린다 — 이름·프로필은
@@ -144,18 +143,14 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
       );
     }
 
-    return _buildContent(isHoneyz, themeColor, themeColorDark);
+    return _buildContent(group, themeColor, themeColorDark);
   }
 
-  Widget _buildContent(bool isHoneyz, Color themeColor, Color themeColorDark) {
+  Widget _buildContent(Group group, Color themeColor, Color themeColorDark) {
     // 카탈로그(membersOf)가 순서·구성의 단일 소스. 프로필/라이브 상태는 key로 조회.
-    final catalog =
-        _globalController.membersOf(_globalController.selectedGroup.value);
-    final streamers =
-        isHoneyz ? _globalController.honeyz : _globalController.acaxia;
-    final liveStatus = isHoneyz
-        ? _globalController.honeyzLiveStatus
-        : _globalController.acaxiaLiveStatus;
+    final catalog = _globalController.membersOf(group);
+    final streamers = _globalController.streamersOf(group);
+    final liveStatus = _globalController.liveStatusOf(group);
 
     // 데이터가 없는 멤버를 위한 기본값
     final defaultLiveStatus = LiveCheckModel(status: 'CLOSE', liveTitle: null);
@@ -169,8 +164,8 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
         slivers: [
           // 헤더
           SliverToBoxAdapter(
-            child: _buildHeader(
-                isHoneyz, themeColor, themeColorDark, catalog.length),
+            child:
+                _buildHeader(group, themeColor, themeColorDark, catalog.length),
           ),
           // 멤버 그리드
           SliverPadding(
@@ -192,7 +187,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                     memberName: member.name,
                     themeColor: themeColor,
                     themeColorDark: themeColorDark,
-                    isHoneyz: isHoneyz,
+                    group: group,
                   );
                 },
                 childCount: catalog.length,
@@ -205,7 +200,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
   }
 
   Widget _buildHeader(
-      bool isHoneyz, Color themeColor, Color themeColorDark, int memberCount) {
+      Group group, Color themeColor, Color themeColorDark, int memberCount) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
       child: Column(
@@ -233,9 +228,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Image.asset(
-                      isHoneyz
-                          ? 'assets/honeyz_logo.png'
-                          : 'assets/acaxia_logo.png',
+                      group.logoAsset,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -266,7 +259,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      isHoneyz ? '허니즈' : '아카시아',
+                      group.label,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,

@@ -1,3 +1,5 @@
+import 'package:projecti_fan_app/model/group.dart';
+
 /// 멤버의 정적 메타데이터를 한데 묶은 카탈로그 모델.
 /// (이름/에셋/치지직 방송ID/유튜브 채널ID 등 — 여러 병렬 List를 대체)
 ///
@@ -10,8 +12,8 @@ class Member {
   /// 표시 이름 (예: '오화요')
   final String name;
 
-  /// 소속 그룹 ('honeyz' | 'acaxia')
-  final String group;
+  /// 소속 그룹
+  final Group group;
 
   /// 치지직 라이브 상태 폴링용 방송 ID
   final String chzzkBroadcastId;
@@ -33,13 +35,11 @@ class Member {
   /// 프로필 이미지 에셋 경로를 group/key로 만든다.
   /// (Member 인스턴스가 없어도 group·key만 있으면 만들 수 있게 static 제공 —
   ///  에셋 경로 규칙을 이 한 곳에 둔다.)
-  static String profileAssetPathOf(String group, String key) =>
-      'assets/$group/${key}_profile.png';
+  static String profileAssetPathOf(Group group, String key) =>
+      'assets/${group.id}/${key}_profile.png';
 
   /// 프로필 이미지 에셋 경로 (예: 'assets/honeyz/ohwayo_profile.png')
   String get profileAssetPath => profileAssetPathOf(group, key);
-
-  bool get isHoneyz => group == 'honeyz';
 
   /// 치지직 라이브 시청 페이지 URL을 broadcastId로 만든다.
   /// (앱 여러 곳·알림 payload에서 broadcastId만 들고 있어 static으로 제공 —

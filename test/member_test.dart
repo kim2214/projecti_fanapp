@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/model/member.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 void main() {
   const member = Member(
     key: 'ohwayo',
     name: '오화요',
-    group: 'honeyz',
+    group: Group.honeyz,
     chzzkBroadcastId: 'abc123',
     youtubeChannelId: 'UCx',
   );

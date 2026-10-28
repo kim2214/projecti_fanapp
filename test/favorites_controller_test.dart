@@ -4,11 +4,12 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 void main() {
   group('favoritesFirst (홈·통합 LIVE 최애 우선 정렬)', () {
-    List<(String, String)> arrange(
-        FavoritesController c, List<(String, String)> items) {
+    List<(Group, String)> arrange(
+        FavoritesController c, List<(Group, String)> items) {
       return c.favoritesFirst(items, (e) => e.$1, (e) => e.$2);
     }
 
@@ -16,10 +17,10 @@ void main() {
       final c = FavoritesController()
         ..favoriteIds.addAll(['honeyz:damyui', 'honeyz:ohwayo']);
       final result = arrange(c, const [
-        ('honeyz', 'honeychurros'),
-        ('honeyz', 'ohwayo'),
-        ('honeyz', 'ayauke'),
-        ('honeyz', 'damyui'),
+        (Group.honeyz, 'honeychurros'),
+        (Group.honeyz, 'ohwayo'),
+        (Group.honeyz, 'ayauke'),
+        (Group.honeyz, 'damyui'),
       ]);
       expect(result.map((e) => e.$2),
           ['ohwayo', 'damyui', 'honeychurros', 'ayauke']);
@@ -28,16 +29,16 @@ void main() {
     test('같은 key라도 그룹이 다르면 최애가 아니다', () {
       final c = FavoritesController()..favoriteIds.add('acaxia:damyui');
       final result = arrange(c, const [
-        ('honeyz', 'ayauke'),
-        ('honeyz', 'damyui'),
+        (Group.honeyz, 'ayauke'),
+        (Group.honeyz, 'damyui'),
       ]);
       expect(result.map((e) => e.$2), ['ayauke', 'damyui']);
     });
 
     test('최애가 없으면 입력 순서 그대로', () {
       final result = arrange(FavoritesController(), const [
-        ('acaxia', 'hasiyo'),
-        ('honeyz', 'ayauke'),
+        (Group.acaxia, 'hasiyo'),
+        (Group.honeyz, 'ayauke'),
       ]);
       expect(result.map((e) => e.$2), ['hasiyo', 'ayauke']);
     });

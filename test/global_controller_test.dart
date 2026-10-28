@@ -11,6 +11,7 @@ import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/schedule_model.dart';
 import 'package:projecti_fan_app/model/streamer_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 LiveCheckModel _live({String status = 'CLOSE', int? viewers}) =>
     LiveCheckModel(status: status, concurrentUserCount: viewers);
@@ -35,26 +36,26 @@ void main() {
     test('selectGroup은 즉시 반영 + 저장, 다음 실행(restore)에서 복원', () async {
       SharedPreferences.setMockInitialValues({});
       final c = GlobalController();
-      await c.selectGroup('acaxia');
-      expect(c.selectedGroup.value, 'acaxia');
+      await c.selectGroup(Group.acaxia);
+      expect(c.selectedGroup.value, Group.acaxia);
 
       final next = GlobalController(); // 다음 실행을 흉내
-      expect(await next.restoreSelectedGroup(), 'acaxia');
-      expect(next.selectedGroup.value, 'acaxia');
+      expect(await next.restoreSelectedGroup(), Group.acaxia);
+      expect(next.selectedGroup.value, Group.acaxia);
     });
 
     test('저장값이 없으면(첫 실행) null — 그룹 선택 화면으로', () async {
       SharedPreferences.setMockInitialValues({});
       final c = GlobalController();
       expect(await c.restoreSelectedGroup(), isNull);
-      expect(c.selectedGroup.value, '');
+      expect(c.selectedGroup.value, isNull);
     });
 
     test('저장값이 유효한 그룹이 아니면 복원하지 않고 null', () async {
       SharedPreferences.setMockInitialValues({'selected_group': 'oldgroup'});
       final c = GlobalController();
       expect(await c.restoreSelectedGroup(), isNull);
-      expect(c.selectedGroup.value, '');
+      expect(c.selectedGroup.value, isNull);
     });
   });
 
@@ -74,8 +75,8 @@ void main() {
 
       expect(
           result.map((e) => e.memberName).toList(), ['담유이', '포포포포', '허니츄러스']);
-      expect(result.first.group, 'honeyz');
-      expect(result[1].group, 'acaxia');
+      expect(result.first.group, Group.honeyz);
+      expect(result[1].group, Group.acaxia);
     });
 
     test('폴링 전(빈 맵)이면 빈 목록 — 크래시 없음', () {
@@ -131,7 +132,7 @@ void main() {
         },
       };
 
-      final result = c.liveStatusFromAggregate('honeyz', members);
+      final result = c.liveStatusFromAggregate(Group.honeyz, members);
 
       // 문서에 있는 멤버만 맵에 들어간다 (없음 = 소비 측에서 비방송 처리)
       expect(result.length, 1);
@@ -148,13 +149,13 @@ void main() {
         'ayauke': {'status': 'OPEN', 'concurrentUserCount': 500.0},
       };
 
-      final result = c.liveStatusFromAggregate('honeyz', members);
+      final result = c.liveStatusFromAggregate(Group.honeyz, members);
       expect(result['ayauke']!.concurrentUserCount, 500);
     });
 
     test('빈 맵이면 빈 결과', () {
       final c = GlobalController();
-      final result = c.liveStatusFromAggregate('acaxia', const {});
+      final result = c.liveStatusFromAggregate(Group.acaxia, const {});
       expect(result, isEmpty);
     });
 
@@ -164,7 +165,7 @@ void main() {
       final members = <String, dynamic>{
         'popopopo': {'status': 'OPEN'},
       };
-      final result = c.liveStatusFromAggregate('honeyz', members);
+      final result = c.liveStatusFromAggregate(Group.honeyz, members);
       expect(result, isEmpty);
     });
   });
@@ -193,8 +194,8 @@ void main() {
       };
 
       final caches = c.liveCachesFromAggregate(members)!;
-      expect(caches.honeyz['damyui']!.isLive, isTrue);
-      expect(caches.acaxia['popopopo']!.isLive, isFalse);
+      expect(caches[Group.honeyz]!['damyui']!.isLive, isTrue);
+      expect(caches[Group.acaxia]!['popopopo']!.isLive, isFalse);
     });
   });
 
@@ -295,13 +296,13 @@ void main() {
         'honeychurros': LiveCheckModel(status: 'OPEN'),
       };
 
-      final result = c.endedTodaySessions('honeyz', now: now);
+      final result = c.endedTodaySessions(Group.honeyz, now: now);
       expect(result.map((e) => e.member.name).toList(), ['담유이', '아야']);
     });
 
     test('기록이 없으면 빈 목록 — 구버전 서버/신규 배포 직후', () {
       final c = GlobalController();
-      expect(c.endedTodaySessions('acaxia', now: now), isEmpty);
+      expect(c.endedTodaySessions(Group.acaxia, now: now), isEmpty);
     });
   });
 
@@ -314,7 +315,7 @@ void main() {
         'ohwayo': ScheduleModel(scheduleURL: 'https://example.com/ohwayo.png'),
       };
 
-      final urls = c.scheduleImageUrlsOf('honeyz');
+      final urls = c.scheduleImageUrlsOf(Group.honeyz);
 
       // 앞의 멤버가 빠져도 뒤 멤버들이 밀리지 않아야 한다.
       expect(urls.length, GlobalController.honeyzMembers.length);
@@ -333,12 +334,12 @@ void main() {
         'honeychurros': ScheduleModel(scheduleURL: null),
       };
 
-      expect(c.scheduleImageUrlsOf('honeyz').first, '');
+      expect(c.scheduleImageUrlsOf(Group.honeyz).first, '');
     });
 
     test('로드 전(빈 캐시)이면 전원 빈 문자열 — 크래시 없음', () {
       final c = GlobalController();
-      final urls = c.scheduleImageUrlsOf('acaxia');
+      final urls = c.scheduleImageUrlsOf(Group.acaxia);
 
       expect(urls.length, GlobalController.acaxiaMembers.length);
       expect(urls.every((u) => u.isEmpty), isTrue);
@@ -351,7 +352,8 @@ void main() {
         'popopopo': ScheduleModel(scheduleURL: 'https://example.com/popo.png'),
       };
 
-      expect(c.scheduleImageUrlsOf('honeyz').every((u) => u.isEmpty), isTrue);
+      expect(
+          c.scheduleImageUrlsOf(Group.honeyz).every((u) => u.isEmpty), isTrue);
     });
   });
 
@@ -363,7 +365,7 @@ void main() {
         'ohwayo': _streamer(birthday: '06-15'),
       };
 
-      final result = c.upcomingBirthdays('honeyz');
+      final result = c.upcomingBirthdays(Group.honeyz);
       expect(result.length, 1);
       expect(result.first.memberName, '오화요');
       expect(result.first.assetPath, 'assets/honeyz/ohwayo_profile.png');
@@ -378,7 +380,7 @@ void main() {
         'damyui': _streamer(birthday: '06-15'),
       };
 
-      final result = c.upcomingBirthdays('honeyz');
+      final result = c.upcomingBirthdays(Group.honeyz);
       // 정확한 일수는 오늘 날짜에 따라 다르지만, 정렬 순서는 항상 비내림차순이어야 한다.
       for (var i = 0; i + 1 < result.length; i++) {
         expect(result[i].daysUntil <= result[i + 1].daysUntil, isTrue);
@@ -387,7 +389,7 @@ void main() {
 
     test('스트리머 데이터가 없으면 빈 목록', () {
       final c = GlobalController();
-      expect(c.upcomingBirthdays('honeyz'), isEmpty);
+      expect(c.upcomingBirthdays(Group.honeyz), isEmpty);
     });
   });
 

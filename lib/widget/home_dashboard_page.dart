@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/birthday_entry.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/controllers/review_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
@@ -80,9 +81,9 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     super.build(context);
 
     return Obx(() {
-      final isHoneyz = _globalController.selectedGroup.value == 'honeyz';
-      final themeColor = AppColors.group(isHoneyz);
-      final themeColorDark = AppColors.groupDark(isHoneyz);
+      final group = _globalController.currentGroup;
+      final themeColor = AppColors.group(group);
+      final themeColorDark = AppColors.groupDark(group);
 
       return Container(
         decoration: BoxDecoration(
@@ -104,7 +105,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: _buildHeader(isHoneyz, themeColor, themeColorDark),
+                child: _buildHeader(group, themeColor, themeColorDark),
               ),
               // 지금 방송 중
               SliverToBoxAdapter(
@@ -119,8 +120,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               SliverToBoxAdapter(
                 // 섹션별 Obx — 라이브 맵이 2분마다 바뀌어도 헤더·배너·영상은 다시 빌드하지
                 // 않는다. 바깥 Obx는 선택 그룹만 구독한다.
-                child: Obx(() =>
-                    _buildLiveSection(isHoneyz, themeColor, themeColorDark)),
+                child: Obx(
+                    () => _buildLiveSection(group, themeColor, themeColorDark)),
               ),
               // 오늘 방송했어요 (기록 없으면 통째로 생략)
               SliverToBoxAdapter(
@@ -158,7 +159,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     });
   }
 
-  Widget _buildHeader(bool isHoneyz, Color themeColor, Color themeColorDark) {
+  Widget _buildHeader(Group group, Color themeColor, Color themeColorDark) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
       child: Row(
@@ -182,9 +183,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               child: Padding(
                 padding: const EdgeInsets.all(7),
                 child: Image.asset(
-                  isHoneyz
-                      ? 'assets/honeyz_logo.png'
-                      : 'assets/acaxia_logo.png',
+                  group.logoAsset,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -214,7 +213,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  isHoneyz ? '허니즈' : '아카시아',
+                  group.label,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -304,12 +303,9 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   // ---------------- 지금 방송 중 ----------------
 
   Widget _buildLiveSection(
-      bool isHoneyz, Color themeColor, Color themeColorDark) {
-    final liveStatus = isHoneyz
-        ? _globalController.honeyzLiveStatus
-        : _globalController.acaxiaLiveStatus;
-    final members =
-        _globalController.membersOf(_globalController.selectedGroup.value);
+      Group group, Color themeColor, Color themeColorDark) {
+    final liveStatus = _globalController.liveStatusOf(group);
+    final members = _globalController.membersOf(group);
 
     // 아직 라이브 상태를 불러오는 중 (폴링 전이면 맵이 비어 있음)
     if (liveStatus.isEmpty) {
@@ -342,8 +338,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
     // 마지막 갱신에서 상태를 하나도 받지 못했다(오프라인 등) — 캐시는 직전 값이거나
     // 전원 CLOSE라 "방송 중인 멤버가 없어요"는 사실이 아닐 수 있다.
-    final unavailable = _globalController.liveUnavailableGroups
-        .contains(_globalController.selectedGroup.value);
+    final unavailable = _globalController.liveUnavailableGroups.contains(group);
 
     if (liveMembers.isEmpty && unavailable) {
       return Container(
@@ -612,7 +607,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   /// 바로 알 수 있게 하고, 탭하면 치지직 채널 다시보기 목록으로 이동한다
   /// (방금 끝난 방송이 맨 위에 온다). 세션 상세는 멤버 탭의 프로필에서 본다.
   Widget _buildEndedTodaySection(Color themeColor, Color themeColorDark) {
-    final group = _globalController.selectedGroup.value;
+    final group = _globalController.currentGroup;
     final entries = _globalController.endedTodaySessions(group);
     if (entries.isEmpty) return const SizedBox.shrink();
 
@@ -728,7 +723,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   // ---------------- 다가오는 생일 ----------------
 
   Widget _buildBirthdaySection(Color themeColor, Color themeColorDark) {
-    final group = _globalController.selectedGroup.value;
+    final group = _globalController.currentGroup;
     final birthdays = _globalController.upcomingBirthdays(group);
 
     // 생일 데이터가 없으면 섹션 통째로 생략

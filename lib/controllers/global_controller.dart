@@ -12,6 +12,7 @@ import 'package:projecti_fan_app/model/birthday_entry.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_member_entry.dart';
 import 'package:projecti_fan_app/model/follower_point_model.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/utils/timed_cache.dart';
 import 'package:projecti_fan_app/model/member.dart';
@@ -98,7 +99,13 @@ class GlobalController extends GetxController {
     _stopLiveRefreshTimer();
   }
 
-  RxString selectedGroup = ''.obs;
+  /// 선택된 그룹. 그룹 선택(첫 실행) 또는 복원 전에는 null.
+  final Rxn<Group> selectedGroup = Rxn<Group>();
+
+  /// 화면용 현재 그룹. 그룹을 쓰는 화면(기본 화면 이하)은 그룹 선택·복원 뒤에만
+  /// 열리므로 null일 일이 없다 — 만약을 대비해 허니즈로 그린다. Obx 안에서
+  /// 읽으면 [selectedGroup]을 구독한다. 데이터 로드는 null을 직접 검사한다.
+  Group get currentGroup => selectedGroup.value ?? Group.honeyz;
 
   // 마지막 선택 그룹 영속화 키 — 다음 실행 스플래시에서 복원해 그룹 선택을 건너뛴다.
   static const String _groupPrefsKey = 'selected_group';
@@ -106,11 +113,11 @@ class GlobalController extends GetxController {
   /// 그룹 선택/전환 단일 진입점 — 값 반영과 기기 영속화를 함께 한다.
   /// 값을 먼저 반영하므로 저장이 실패해도 이번 실행 동작에는 영향이 없다
   /// (다음 실행에서 그룹 선택 화면이 다시 뜰 뿐이다).
-  Future<void> selectGroup(String group) async {
+  Future<void> selectGroup(Group group) async {
     selectedGroup.value = group;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_groupPrefsKey, group);
+      await prefs.setString(_groupPrefsKey, group.id);
     } catch (_) {
       // 저장 실패는 무시.
     }
@@ -119,12 +126,12 @@ class GlobalController extends GetxController {
   /// 저장된 마지막 선택 그룹을 복원한다. 유효한 그룹이면 [selectedGroup]에
   /// 반영하고 그 값을, 없거나(첫 실행) 유효하지 않으면(읽기 실패 포함) null을
   /// 반환해 호출부(스플래시)가 그룹 선택 화면으로 보내게 한다.
-  Future<String?> restoreSelectedGroup() async {
+  Future<Group?> restoreSelectedGroup() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getString(_groupPrefsKey);
-      if (saved != 'honeyz' && saved != 'acaxia') return null;
-      selectedGroup.value = saved!;
+      final saved = Group.fromId(prefs.getString(_groupPrefsKey));
+      if (saved == null) return null;
+      selectedGroup.value = saved;
       return saved;
     } catch (_) {
       return null;
@@ -140,7 +147,7 @@ class GlobalController extends GetxController {
   /// 그룹별 스케줄 로드 상태. 빈 캐시만으로는 "로딩 중·불러오기 실패·문서 없음
   /// (등록 전)"을 구분할 수 없어, 오프라인에서도 전원 "등록 전"으로 보였다.
   /// 키가 없으면 아직 요청 전(스플래시가 곧 시작한다) — 로딩 중으로 다룬다.
-  final RxMap<String, LoadStatus> scheduleStatus = <String, LoadStatus>{}.obs;
+  final RxMap<Group, LoadStatus> scheduleStatus = <Group, LoadStatus>{}.obs;
 
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
@@ -155,7 +162,7 @@ class GlobalController extends GetxController {
   /// 마지막 라이브 갱신에서 상태를 하나도 받지 못한 그룹 (서버 집계·직접 폴링
   /// 모두 실패 — 오프라인 등). 이때 캐시는 직전 값이거나(있으면) 전원 CLOSE라,
   /// 화면이 "방송 중인 멤버가 없어요"를 사실처럼 보여주지 않도록 참고한다.
-  final RxSet<String> liveUnavailableGroups = <String>{}.obs;
+  final RxSet<Group> liveUnavailableGroups = <Group>{}.obs;
 
   // 멤버별 마지막 방송 세션 요약 (서버 집계 문서의 lastSessions). 홈 "오늘
   // 방송했어요" 섹션용 — 서버가 종료 시 함께 써주므로 추가 읽기가 없다.
@@ -179,31 +186,31 @@ class GlobalController extends GetxController {
     Member(
         key: 'honeychurros',
         name: '허니츄러스',
-        group: 'honeyz',
+        group: Group.honeyz,
         chzzkBroadcastId: 'c0d9723cbb75dc223c6aa8a9d4f56002',
         youtubeChannelId: 'UCkQFRBUPh5mcF1kca4f_DvQ'),
     Member(
         key: 'ayauke',
         name: '아야',
-        group: 'honeyz',
+        group: Group.honeyz,
         chzzkBroadcastId: 'abe8aa82baf3d3ef54ad8468ee73e7fc',
         youtubeChannelId: 'UCZcjMonq-hln97npqkYdHjQ'),
     Member(
         key: 'damyui',
         name: '담유이',
-        group: 'honeyz',
+        group: Group.honeyz,
         chzzkBroadcastId: 'b82e8bc2505e37156b2d1140ba1fc05c',
         youtubeChannelId: 'UC_XRkKvydFB_wX1dlr7OHrg'),
     Member(
         key: 'ddddragon',
         name: '디디디용',
-        group: 'honeyz',
+        group: Group.honeyz,
         chzzkBroadcastId: '798e100206987b59805cfb75f927e965',
         youtubeChannelId: 'UCmNurVU0rTyYqU4W4N0Mbgg'),
     Member(
         key: 'ohwayo',
         name: '오화요',
-        group: 'honeyz',
+        group: Group.honeyz,
         chzzkBroadcastId: '65a53076fe1a39636082dd6dba8b8a4b',
         youtubeChannelId: 'UC1RdgfinRXTboGZLZ4xG5Aw'),
   ];
@@ -212,60 +219,69 @@ class GlobalController extends GetxController {
     Member(
         key: 'popopopo',
         name: '포포포포',
-        group: 'acaxia',
+        group: Group.acaxia,
         chzzkBroadcastId: '3e3781d3bd20dadc2f6f6d5d30091195',
         youtubeChannelId: 'UCXE5gQZ5WIbtT6FJtG2g5ag'),
     Member(
         key: 'violetaMone',
         name: '비올레타 모네',
-        group: 'acaxia',
+        group: Group.acaxia,
         chzzkBroadcastId: '5c897b3e639045ca6e314bbaff991f73',
         youtubeChannelId: 'UC0dF0Yr7PVddxuIHp_xsFZg'),
     Member(
         key: 'blaireRose',
         name: '블레어 로즈',
-        group: 'acaxia',
+        group: Group.acaxia,
         chzzkBroadcastId: 'dae2de8eaa005a59163f2e4c045e1aa1',
         youtubeChannelId: 'UC4RqkMZg4xRy0gWizubvPLw'),
     Member(
         key: 'hasiyo',
         name: '하시요',
-        group: 'acaxia',
+        group: Group.acaxia,
         chzzkBroadcastId: 'b33c957eac9335d38e4043c3dca97675',
         youtubeChannelId: 'UCkmb3uZxHAx10m7QR8XJSpQ'),
     Member(
         key: 'ryushiho',
         name: '류시호',
-        group: 'acaxia',
+        group: Group.acaxia,
         chzzkBroadcastId: 'f36320c432d9f06095ce2cfbbf681c26',
         youtubeChannelId: 'UC-9fPSlVjMqG3zwbRT2XhXA'),
   ];
 
   /// 그룹별 멤버 목록
-  List<Member> membersOf(String group) =>
-      group == 'honeyz' ? honeyzMembers : acaxiaMembers;
+  List<Member> membersOf(Group group) => switch (group) {
+        Group.honeyz => honeyzMembers,
+        Group.acaxia => acaxiaMembers,
+      };
+
+  /// 선택 그룹의 멤버 목록 (선택 전이면 빈 목록)
+  List<Member> get selectedMembers {
+    final group = selectedGroup.value;
+    return group == null ? const [] : membersOf(group);
+  }
 
   /// 두 그룹 합본 (통합 LIVE 등)
   List<Member> get allMembers => [...honeyzMembers, ...acaxiaMembers];
 
   /// 캐시된 멤버 프로필 (Firestore 문서). 아직 로드 전이거나 문서가 없으면 null.
-  StreamerModel? streamerOf(String group, String key) =>
-      _streamerCacheOf(group)[key];
+  StreamerModel? streamerOf(Group group, String key) => streamersOf(group)[key];
 
-  /// 그룹별 스케줄 컬렉션 이름. (멤버/스트리머 컬렉션 이름은 그룹 이름과 동일)
-  static const Map<String, String> _scheduleCollection = {
-    'honeyz': 'schedule',
-    'acaxia': 'schedule_acaxia',
-  };
+  RxMap<String, ScheduleModel> _scheduleCacheOf(Group group) => switch (group) {
+        Group.honeyz => honeyzSchedules,
+        Group.acaxia => acaxiaSchedules,
+      };
 
-  RxMap<String, ScheduleModel> _scheduleCacheOf(String group) =>
-      group == 'honeyz' ? honeyzSchedules : acaxiaSchedules;
+  /// 그룹의 멤버 프로필 캐시 (member.key → 프로필, Obx 구독용)
+  RxMap<String, StreamerModel> streamersOf(Group group) => switch (group) {
+        Group.honeyz => honeyz,
+        Group.acaxia => acaxia,
+      };
 
-  RxMap<String, StreamerModel> _streamerCacheOf(String group) =>
-      group == 'honeyz' ? honeyz : acaxia;
-
-  RxMap<String, LiveCheckModel> _liveCacheOf(String group) =>
-      group == 'honeyz' ? honeyzLiveStatus : acaxiaLiveStatus;
+  /// 그룹의 라이브 상태 캐시 (member.key → 상태, Obx 구독용)
+  RxMap<String, LiveCheckModel> liveStatusOf(Group group) => switch (group) {
+        Group.honeyz => honeyzLiveStatus,
+        Group.acaxia => acaxiaLiveStatus,
+      };
 
   /// 컬렉션의 모든 문서를 문서 ID(= 멤버 key) 기준 Map으로 반환.
   /// 멤버-문서 매칭을 O(n²) 중첩 루프 대신 O(1) 조회로 처리하기 위함.
@@ -327,8 +343,8 @@ class GlobalController extends GetxController {
   Future<Map<String, ScheduleModel>> loadScheduleFireStore(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
-    final collection = _scheduleCollection[group];
-    if (collection == null) return {};
+    if (group == null) return {};
+    final collection = group.scheduleCollection;
 
     final cache = _scheduleCacheOf(group);
     if (forceRefresh || cache.isEmpty) {
@@ -356,12 +372,11 @@ class GlobalController extends GetxController {
   Future<Map<String, StreamerModel>> loadStreamerFireStore(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
-    if (group != 'honeyz' && group != 'acaxia') return {};
+    if (group == null) return {};
 
-    final cache = _streamerCacheOf(group);
+    final cache = streamersOf(group);
     if (forceRefresh || cache.isEmpty) {
-      // 스트리머 컬렉션 이름은 그룹 이름과 동일하다.
-      final docsByKey = await _fetchDocsByKey(group);
+      final docsByKey = await _fetchDocsByKey(group.streamerCollection);
       // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
       if (docsByKey != null) {
         // member.key로 조회하는 맵으로 보관한다. 문서가 없는 멤버는 맵에 없을 뿐이며,
@@ -496,31 +511,31 @@ class GlobalController extends GetxController {
   Future<Map<String, LiveCheckModel>> liveCheck(
       {bool forceRefresh = false}) async {
     final group = selectedGroup.value;
-    if (group != 'honeyz' && group != 'acaxia') return {};
+    if (group == null) return {};
 
-    final cache = _liveCacheOf(group);
+    final cache = liveStatusOf(group);
     if (forceRefresh || cache.isEmpty) {
       await refreshLiveStatus();
     }
     return cache;
   }
 
-  // 진행 중인 라이브 갱신과 그 범위(그룹 key, 양쪽이면 _allGroups).
+  // 진행 중인 라이브 갱신과 그 범위(그룹, 전체면 null).
   // 홈 진입·LIVE 탭·2분 타이머·포그라운드 복귀·위젯 갱신 푸시가 겹치면 같은
   // 요청이 여러 벌 나가고, 늦게 끝난 직접 폴링이 그 사이 받은 더 새로운
   // 서버 집계를 덮어썼다 — 범위가 겹치면 진행 중인 갱신을 공유한다.
-  static const String _allGroups = '*';
   Future<void>? _liveRefreshInFlight;
-  String _liveRefreshScope = '';
+  Group? _liveRefreshScope;
 
   /// 현재 선택된 그룹의 라이브 상태를 새로 조회해서 교체.
   /// 서버 집계 문서는 양쪽 그룹을 한 번에 채우므로, 성공 시 그대로 반환하고
   /// 실패(문서 없음/오래됨/오류) 시에만 선택 그룹을 직접 폴링한다.
   Future<void> refreshLiveStatus() {
     final group = selectedGroup.value;
+    if (group == null) return Future.value();
     final inFlight = _liveRefreshInFlight;
     if (inFlight != null &&
-        (_liveRefreshScope == _allGroups || _liveRefreshScope == group)) {
+        (_liveRefreshScope == null || _liveRefreshScope == group)) {
       return inFlight;
     }
     return _trackLiveRefresh(group, () async {
@@ -533,20 +548,17 @@ class GlobalController extends GetxController {
   /// 서버 집계 우선, 실패 시 두 그룹을 직접 폴링으로 폴백.
   Future<void> refreshAllLiveStatus() {
     final inFlight = _liveRefreshInFlight;
-    if (inFlight != null && _liveRefreshScope == _allGroups) return inFlight;
-    return _trackLiveRefresh(_allGroups, () async {
+    if (inFlight != null && _liveRefreshScope == null) return inFlight;
+    return _trackLiveRefresh(null, () async {
       // 단일 그룹 갱신이 진행 중이면 끝난 뒤 시작해 결과 순서가 뒤집히지 않게 한다.
       if (inFlight != null) await inFlight.catchError((Object _) {});
       if (await _refreshFromServerAggregate()) return;
-      await Future.wait([
-        _refreshGroupLiveStatus('honeyz'),
-        _refreshGroupLiveStatus('acaxia'),
-      ]);
+      await Future.wait(Group.values.map(_refreshGroupLiveStatus));
     });
   }
 
   Future<void> _trackLiveRefresh(
-      String scope, Future<void> Function() refresh) {
+      Group? scope, Future<void> Function() refresh) {
     late final Future<void> tracked;
     tracked = refresh().whenComplete(() {
       if (identical(_liveRefreshInFlight, tracked)) {
@@ -587,8 +599,9 @@ class GlobalController extends GetxController {
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
       final caches = liveCachesFromAggregate(members);
       if (caches == null) return false;
-      _liveCacheOf('honeyz').value = caches.honeyz;
-      _liveCacheOf('acaxia').value = caches.acaxia;
+      for (final group in Group.values) {
+        liveStatusOf(group).value = caches[group]!;
+      }
       if (liveUnavailableGroups.isNotEmpty) liveUnavailableGroups.clear();
       lastSessions.value = lastSessionsFromAggregate(data['lastSessions']);
       _pushLiveWidget();
@@ -621,18 +634,20 @@ class GlobalController extends GetxController {
         now.difference(updatedAt.toDate()) > maxAge;
   }
 
-  /// 서버 집계 members를 두 그룹의 캐시 값으로 변환한다. 어느 한 그룹도 채우지
+  /// 서버 집계 members를 그룹별 캐시 값으로 변환한다. 어느 한 그룹이라도 채우지
   /// 못하면(문서 초기화 직후·형식 오류) null — 홈은 "빈 맵 = 로딩 중"으로
   /// 그리므로, 빈 집계를 성공으로 취급해 캐시를 {}로 덮으면 직접 폴링 폴백이
   /// 막혀 스피너가 영영 사라지지 않는다. 정상 집계는 서버가 매 주기 멤버 전원을
-  /// 기록하므로 두 그룹 모두 비지 않는다. (순수 변환 — 테스트 대상)
+  /// 기록하므로 어느 그룹도 비지 않는다. (순수 변환 — 테스트 대상)
   @visibleForTesting
-  ({Map<String, LiveCheckModel> honeyz, Map<String, LiveCheckModel> acaxia})?
-      liveCachesFromAggregate(Map<String, dynamic> members) {
-    final honeyz = liveStatusFromAggregate('honeyz', members);
-    final acaxia = liveStatusFromAggregate('acaxia', members);
-    if (honeyz.isEmpty || acaxia.isEmpty) return null;
-    return (honeyz: honeyz, acaxia: acaxia);
+  Map<Group, Map<String, LiveCheckModel>>? liveCachesFromAggregate(
+      Map<String, dynamic> members) {
+    final caches = {
+      for (final group in Group.values)
+        group: liveStatusFromAggregate(group, members),
+    };
+    if (caches.values.any((c) => c.isEmpty)) return null;
+    return caches;
   }
 
   /// 서버 집계 members 맵을 `member.key → 상태` 맵으로 변환한다.
@@ -641,7 +656,7 @@ class GlobalController extends GetxController {
   /// (Firestore 읽기와 분리된 순수 변환 — 테스트 대상)
   @visibleForTesting
   Map<String, LiveCheckModel> liveStatusFromAggregate(
-      String group, Map<String, dynamic> members) {
+      Group group, Map<String, dynamic> members) {
     return {
       for (final member in membersOf(group))
         if (members[member.key] is Map)
@@ -652,15 +667,13 @@ class GlobalController extends GetxController {
 
   /// 지정한 그룹의 라이브 상태를 직접 폴링해 갱신한다 ([mergeDirectPoll] 참고).
   /// 전원 실패면 [liveUnavailableGroups]에 표시하고, 위젯은 기존 스냅샷을 둔다.
-  Future<void> _refreshGroupLiveStatus(String group) async {
-    if (group != 'honeyz' && group != 'acaxia') return;
-
+  Future<void> _refreshGroupLiveStatus(Group group) async {
     final members = membersOf(group);
     final results = await Future.wait(
       members.map((m) => _fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
-    final cache = _liveCacheOf(group);
+    final cache = liveStatusOf(group);
     final merged = mergeDirectPoll(members, results, cache);
     cache.value = merged.statuses;
     if (merged.allFailed) {
@@ -700,8 +713,8 @@ class GlobalController extends GetxController {
   /// 홈스크린 위젯에 현재 라이브 상태(양 그룹 합본)를 반영한다. 라이브 캐시가
   /// 바뀌는 두 경로(서버 집계·직접 폴링) 끝에서 호출. 실패는 서비스가 흡수한다.
   void _pushLiveWidget() {
-    unawaited(
-        LiveWidgetService.push({...honeyzLiveStatus, ...acaxiaLiveStatus}));
+    unawaited(LiveWidgetService.push(
+        {for (final g in Group.values) ...liveStatusOf(g)}));
   }
 
   /// 두 그룹을 통합한 현재 방송 중(LIVE) 멤버 목록.
@@ -725,8 +738,9 @@ class GlobalController extends GetxController {
       }
     }
 
-    collect(honeyzMembers, honeyzLiveStatus);
-    collect(acaxiaMembers, acaxiaLiveStatus);
+    for (final group in Group.values) {
+      collect(membersOf(group), liveStatusOf(group));
+    }
 
     // 시청자 수 내림차순 (null은 0으로 취급해 뒤로)
     entries.sort((a, b) => (b.status.concurrentUserCount ?? 0)
@@ -740,7 +754,7 @@ class GlobalController extends GetxController {
   /// 항상 `membersOf(group)`과 일치한다 — 소비 측이 인덱스로 멤버 이름과 짝지어도
   /// 어긋나지 않는다. (문서 없는 멤버를 걸러낸 리스트를 쓰면 그 뒤 멤버들의 이름이
   ///  한 칸씩 밀려 다른 멤버의 스케줄에 엉뚱한 이름이 붙는다.)
-  List<String> scheduleImageUrlsOf(String group) {
+  List<String> scheduleImageUrlsOf(Group group) {
     final cache = _scheduleCacheOf(group);
     return [
       for (final member in membersOf(group))
@@ -764,10 +778,10 @@ class GlobalController extends GetxController {
   /// 홈 "오늘 방송했어요": 오늘(기기 로컬 날짜) 방송을 마쳤고 지금은 방송 중이
   /// 아닌 멤버를 종료 시각 내림차순으로 반환한다. [now]는 테스트용 주입.
   List<({Member member, LiveSessionModel session})> endedTodaySessions(
-      String group,
+      Group group,
       {DateTime? now}) {
     final today = now ?? DateTime.now();
-    final live = _liveCacheOf(group);
+    final live = liveStatusOf(group);
     final result = <({Member member, LiveSessionModel session})>[];
     for (final member in membersOf(group)) {
       final session = lastSessions[member.key];
@@ -788,8 +802,8 @@ class GlobalController extends GetxController {
 
   /// 지정 그룹의 다가오는 생일 (가까운 순). birthday 미설정 멤버는 제외.
   /// Member(이름/에셋)와 StreamerModel(생일)을 member.key로 매칭한다.
-  List<BirthdayEntry> upcomingBirthdays(String group) {
-    final streamers = group == 'honeyz' ? honeyz : acaxia;
+  List<BirthdayEntry> upcomingBirthdays(Group group) {
+    final streamers = streamersOf(group);
 
     final entries = <BirthdayEntry>[];
     for (final member in membersOf(group)) {

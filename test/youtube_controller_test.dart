@@ -9,6 +9,7 @@ import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/model/youtube_video_model.dart';
 import 'package:projecti_fan_app/services/youtube_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:projecti_fan_app/model/group.dart';
 
 /// 채널별 응답을 테스트가 직접 완료시키는 가짜 서비스.
 class _FakeYouTubeService implements YouTubeService {
@@ -30,7 +31,7 @@ List<YouTubeVideoModel> _videos(String prefix) =>
     [YouTubeVideoModel(videoId: '${prefix}_1', title: '$prefix 영상')];
 
 void main() {
-  YouTubeController controllerForGroup(String group) {
+  YouTubeController controllerForGroup(Group group) {
     final global = GlobalController();
     global.selectedGroup.value = group;
     return YouTubeController(globalController: global);
@@ -38,18 +39,18 @@ void main() {
 
   group('effectiveSelectedMemberKey', () {
     test('선택 미설정이면 그룹의 첫 번째 멤버', () {
-      final c = controllerForGroup('honeyz');
+      final c = controllerForGroup(Group.honeyz);
       expect(c.effectiveSelectedMemberKey, 'honeychurros');
     });
 
     test('현재 그룹에 없는 키가 선택돼 있으면 첫 번째 멤버로 폴백', () {
-      final c = controllerForGroup('honeyz');
+      final c = controllerForGroup(Group.honeyz);
       c.selectedMemberKey.value = 'nonexistent';
       expect(c.effectiveSelectedMemberKey, 'honeychurros');
     });
 
     test('유효한 키가 선택돼 있으면 그 키를 유지', () {
-      final c = controllerForGroup('honeyz');
+      final c = controllerForGroup(Group.honeyz);
       c.selectedMemberKey.value = 'damyui';
       expect(c.effectiveSelectedMemberKey, 'damyui');
     });
@@ -57,7 +58,7 @@ void main() {
 
   group('currentChannelUrl', () {
     test('선택된 멤버의 채널 영상 URL을 만든다', () {
-      final c = controllerForGroup('honeyz');
+      final c = controllerForGroup(Group.honeyz);
       // 허니츄러스 채널 ID 기반
       expect(
         c.currentChannelUrl,
@@ -66,7 +67,7 @@ void main() {
     });
 
     test('acaxia 그룹의 첫 멤버 채널 URL', () {
-      final c = controllerForGroup('acaxia');
+      final c = controllerForGroup(Group.acaxia);
       // 포포포포 채널 ID 기반
       expect(
         c.currentChannelUrl,
@@ -78,8 +79,8 @@ void main() {
   group('loadVideos 멤버 전환', () {
     // honeyz 첫 멤버(허니츄러스)와 다른 멤버(담유이)의 채널 ID
     final firstChannel = GlobalController.honeyzMembers.first.youtubeChannelId;
-    final damyui = GlobalController.honeyzMembers
-        .firstWhere((m) => m.key == 'damyui');
+    final damyui =
+        GlobalController.honeyzMembers.firstWhere((m) => m.key == 'damyui');
 
     late _FakeYouTubeService service;
     late YouTubeController c;
@@ -88,7 +89,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       service = _FakeYouTubeService();
       final global = GlobalController();
-      global.selectedGroup.value = 'honeyz';
+      global.selectedGroup.value = Group.honeyz;
       c = YouTubeController(globalController: global, service: service);
     });
 
@@ -155,7 +156,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       service = _FakeYouTubeService();
       global = GlobalController();
-      global.selectedGroup.value = 'honeyz';
+      global.selectedGroup.value = Group.honeyz;
       c = YouTubeController(globalController: global, service: service);
     });
 
@@ -179,7 +180,7 @@ void main() {
       await honeyzLoad;
       expect(c.groupLatestVideos, isNotEmpty);
 
-      global.selectedGroup.value = 'acaxia';
+      global.selectedGroup.value = Group.acaxia;
       final acaxiaLoad = c.loadGroupLatestVideos();
       await pumpEventQueue();
       expect(c.groupLatestVideos, isEmpty);
@@ -195,7 +196,7 @@ void main() {
       final honeyzLoad = c.loadGroupLatestVideos();
       await pumpEventQueue();
 
-      global.selectedGroup.value = 'acaxia';
+      global.selectedGroup.value = Group.acaxia;
       final acaxiaLoad = c.loadGroupLatestVideos();
       await pumpEventQueue();
 
