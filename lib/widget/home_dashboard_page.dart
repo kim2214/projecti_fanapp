@@ -855,6 +855,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           icon: Icons.cake_rounded,
           title: '다가오는 생일',
           color: AppColors.birthday,
+          // 홈 카드는 가까운 3명까지만 — 나머지가 있을 때만 전체보기를 붙인다.
+          trailing: birthdays.length > items.length
+              ? _buildMoreLink(
+                  '전체보기', () => _showAllBirthdays(birthdays, themeColorDark))
+              : null,
         ),
         SizedBox(
           height: _scaledHeight(92),
@@ -933,6 +938,98 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           _buildDdayChip(entry, themeColorDark),
         ],
       ),
+    );
+  }
+
+  /// 그룹 전체 멤버의 생일을 가까운 순으로 보여주는 시트.
+  void _showAllBirthdays(List<BirthdayEntry> entries, Color themeColorDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.7,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.cake_rounded,
+                          size: 22, color: AppColors.birthday),
+                      const SizedBox(width: 8),
+                      Text(
+                        '멤버 생일',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: context.textMain,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: entries.length,
+                      itemBuilder: (_, i) {
+                        final entry = entries[i];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: themeColorDark.withAlpha(30),
+                                backgroundImage: AssetImage(entry.assetPath),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.memberName,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.textMain,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      entry.dateLabel,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: context.textSub,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _buildDdayChip(entry, themeColorDark),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
