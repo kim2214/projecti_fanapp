@@ -1,6 +1,5 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
-import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -26,10 +25,7 @@ class ScheduleDetail extends StatelessWidget {
     final group = globalController.currentGroup;
     final themeColor = AppColors.group(group);
     // 글자·아이콘용 (배경 틴트·그림자는 themeColor 유지)
-    final inkColor = switch (group) {
-      Group.honeyz => AppColors.honeyz,
-      Group.acaxia => context.acaxiaInk,
-    };
+    final inkColor = context.groupInk(group);
 
     return Scaffold(
       backgroundColor: context.bg,
