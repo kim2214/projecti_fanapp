@@ -62,6 +62,17 @@ class YouTubeVideoCard extends StatelessWidget {
     );
   }
 
+  Widget _buildThumbnailFallback(BuildContext context) {
+    return Container(
+      color: context.surfaceAlt,
+      child: const Icon(
+        Icons.play_circle_outline_rounded,
+        color: youtubeRed,
+        size: 32,
+      ),
+    );
+  }
+
   Widget _buildThumbnail(BuildContext context) {
     return Container(
       width: 120,
@@ -81,40 +92,37 @@ class YouTubeVideoCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            ExtendedImage.network(
-              video.thumbnailUrl ?? '',
-              fit: BoxFit.cover,
-              cache: true,
-              loadStateChanged: (ExtendedImageState state) {
-                switch (state.extendedImageLoadState) {
-                  case LoadState.loading:
-                    return Container(
-                      color: context.surfaceAlt,
-                      child: const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: youtubeRed,
+            // 주소가 없으면(예전 캐시 항목) 요청하지 않고 바로 대체 아이콘을 그린다.
+            if (video.thumbnailUrl?.isNotEmpty != true)
+              _buildThumbnailFallback(context)
+            else
+              ExtendedImage.network(
+                video.thumbnailUrl!,
+                fit: BoxFit.cover,
+                cache: true,
+                loadStateChanged: (ExtendedImageState state) {
+                  switch (state.extendedImageLoadState) {
+                    case LoadState.loading:
+                      return Container(
+                        color: context.surfaceAlt,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: youtubeRed,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  case LoadState.failed:
-                    return Container(
-                      color: context.surfaceAlt,
-                      child: const Icon(
-                        Icons.play_circle_outline_rounded,
-                        color: youtubeRed,
-                        size: 32,
-                      ),
-                    );
-                  case LoadState.completed:
-                    return null;
-                }
-              },
-            ),
+                      );
+                    case LoadState.failed:
+                      return _buildThumbnailFallback(context);
+                    case LoadState.completed:
+                      return null;
+                  }
+                },
+              ),
             // 재생 오버레이
             Positioned.fill(
               child: Container(

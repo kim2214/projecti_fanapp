@@ -20,8 +20,12 @@ String _entry({
   String? videoId = 'VIDEO_1',
   String title = '첫 번째 영상',
   String published = '2026-07-18T10:00:00+00:00',
+  String? thumbnailUrl = 'https://i.ytimg.com/vi/VIDEO_1/hq720.jpg',
 }) {
   final videoIdTag = videoId == null ? '' : '<yt:videoId>$videoId</yt:videoId>';
+  final thumbnailTag = thumbnailUrl == null
+      ? ''
+      : '<media:thumbnail url="$thumbnailUrl" width="480" height="360"/>';
   return '''
   <entry>
     <id>yt:video:$videoId</id>
@@ -31,7 +35,7 @@ String _entry({
     <published>$published</published>
     <media:group>
       <media:title>$title</media:title>
-      <media:thumbnail url="https://i.ytimg.com/vi/$videoId/hqdefault.jpg" width="480" height="360"/>
+      $thumbnailTag
       <media:description>설명 텍스트</media:description>
     </media:group>
   </entry>''';
@@ -47,7 +51,7 @@ void main() {
       expect(v.videoId, 'VIDEO_1');
       expect(v.title, '첫 번째 영상');
       expect(v.channelTitle, '채널명');
-      expect(v.thumbnailUrl, 'https://i.ytimg.com/vi/VIDEO_1/hqdefault.jpg');
+      expect(v.thumbnailUrl, 'https://i.ytimg.com/vi/VIDEO_1/hq720.jpg');
       expect(v.publishedAt, DateTime.parse('2026-07-18T10:00:00+00:00'));
     });
 
@@ -71,6 +75,14 @@ void main() {
       final videos = YouTubeService.parseFeed(feed);
       expect(videos.length, 1);
       expect(videos.first.videoId, 'A');
+    });
+
+    test('썸네일이 빠진 엔트리는 영상 ID로 기본 썸네일 주소를 만든다', () {
+      final videos = YouTubeService.parseFeed(
+          _feed(_entry(videoId: 'VIDEO_2', thumbnailUrl: null)));
+
+      expect(videos.single.thumbnailUrl,
+          'https://i.ytimg.com/vi/VIDEO_2/hqdefault.jpg');
     });
 
     test('entry가 없는 피드는 빈 목록', () {

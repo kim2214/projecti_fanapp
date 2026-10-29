@@ -2,6 +2,7 @@
 // GlobalController·YouTubeService를 생성자로 주입해 Get 레지스트리·네트워크 없이 검증한다.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
@@ -208,6 +209,35 @@ void main() {
       completeAll(acaxiaChannels, 'a');
       await acaxiaLoad;
       expect(c.isGroupVideosLoading.value, isFalse);
+    });
+  });
+
+  group('영속 캐시 복원', () {
+    test('깨진 항목이 섞여 있어도 나머지 멤버 캐시는 복원된다', () async {
+      final first = GlobalController.honeyzMembers.first;
+      SharedPreferences.setMockInitialValues({
+        'yt_member_cache_v1': jsonEncode({
+          'broken': 'not-a-map',
+          'also_broken': {'videos': 'not-a-list'},
+          first.key: {
+            'lastFetched': DateTime.now().toIso8601String(),
+            'videos': [
+              {'videoId': 'cached_1', 'title': '캐시 영상'},
+            ],
+          },
+        }),
+        'yt_group_cache_v1': '{not json',
+      });
+      final global = GlobalController()..selectedGroup.value = Group.honeyz;
+      final c = YouTubeController(
+          globalController: global, service: _FakeYouTubeService())
+        ..onInit();
+
+      await c.loadVideos();
+
+      // 신선한 캐시가 있으니 네트워크 응답 없이 바로 보인다.
+      expect(c.videoList.single.videoId, 'cached_1');
+      expect(c.isLoading.value, isFalse);
     });
   });
 }

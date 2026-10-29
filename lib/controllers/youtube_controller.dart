@@ -333,15 +333,26 @@ class YouTubeController extends GetxController {
       _restoreInto(_cache, prefs.getString(_memberCacheKey));
       _restoreInto(_groupCache, prefs.getString(_groupCacheKey));
     } catch (_) {
-      // 손상된 캐시 등은 무시하고 빈 상태로 시작.
+      // 저장소를 못 읽으면 빈 상태로 시작.
     }
   }
 
+  /// 손상은 가능한 한 좁게 버린다 — 맵 하나가 깨져도 다른 맵은, 항목 하나가
+  /// 깨져도 나머지 멤버의 캐시는 살려 콜드스타트에 바로 보여준다.
   void _restoreInto(Map<String, _MemberVideoCache> target, String? raw) {
     if (raw == null || raw.isEmpty) return;
-    final decoded = json.decode(raw) as Map<String, dynamic>;
+    final Map<String, dynamic> decoded;
+    try {
+      decoded = json.decode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return;
+    }
     decoded.forEach((key, value) {
-      target[key] = _MemberVideoCache.fromJson(value as Map<String, dynamic>);
+      try {
+        target[key] = _MemberVideoCache.fromJson(value as Map<String, dynamic>);
+      } catch (_) {
+        // 이 항목만 건너뛴다 (다음 조회에서 새로 채워진다).
+      }
     });
   }
 

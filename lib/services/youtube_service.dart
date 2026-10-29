@@ -86,12 +86,18 @@ class YouTubeService {
   static YouTubeVideoModel _parseEntry(XmlElement entry) {
     final mediaGroup = entry.getElement('media:group');
     final published = entry.getElement('published')?.innerText;
+    final videoId = entry.getElement('yt:videoId')?.innerText;
 
     return YouTubeVideoModel(
-      videoId: entry.getElement('yt:videoId')?.innerText,
+      videoId: videoId,
       title: entry.getElement('title')?.innerText,
+      // 피드에 썸네일이 빠지면 영상 ID로 유튜브 기본 썸네일 주소를 만든다
+      // (빈 주소로 요청하면 매번 실패하고 이미지 오류만 쌓인다).
       thumbnailUrl:
-          mediaGroup?.getElement('media:thumbnail')?.getAttribute('url'),
+          mediaGroup?.getElement('media:thumbnail')?.getAttribute('url') ??
+              (videoId == null
+                  ? null
+                  : 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg'),
       channelTitle: entry.getElement('author')?.getElement('name')?.innerText,
       publishedAt: published != null ? DateTime.tryParse(published) : null,
     );

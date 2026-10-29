@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
+import 'package:projecti_fan_app/model/group.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 호출을 기록하고, [hold]가 켜져 있으면 테스트가 완료시킬 때까지 멈추는 가짜 FCM.
@@ -126,6 +127,42 @@ void main() {
 
       await failing.syncLiveSubscriptions({}); // 체인이 끊기지 않았다
       expect(await _savedTopics(), isEmpty);
+    });
+  });
+
+  group('설정 화면 콜백 (오프라인 구독 실패)', () {
+    late List<String> reported;
+    late NotificationController c;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      reported = [];
+      c = NotificationController(
+        subscribeToTopic: (_) => Future.error(Exception('offline')),
+        unsubscribeFromTopic: (_) => Future.error(Exception('offline')),
+        reportError: (e, st, reason) => reported.add(reason),
+      );
+    });
+
+    test('스케줄 알림: 구독이 실패해도 설정은 저장되고 예외를 던지지 않는다', () async {
+      await c.setScheduleEnabled(Group.honeyz, false);
+
+      expect(c.scheduleEnabled[Group.honeyz], isFalse);
+      // 저장값이 있어야 다음 실행에서 저장값대로 구독을 다시 맞춘다.
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('noti_schedule_honeyz'), isFalse);
+      expect(reported, ['스케줄 알림 설정 반영 실패']);
+    });
+
+    test('라이브 모드: 구독이 실패해도 모드는 저장되고 예외를 던지지 않는다', () async {
+      await c.setLiveMode('all');
+
+      expect(c.liveMode.value, 'all');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('noti_live_mode'), 'all');
+      // 구독 집합은 성공했을 때만 저장 — 다음 재조정에서 다시 시도된다.
+      expect(await _savedTopics(), isNull);
+      expect(reported, ['라이브 알림 모드 반영 실패']);
     });
   });
 }

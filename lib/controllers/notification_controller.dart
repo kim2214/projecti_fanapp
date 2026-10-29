@@ -19,18 +19,28 @@ import 'package:projecti_fan_app/utils/external_link.dart';
 ///   ('all' 전체 / 'favorites' 최애만(기본) / 'off' 끄기)가 정하고, 최애 목록이
 ///   바뀌면 [FavoritesController]가 [syncLiveSubscriptions]로 알려준다.
 class NotificationController extends GetxController {
-  // 토픽 구독/해제는 테스트에서 주입할 수 있게 함수로 받는다.
-  // 프로덕션(main)은 인자 없이 생성하므로 FCM을 그대로 쓴다.
+  // 토픽 구독/해제·오류 기록은 테스트에서 주입할 수 있게 함수로 받는다.
+  // 프로덕션(main)은 인자 없이 생성하므로 FCM·Crashlytics를 그대로 쓴다.
   NotificationController({
     Future<void> Function(String topic)? subscribeToTopic,
     Future<void> Function(String topic)? unsubscribeFromTopic,
+    void Function(Object error, StackTrace stack, String reason)? reportError,
   })  : _subscribe = subscribeToTopic ??
             ((topic) => FirebaseMessaging.instance.subscribeToTopic(topic)),
         _unsubscribe = unsubscribeFromTopic ??
-            ((topic) => FirebaseMessaging.instance.unsubscribeFromTopic(topic));
+            ((topic) => FirebaseMessaging.instance.unsubscribeFromTopic(topic)),
+        _reportError = reportError ?? _reportToCrashlytics;
 
   final Future<void> Function(String topic) _subscribe;
   final Future<void> Function(String topic) _unsubscribe;
+  final void Function(Object error, StackTrace stack, String reason)
+      _reportError;
+
+  static void _reportToCrashlytics(
+      Object error, StackTrace stack, String reason) {
+    unawaited(FirebaseCrashlytics.instance
+        .recordError(error, stack, reason: reason, fatal: false));
+  }
 
   static const String _prefsPrefix = 'noti_schedule_'; // + group
 
@@ -95,12 +105,7 @@ class NotificationController extends GetxController {
     try {
       await action();
     } catch (e, st) {
-      unawaited(FirebaseCrashlytics.instance.recordError(
-        e,
-        st,
-        reason: '알림 초기화 실패: $label',
-        fatal: false,
-      ));
+      _reportError(e, st, '알림 초기화 실패: $label');
     }
   }
 
@@ -173,11 +178,20 @@ class NotificationController extends GetxController {
   }
 
   /// 그룹별 스케줄 알림 켜기/끄기 — 토픽 구독과 설정 저장을 함께 처리한다.
+  ///
+  /// 설정을 먼저 저장하고 구독은 그다음에 시도한다. 구독이 실패해도(오프라인 등)
+  /// 다음 실행의 [_loadAndApplySubscriptions]가 저장값대로 다시 맞추므로, 화면의
+  /// 스위치·저장값·실제 구독이 어긋난 채 남지 않는다. 설정 화면의 콜백에서
+  /// 바로 불리므로 예외를 밖으로 던지지 않는다(던지면 fatal로 오분류된다).
   Future<void> setScheduleEnabled(Group group, bool enabled) async {
     scheduleEnabled[group] = enabled;
-    await _applySubscription(group, enabled);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('$_prefsPrefix${group.id}', enabled);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_prefsPrefix${group.id}', enabled);
+      await _applySubscription(group, enabled);
+    } catch (e, st) {
+      _reportError(e, st, '스케줄 알림 설정 반영 실패');
+    }
   }
 
   /// 최애 멤버 목록 변경을 반영한다. [FavoritesController]가 로드/토글 후 호출한다.
@@ -188,13 +202,21 @@ class NotificationController extends GetxController {
   }
 
   /// 라이브 알림 모드 변경 — 토픽 구독 재조정과 설정 저장을 함께 처리한다.
+  ///
+  /// 구독 실패는 기록만 한다 — 영속 구독 집합은 성공했을 때만 갱신되므로 다음
+  /// 재조정(앱 시작 시 최애 로드 등)에서 다시 시도된다. 설정 화면의 콜백에서
+  /// 바로 불리므로 예외를 밖으로 던지지 않는다(던지면 fatal로 오분류된다).
   Future<void> setLiveMode(String mode) async {
     if (mode != 'all' && mode != 'favorites' && mode != 'off') return;
     liveMode.value = mode;
     _liveModeLoaded = true; // 사용자가 방금 정한 값이 저장값보다 우선
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_liveModePrefsKey, mode);
-    await _reconcileLiveTopics();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_liveModePrefsKey, mode);
+      await _reconcileLiveTopics();
+    } catch (e, st) {
+      _reportError(e, st, '라이브 알림 모드 반영 실패');
+    }
   }
 
   /// 모드에 따른 라이브 알림 구독 대상 key 집합. (순수 판정 — 테스트 대상)
@@ -304,12 +326,7 @@ class NotificationController extends GetxController {
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) _handleRemoteTap(message);
     }).catchError((Object e, StackTrace st) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        st,
-        reason: '알림 탭 콜드스타트 진입 메시지 조회 실패',
-        fatal: false,
-      );
+      _reportError(e, st, '알림 탭 콜드스타트 진입 메시지 조회 실패');
     });
     // 백그라운드(앱은 살아있음)에서 알림 탭한 경우
     FirebaseMessaging.onMessageOpenedApp.listen(_handleRemoteTap);
