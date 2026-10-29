@@ -82,8 +82,11 @@ class _StreamerDetailState extends State<StreamerDetail> {
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: _buildAppBar(context, themeColor)),
+          // 프로필·SNS는 스트리머 캐시를 읽으므로 Obx — 데이터가 오기 전에 열어도
+          // (홈 "내 최애" 타일은 로드 전에 누를 수 있다) 도착하면 채워진다.
           SliverToBoxAdapter(
-            child: _buildProfileSection(context, themeColor, themeColorDark),
+            child: Obx(() =>
+                _buildProfileSection(context, themeColor, themeColorDark)),
           ),
           // 실시간 LIVE 상태 (방송 중일 때만)
           SliverToBoxAdapter(
@@ -99,7 +102,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
           ),
           // SNS 링크
           SliverToBoxAdapter(
-            child: _buildSocialSection(context, themeColor, themeColorDark),
+            child: Obx(
+                () => _buildSocialSection(context, themeColor, themeColorDark)),
           ),
           // 최신 YouTube 영상
           SliverToBoxAdapter(
@@ -223,7 +227,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _streamer.name ?? '',
+                  // 프로필 문서가 아직 없으면 카탈로그 이름으로 먼저 보여준다.
+                  _streamer.name ?? _member?.name ?? '',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

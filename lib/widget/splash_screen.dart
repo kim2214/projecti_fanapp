@@ -71,13 +71,15 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateNext() async {
     // 저장된 그룹 복원과 최소 표시 시간(페이드 1.2초 + 여유)을 병행한다.
     // (예전엔 고정 2.5초 대기라 애니메이션이 끝나고도 1.3초를 낭비했다.)
-    final results = await Future.wait([
+    // 레코드 wait로 받아 결과 타입을 컴파일러가 확인하게 한다 — Future.wait
+    // 리스트는 dynamic이라 반환 타입이 바뀌어도(String→Group) 캐스트가
+    // 런타임에야 실패해 스플래시에서 멈춘다.
+    final (savedGroup, _) = await (
       Get.find<GlobalController>().restoreSelectedGroup(),
-      Future.delayed(const Duration(milliseconds: 1400)),
-    ]);
+      Future<void>.delayed(const Duration(milliseconds: 1400)),
+    ).wait;
     if (!mounted) return;
 
-    final savedGroup = results.first as String?;
     if (savedGroup == null) {
       // 첫 실행(또는 저장값 없음/오류) — 기존처럼 그룹 선택으로.
       context.pushReplacement('/groupSelect');
