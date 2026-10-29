@@ -201,6 +201,17 @@ void main() {
 
   group('mergeDirectPoll (직접 폴링 실패 처리)', () {
     const members = GlobalController.honeyzMembers;
+    final now = DateTime.utc(2026, 10, 29, 12);
+    // 모든 멤버를 방금 확인한 상태 (직전 값 유지 대상)
+    final fresh = {for (final m in members) m.key: now};
+
+    ({Map<String, LiveCheckModel> statuses, bool allFailed}) merge(
+      List<LiveCheckModel?> results,
+      Map<String, LiveCheckModel> previous, {
+      Map<String, DateTime>? observedAt,
+    }) =>
+        GlobalController.mergeDirectPoll(members, results, previous,
+            observedAt: observedAt ?? fresh, now: now);
 
     test('성공한 멤버는 새 값, 실패한 멤버는 직전 값 유지', () {
       // 일시 오류로 방송 중인 멤버가 목록에서 사라졌다 나타나지 않게 한다.
@@ -211,8 +222,7 @@ void main() {
         _live(), null, _live(),
       ];
 
-      final merged =
-          GlobalController.mergeDirectPoll(members, results, previous);
+      final merged = merge(results, previous);
       expect(merged.allFailed, isFalse);
       expect(merged.statuses['honeychurros']!.isLive, isTrue);
       expect(merged.statuses['ayauke']!.concurrentUserCount, 50);
@@ -226,15 +236,15 @@ void main() {
         for (final m in members) m.key: _live(),
       }..['damyui'] = _live(status: 'OPEN', viewers: 7);
 
-      final merged = GlobalController.mergeDirectPoll(members,
-          List<LiveCheckModel?>.filled(members.length, null), previous);
+      final merged =
+          merge(List<LiveCheckModel?>.filled(members.length, null), previous);
       expect(merged.allFailed, isTrue);
       expect(merged.statuses['damyui']!.isLive, isTrue);
     });
 
     test('첫 폴링부터 전원 실패면 전원 CLOSE + allFailed (확인 불가 표시용)', () {
-      final merged = GlobalController.mergeDirectPoll(
-          members, List<LiveCheckModel?>.filled(members.length, null), {});
+      final merged =
+          merge(List<LiveCheckModel?>.filled(members.length, null), {});
       expect(merged.allFailed, isTrue);
       expect(merged.statuses.values.every((s) => !s.isLive), isTrue);
       expect(merged.statuses.length, members.length);
@@ -243,8 +253,37 @@ void main() {
     test('하나라도 성공하면 allFailed가 아니다', () {
       final results = List<LiveCheckModel?>.filled(members.length, null);
       results[0] = _live();
-      expect(GlobalController.mergeDirectPoll(members, results, {}).allFailed,
-          isFalse);
+      expect(merge(results, {}).allFailed, isFalse);
+    });
+
+    test('마지막 확인이 오래된 멤버의 직전 값은 CLOSE로 만료', () {
+      // 한 멤버만 계속 실패하면 끝난 방송이 "방송 중"으로 남지 않게 한다.
+      final previous = {
+        'ayauke': _live(status: 'OPEN', viewers: 50),
+        'damyui': _live(status: 'OPEN', viewers: 7),
+      };
+      final results = List<LiveCheckModel?>.filled(members.length, null);
+      results[0] = _live(); // 하나는 성공 (전원 실패와 무관하게 만료되는지)
+
+      final merged = merge(results, previous, observedAt: {
+        ...fresh,
+        // 기준(5분)과 같으면 유지, 넘으면 만료
+        'ayauke': now.subtract(GlobalController.serverStatusMaxAge),
+        'damyui': now.subtract(
+            GlobalController.serverStatusMaxAge + const Duration(seconds: 1)),
+      });
+      expect(merged.statuses['ayauke']!.isLive, isTrue);
+      expect(merged.statuses['damyui']!.isLive, isFalse);
+    });
+
+    test('확인 시각 기록이 없는 직전 값은 믿지 않는다', () {
+      final merged = merge(
+        List<LiveCheckModel?>.filled(members.length, null),
+        {'damyui': _live(status: 'OPEN', viewers: 7)},
+        observedAt: {},
+      );
+      expect(merged.allFailed, isTrue);
+      expect(merged.statuses['damyui']!.isLive, isFalse);
     });
   });
 

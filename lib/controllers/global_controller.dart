@@ -49,6 +49,11 @@ class GlobalController extends GetxController {
   // 서버는 1분 주기라 정상이면 1분 미만이며, 몇 번 놓쳐도 견디도록 여유를 둔다.
   // 홈스크린 위젯(LiveWidgetService)도 같은 기준으로 stale을 판정한다.
   static const Duration serverStatusMaxAge = Duration(minutes: 5);
+
+  /// 멤버별 라이브 상태를 마지막으로 확인한 시각 (서버 집계 반영·직접 조회 성공).
+  /// 직접 폴링에서 조회가 계속 실패한 멤버의 직전 값을 언제까지 믿을지 판단한다
+  /// ([mergeDirectPoll]).
+  final Map<String, DateTime> _liveObservedAt = {};
   Timer? _liveRefreshTimer;
   AppLifecycleListener? _lifecycleListener;
 
@@ -540,8 +545,13 @@ class GlobalController extends GetxController {
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
       final caches = liveCachesFromAggregate(members);
       if (caches == null) return false;
+      final now = DateTime.now();
       for (final group in Group.values) {
         liveStatusOf(group).value = caches[group]!;
+        // 집계에 없는 멤버도 "비방송"으로 확인된 것이다.
+        for (final member in membersOf(group)) {
+          _liveObservedAt[member.key] = now;
+        }
       }
       if (liveUnavailableGroups.isNotEmpty) liveUnavailableGroups.clear();
       lastSessions.value = lastSessionsFromAggregate(data['lastSessions']);
@@ -614,8 +624,14 @@ class GlobalController extends GetxController {
       members.map((m) => _chzzk.fetchLiveStatus(m.chzzkBroadcastId)),
     );
 
+    final now = DateTime.now();
+    for (var i = 0; i < members.length; i++) {
+      if (results[i] != null) _liveObservedAt[members[i].key] = now;
+    }
+
     final cache = liveStatusOf(group);
-    final merged = mergeDirectPoll(members, results, cache);
+    final merged = mergeDirectPoll(members, results, cache,
+        observedAt: _liveObservedAt, now: now);
     cache.value = merged.statuses;
     if (merged.allFailed) {
       if (!liveUnavailableGroups.contains(group)) {
@@ -635,16 +651,27 @@ class GlobalController extends GetxController {
   /// 중인 멤버가 사라졌다 나타나지 않게), 직전 값도 없으면 `CLOSE`로 채운다.
   /// 맵을 비우지 않아야 UI가 "로딩 중(맵 비어있음)"을 벗어난다. 전원 실패
   /// 여부는 [allFailed]로 알려 화면이 "확인 불가"를 표시하게 한다.
+  ///
+  /// 직전 값은 마지막 확인([observedAt])이 [serverStatusMaxAge] 이내일 때만
+  /// 유지한다(2분 폴링 두 번 실패까지). 그보다 오래 실패하면 `CLOSE`로 만료해,
+  /// 한 멤버만 계속 실패할 때 끝난 방송이 "방송 중"으로 남지 않게 한다.
   /// (네트워크와 분리된 순수 병합 — 테스트 대상)
   @visibleForTesting
   static ({Map<String, LiveCheckModel> statuses, bool allFailed})
       mergeDirectPoll(List<Member> members, List<LiveCheckModel?> results,
-          Map<String, LiveCheckModel> previous) {
+          Map<String, LiveCheckModel> previous,
+          {required Map<String, DateTime> observedAt, required DateTime now}) {
+    LiveCheckModel? carried(String key) {
+      final at = observedAt[key];
+      if (at == null || now.difference(at) > serverStatusMaxAge) return null;
+      return previous[key];
+    }
+
     return (
       statuses: {
         for (var i = 0; i < members.length; i++)
           members[i].key: results[i] ??
-              previous[members[i].key] ??
+              carried(members[i].key) ??
               LiveCheckModel(status: 'CLOSE', liveTitle: null),
       },
       allFailed: results.every((r) => r == null),

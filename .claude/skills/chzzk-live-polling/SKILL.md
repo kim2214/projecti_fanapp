@@ -81,6 +81,10 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
   멤버를 **직전 값으로 유지**하고(서버와 같은 정책), 직전 값도 없으면 `CLOSE`로
   채운다 — 맵이 비지 않아 UI가 "로딩 중(맵 비어있음)"을 벗어난다. `fetchLiveStatus`의
   null은 **조회 실패만** 뜻한다(content null 비방송은 CLOSE 모델 반환).
+- **직전 값 만료**: 멤버별 마지막 확인 시각(`_liveObservedAt` — 서버 집계 반영 시
+  전 멤버, 직접 조회 성공 시 해당 멤버)이 `serverStatusMaxAge`(5분)를 넘으면 직전
+  값을 버리고 `CLOSE`로 만든다. 한 멤버만 계속 실패할 때 끝난 방송이 "방송 중"으로
+  남지 않게 하기 위함이다(2분 폴링 두 번 실패까지는 유지).
 - **전원 실패**(오프라인 등)면 그룹을 `liveUnavailableGroups`에 넣고 위젯 push를
   건너뛴다. 홈 "지금 방송 중"·통합 LIVE 빈 화면은 이때 "방송 상태를 확인하지
   못했어요"를 보여준다(전원 CLOSE를 "방송 없음"으로 단정하지 않게). 서버 집계
