@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
+import 'package:projecti_fan_app/widget/components/status_message.dart';
 
 class SchedulePageWidget extends StatefulWidget {
   const SchedulePageWidget({super.key});
@@ -117,38 +118,16 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
   Widget _buildLoadFailed(GlobalController globalController, Color inkColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.wifi_off_rounded,
-              size: 40, color: inkColor.withAlpha(150)),
-          const SizedBox(height: 12),
-          Text(
-            '스케줄을 불러오지 못했어요',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: context.textMain,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '네트워크 연결을 확인한 뒤 다시 시도해 주세요',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: context.textFaint),
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () =>
-                globalController.loadScheduleFireStore(forceRefresh: true),
-            icon: Icon(Icons.refresh_rounded, color: inkColor),
-            label: Text(
-              '다시 시도',
-              style: TextStyle(color: inkColor, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+      child: Center(
+        child: StatusMessage(
+          icon: Icons.wifi_off_rounded,
+          iconColor: inkColor.withAlpha(150),
+          actionColor: inkColor,
+          title: '스케줄을 불러오지 못했어요',
+          subtitle: '네트워크 연결을 확인한 뒤 다시 시도해 주세요',
+          onRetry: () =>
+              globalController.loadScheduleFireStore(forceRefresh: true),
+        ),
       ),
     );
   }

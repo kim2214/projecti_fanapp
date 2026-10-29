@@ -17,6 +17,7 @@ import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 import 'package:projecti_fan_app/widget/components/live_thumbnail.dart';
+import 'package:projecti_fan_app/widget/components/status_message.dart';
 
 /// 홈 대시보드: 지금 방송 중 + 주간 스케줄 바로가기 + 최신 영상
 class HomeDashboardWidget extends StatefulWidget {
@@ -353,30 +354,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           color: context.surface,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.wifi_off_rounded,
-              size: 32,
-              color: themeColor.withAlpha(150),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '방송 상태를 확인하지 못했어요',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: context.textFaint,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '연결을 확인한 뒤 당겨서 새로고침해 주세요',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: context.textFaint),
-            ),
-          ],
+        child: StatusMessage(
+          compact: true,
+          icon: Icons.wifi_off_rounded,
+          iconColor: themeColor.withAlpha(150),
+          title: '방송 상태를 확인하지 못했어요',
+          subtitle: '연결을 확인한 뒤 당겨서 새로고침해 주세요',
         ),
       );
     }
@@ -396,23 +379,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             ),
           ],
         ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.nightlight_round,
-              size: 32,
-              color: themeColor.withAlpha(150),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '지금은 방송 중인 멤버가 없어요',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: context.textFaint,
-              ),
-            ),
-          ],
+        child: StatusMessage(
+          compact: true,
+          icon: Icons.nightlight_round,
+          iconColor: themeColor.withAlpha(150),
+          title: '지금은 방송 중인 멤버가 없어요',
         ),
       );
     }

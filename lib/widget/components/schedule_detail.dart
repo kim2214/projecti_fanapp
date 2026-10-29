@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/utils/schedule_image.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
+import 'package:projecti_fan_app/widget/components/status_message.dart';
 
 /// 스케줄 상세 화면 인자.
 ///
@@ -89,41 +90,12 @@ class ScheduleDetail extends StatelessWidget {
                                 );
                               case LoadState.failed:
                                 return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.image_not_supported_rounded,
-                                        size: 48,
-                                        color: context.textFaint,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        '이미지를 불러올 수 없습니다',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: context.textFaint,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      TextButton.icon(
-                                        onPressed: () {
-                                          state.reLoadImage();
-                                        },
-                                        icon: Icon(
-                                          Icons.refresh_rounded,
-                                          size: 18,
-                                          color: inkColor,
-                                        ),
-                                        label: Text(
-                                          '다시 시도',
-                                          style: TextStyle(
-                                            color: inkColor,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  child: StatusMessage(
+                                    icon: Icons.image_not_supported_rounded,
+                                    iconColor: context.textFaint,
+                                    actionColor: inkColor,
+                                    title: '이미지를 불러올 수 없습니다',
+                                    onRetry: state.reLoadImage,
                                   ),
                                 );
                               case LoadState.completed:
@@ -166,23 +138,10 @@ class ScheduleDetail extends StatelessWidget {
   /// 인자 없이 진입해(복원·딥링크) 보여줄 이미지가 없을 때의 화면.
   Widget _buildUnavailable(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.image_not_supported_rounded,
-            size: 48,
-            color: context.textFaint,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '스케줄 정보를 불러올 수 없습니다',
-            style: TextStyle(
-              fontSize: 14,
-              color: context.textFaint,
-            ),
-          ),
-        ],
+      child: StatusMessage(
+        icon: Icons.image_not_supported_rounded,
+        iconColor: context.textFaint,
+        title: '스케줄 정보를 불러올 수 없습니다',
       ),
     );
   }

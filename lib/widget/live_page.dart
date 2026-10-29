@@ -6,6 +6,7 @@ import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/widget/components/live_member_card.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
+import 'package:projecti_fan_app/widget/components/status_message.dart';
 
 /// 통합 LIVE 현황 화면.
 /// 그룹(허니즈/아카시아) 전환 없이 지금 방송 중인 모든 멤버를 한 화면에 보여준다.
@@ -233,32 +234,12 @@ class _LivePageWidgetState extends State<LivePageWidget> {
 
   Widget _buildEmptyState(bool unavailable) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            unavailable ? Icons.wifi_off_rounded : Icons.nightlight_round,
-            size: 48,
-            color: AppColors.honeyz.withAlpha(120),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            unavailable ? '방송 상태를 확인하지 못했어요' : '지금은 방송 중인 멤버가 없어요',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: context.textFaint,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
+      child: StatusMessage(
+        icon: unavailable ? Icons.wifi_off_rounded : Icons.nightlight_round,
+        iconColor: AppColors.honeyz.withAlpha(120),
+        title: unavailable ? '방송 상태를 확인하지 못했어요' : '지금은 방송 중인 멤버가 없어요',
+        subtitle:
             unavailable ? '연결을 확인한 뒤 당겨서 새로고침해 주세요' : '방송이 시작되면 여기에 표시됩니다',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.textFaint,
-            ),
-          ),
-        ],
       ),
     );
   }
