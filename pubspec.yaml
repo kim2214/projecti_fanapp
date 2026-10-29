@@ -59,6 +59,10 @@ dependencies:
   home_widget: ^0.9.4
   package_info_plus: ^10.2.1
 
+  # 스케줄 이미지 공유(시스템 공유 시트)·갤러리 저장
+  share_plus: ^13.3.1
+  gal: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 푸시 알림 (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 스케줄 이미지 갤러리 저장 (gal). Android 10 이하만 필요 — 이후는 MediaStore 추가 전용 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
 
     <queries>
         <intent>

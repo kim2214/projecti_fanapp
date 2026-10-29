@@ -4,6 +4,7 @@ import 'package:projecti_fan_app/model/group.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/utils/schedule_image.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 
 /// 스케줄 상세 화면 인자.
@@ -222,36 +223,98 @@ class ScheduleDetail extends StatelessWidget {
               ],
             ),
           ),
-          // 그룹 뱃지
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: themeColor.withAlpha(30),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 14,
-                  color: inkColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'SCHEDULE',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
+          // 이미지가 있으면 저장·공유, 없으면 그룹 뱃지
+          if (imageURL?.isNotEmpty == true)
+            _ScheduleImageActions(
+              imageURL: imageURL!,
+              name: name ?? '',
+              color: inkColor,
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: themeColor.withAlpha(30),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
                     color: inkColor,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Text(
+                    'SCHEDULE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: inkColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
+    );
+  }
+}
+
+/// 상세 화면 상단의 저장·공유 버튼. 처리 중에는 두 버튼 모두 잠근다 — 연타로
+/// 같은 이미지가 여러 장 저장되거나 공유 시트가 겹쳐 뜨지 않게 한다.
+class _ScheduleImageActions extends StatefulWidget {
+  final String imageURL;
+  final String name;
+  final Color color;
+
+  const _ScheduleImageActions({
+    required this.imageURL,
+    required this.name,
+    required this.color,
+  });
+
+  @override
+  State<_ScheduleImageActions> createState() => _ScheduleImageActionsState();
+}
+
+class _ScheduleImageActionsState extends State<_ScheduleImageActions> {
+  bool _busy = false;
+
+  Future<void> _run(
+      Future<void> Function(String url, String name) action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action(widget.imageURL, widget.name);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _busy ? context.textFaint : widget.color;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        RoundIconButton(
+          icon: Icons.download_rounded,
+          color: color,
+          label: '스케줄 이미지 저장',
+          onTap: () => _run(saveScheduleImage),
+        ),
+        const SizedBox(width: 8),
+        RoundIconButton(
+          icon: Icons.share_rounded,
+          color: color,
+          label: '스케줄 이미지 공유',
+          onTap: () => _run(shareScheduleImage),
+        ),
+      ],
     );
   }
 }
