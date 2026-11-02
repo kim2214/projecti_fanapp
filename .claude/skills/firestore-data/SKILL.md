@@ -20,7 +20,7 @@ Admin SDK(Cloud Functions)로만 하며, `firestore.rules`는 클라이언트 �
 | `schedule/{key}` | 멤버 key | 허니즈 주간 스케줄 (`schedule_image` 필드) |
 | `schedule_acaxia/{key}` | 멤버 key | 아카시아 주간 스케줄 |
 | `live_status/current` | 고정 문서 | 서버 폴링 라이브 집계(멤버별 `liveImageUrl` 썸네일 템플릿 포함) + `lastSessions`(멤버별 마지막 세션 요약, 48h 보존 — 홈 "오늘 방송했어요") ([[chzzk-live-polling]]) |
-| `follower_history/{key}/daily/{yyyyMMdd}` | KST 날짜 | 치지직 팔로워 수 일별 기록 (`followerCount`, `recordedAt`). 서버 `recordFollowerCounts`(매일 KST 09:05, 공식 Open API Client 인증, Secret `CHZZK_CLIENT_ID`/`CHZZK_CLIENT_SECRET`)가 기록, 클라 멤버 프로필 "팔로워" 섹션이 문서 ID 내림차순 30개를 읽음 (`FollowerPointModel`) |
+| `follower_history/{key}/daily/{yyyyMMdd}` | KST 날짜 | 치지직 팔로워 수 일별 기록 (`followerCount`, `recordedAt`). 서버 `recordFollowerCounts`(매일 KST 09:05, 공식 Open API Client 인증, Secret `CHZZK_CLIENT_ID`/`CHZZK_CLIENT_SECRET`)가 기록, 클라 멤버 프로필 "팔로워" 섹션이 `recordedAt` 내림차순 30개를 읽음 (`FollowerPointModel`). **문서 ID(`__name__`) 내림차순 정렬은 복합 인덱스가 필요해 실패하므로 쓰지 않는다** — 하위 컬렉션 정렬은 단일 필드(자동 인덱스)로만 하거나 `firestore.indexes.json`에 인덱스를 추가·배포 |
 | `live_history/{key}/sessions/{id}` | openDate 숫자 | 지난 방송 세션 (제목·카테고리·openDate·startedAt(절대 시각)·peak 시청자·endedAt(마지막 OPEN 관측과 CLOSE 관측의 중간값)). 서버가 방송 종료 시 기록, 클라 멤버 프로필 "지난 방송"이 endedAt 내림차순으로 읽음 (`LiveSessionModel`) |
 
 - `{key}`는 dart 카탈로그(`global_controller.dart`)의 `Member.key`와 동일

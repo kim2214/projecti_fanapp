@@ -33,6 +33,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 세로 고정. 화면들이 세로 기준이라 가로에선 그룹 선택 카드가 로고보다
+  // 낮아져 찌그러지는 등 깨진다. 큰 화면(태블릿·폴더블)에선 OS가 무시할 수 있다.
+  unawaited(SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]));
+
   // Android 15(SDK 35)부터 강제되는 edge-to-edge를 모든 버전에서 켠다.
   // (이전 버전과의 호환성을 위해 enableEdgeToEdge()를 호출하라는 권장사항 대응)
   unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));

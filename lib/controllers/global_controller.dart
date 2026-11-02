@@ -361,6 +361,26 @@ class GlobalController extends GetxController {
     return snapshot;
   }
 
+  /// 프로필 보조 조회의 실패를 Crashlytics에 non-fatal로 남기고 그대로 던진다.
+  /// 화면은 실패 시 섹션을 숨길 뿐이라, 기록하지 않으면 인덱스 누락 같은
+  /// 지속적 실패가 아무 신호 없이 묻힌다. 오프라인·타임아웃은 노이즈라 제외.
+  Future<T> _reportingQueryError<T>(
+      String collection, Future<T> Function() query) async {
+    try {
+      return await query();
+    } catch (e, st) {
+      if (e is! OfflineEmptyResultException && e is! TimeoutException) {
+        unawaited(FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'Firestore 조회 실패 ($collection)',
+          fatal: false,
+        ));
+      }
+      rethrow;
+    }
+  }
+
   /// 조회에 실패했고 화면에 보여줄 캐시도 없을 때만 사용자에게 알린다.
   /// 캐시가 남아 있으면 화면은 멀쩡하므로(새로고침 실패 등) 조용히 넘어간다.
   void _notifyLoadFailed() {
@@ -434,7 +454,7 @@ class GlobalController extends GetxController {
   /// 숨김으로 처리하고, 캐시에 남지 않아 프로필을 다시 열면 재시도된다.
   Future<List<LiveSessionModel>> fetchRecentSessions(String memberKey,
       {int limit = 5}) {
-    return _sessionsCache.getOrFetch('$memberKey:$limit', () async {
+    Future<List<LiveSessionModel>> fetch() async {
       final snapshot = await _queryOnline(_fireStore
           .collection('live_history')
           .doc(memberKey)
@@ -444,7 +464,10 @@ class GlobalController extends GetxController {
       return [
         for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
       ];
-    });
+    }
+
+    return _sessionsCache.getOrFetch(
+        '$memberKey:$limit', () => _reportingQueryError('live_history', fetch));
   }
 
   /// 멤버의 치지직 팔로워 수 일별 기록을 최신순으로 조회한다 (서버
@@ -453,18 +476,24 @@ class GlobalController extends GetxController {
   /// 숨김으로 처리하고, 캐시에 남지 않아 프로필을 다시 열면 재시도된다.
   Future<List<FollowerPointModel>> fetchFollowerHistory(String memberKey,
       {int limit = 30}) {
-    return _followersCache.getOrFetch('$memberKey:$limit', () async {
+    Future<List<FollowerPointModel>> fetch() async {
       final snapshot = await _queryOnline(_fireStore
           .collection('follower_history')
           .doc(memberKey)
           .collection('daily')
-          .orderBy(FieldPath.documentId, descending: true)
+          // 문서 ID(yyyyMMdd) 역순 정렬은 복합 인덱스가 필요해, 인덱스 없이는
+          // FAILED_PRECONDITION으로 실패했다(섹션이 늘 숨겨짐). 서버가 함께 쓰는
+          // recordedAt은 단일 필드라 자동 인덱스로 같은 순서를 얻는다.
+          .orderBy('recordedAt', descending: true)
           .limit(limit));
       return [
         for (final doc in snapshot.docs)
           if (FollowerPointModel.fromDoc(doc.id, doc.data()) case final p?) p,
       ];
-    });
+    }
+
+    return _followersCache.getOrFetch('$memberKey:$limit',
+        () => _reportingQueryError('follower_history', fetch));
   }
 
   Future<Map<String, LiveCheckModel>> liveCheck(
