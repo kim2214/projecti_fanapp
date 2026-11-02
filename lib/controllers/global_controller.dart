@@ -20,6 +20,15 @@ import 'package:projecti_fan_app/services/live_widget_service.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// 오프라인이라 서버에 닿지 못했고 로컬 캐시도 비어 있는 조회 결과.
+/// "데이터 없음"과 구분해 캐시에 남기지 않고 다음 조회에서 재시도한다.
+class OfflineEmptyResultException implements Exception {
+  const OfflineEmptyResultException();
+
+  @override
+  String toString() => 'OfflineEmptyResultException';
+}
+
 /// 화면에 보여줄 데이터의 로드 상태 (캐시가 비었을 때의 의미를 구분한다).
 enum LoadStatus { loading, loaded, failed }
 
@@ -306,25 +315,14 @@ class GlobalController extends GetxController {
     try {
       // 타임아웃이 없으면 불안정 네트워크에서 호출부(그룹 선택 버튼 등)가
       // 무한정 "로딩 중"에 갇힌다 — 집계/치지직 조회와 동일한 8초 상한.
-      final snapshot = await _fireStore
-          .collection(collection)
-          .get()
-          .timeout(_requestTimeout);
-
-      // 오프라인에서 로컬 캐시까지 비어 있으면 Firestore는 예외를 던지지 않고
-      // "빈 스냅샷"을 성공으로 돌려준다. 그대로 통과시키면 네트워크 실패가
-      // "데이터가 없음"으로 둔갑해, 캐시를 빈 값으로 덮어쓰고 사용자에게는
-      // 아무 안내도 못 한다. 서버에 닿지 못한 빈 결과는 실패로 취급한다.
-      // (문서가 있는 캐시 응답은 그대로 쓴다 — 오프라인에서도 화면이 보여야 한다.)
-      if (snapshot.docs.isEmpty && snapshot.metadata.isFromCache) {
-        developer.log(
-          'Firestore 컬렉션이 비어 있고 캐시 응답 → 오프라인으로 판단: $collection',
-          name: 'GlobalController',
-        );
-        return null;
-      }
-
+      final snapshot = await _queryOnline(_fireStore.collection(collection));
       return {for (final doc in snapshot.docs) doc.id: doc.data()};
+    } on OfflineEmptyResultException {
+      developer.log(
+        'Firestore 컬렉션이 비어 있고 캐시 응답 → 오프라인으로 판단: $collection',
+        name: 'GlobalController',
+      );
+      return null;
     } catch (e, st) {
       developer.log(
         'Firestore 컬렉션 조회 실패: $collection',
@@ -344,6 +342,23 @@ class GlobalController extends GetxController {
       }
       return null;
     }
+  }
+
+  /// 타임아웃을 건 Firestore 조회. 서버에 닿지 못한 빈 결과는
+  /// [OfflineEmptyResultException]으로 던진다.
+  ///
+  /// 오프라인에서 로컬 캐시까지 비어 있으면 Firestore는 예외를 던지지 않고
+  /// "빈 스냅샷"을 성공으로 돌려준다. 그대로 통과시키면 네트워크 실패가
+  /// "데이터가 없음"으로 둔갑해, 캐시를 빈 값으로 덮어쓰거나(TimedCache는
+  /// 10분간) 사용자에게 아무 안내도 못 한다. 문서가 있는 캐시 응답은 그대로
+  /// 쓴다 — 오프라인에서도 화면이 보여야 한다.
+  Future<QuerySnapshot<Map<String, dynamic>>> _queryOnline(
+      Query<Map<String, dynamic>> query) async {
+    final snapshot = await query.get().timeout(_requestTimeout);
+    if (snapshot.docs.isEmpty && snapshot.metadata.isFromCache) {
+      throw const OfflineEmptyResultException();
+    }
+    return snapshot;
   }
 
   /// 조회에 실패했고 화면에 보여줄 캐시도 없을 때만 사용자에게 알린다.
@@ -415,18 +430,17 @@ class GlobalController extends GetxController {
 
   /// 멤버의 지난 방송 세션을 최신순으로 조회한다 (서버 pollLiveStatus가
   /// 방송 종료 시 `live_history/{memberKey}/sessions/`에 기록).
-  /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
+  /// 실패(오프라인 빈 결과 포함) 시 예외를 던진다 — 화면(FutureBuilder)이 섹션
+  /// 숨김으로 처리하고, 캐시에 남지 않아 프로필을 다시 열면 재시도된다.
   Future<List<LiveSessionModel>> fetchRecentSessions(String memberKey,
       {int limit = 5}) {
     return _sessionsCache.getOrFetch('$memberKey:$limit', () async {
-      final snapshot = await _fireStore
+      final snapshot = await _queryOnline(_fireStore
           .collection('live_history')
           .doc(memberKey)
           .collection('sessions')
           .orderBy('endedAt', descending: true)
-          .limit(limit)
-          .get()
-          .timeout(_requestTimeout);
+          .limit(limit));
       return [
         for (final doc in snapshot.docs) LiveSessionModel.fromJson(doc.data()),
       ];
@@ -435,18 +449,17 @@ class GlobalController extends GetxController {
 
   /// 멤버의 치지직 팔로워 수 일별 기록을 최신순으로 조회한다 (서버
   /// recordFollowerCounts가 매일 `follower_history/{memberKey}/daily/`에 기록).
-  /// 실패 시 예외를 던진다 — 화면(FutureBuilder)이 섹션 숨김으로 처리한다.
+  /// 실패(오프라인 빈 결과 포함) 시 예외를 던진다 — 화면(FutureBuilder)이 섹션
+  /// 숨김으로 처리하고, 캐시에 남지 않아 프로필을 다시 열면 재시도된다.
   Future<List<FollowerPointModel>> fetchFollowerHistory(String memberKey,
       {int limit = 30}) {
     return _followersCache.getOrFetch('$memberKey:$limit', () async {
-      final snapshot = await _fireStore
+      final snapshot = await _queryOnline(_fireStore
           .collection('follower_history')
           .doc(memberKey)
           .collection('daily')
           .orderBy(FieldPath.documentId, descending: true)
-          .limit(limit)
-          .get()
-          .timeout(_requestTimeout);
+          .limit(limit));
       return [
         for (final doc in snapshot.docs)
           if (FollowerPointModel.fromDoc(doc.id, doc.data()) case final p?) p,

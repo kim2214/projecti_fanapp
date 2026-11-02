@@ -18,6 +18,7 @@ import 'package:projecti_fan_app/widget/components/peak_viewer_chart.dart';
 import 'package:projecti_fan_app/utils/app_snackbar.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
+import 'package:projecti_fan_app/widget/components/status_message.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 /// 멤버 프로필. 프로필 데이터(이름·생일·SNS)는 [group]/[memberKey]로
@@ -59,12 +60,24 @@ class _StreamerDetailState extends State<StreamerDetail> {
     if (_memberIndex >= 0) {
       _member = members[_memberIndex];
       // 컨트롤러의 멤버별 캐시를 경유한다 — 프로필을 열 때마다 RSS 재조회 방지.
-      _videosFuture = Get.find<YouTubeController>().videosFor(_member!);
+      _videosFuture = _loadVideos(_member!);
       // 목록은 5개만 보이지만 시청자 추이 차트는 10회를 쓴다 — 한 번에 조회.
       _sessionsFuture =
           _global.fetchRecentSessions(widget.memberKey, limit: 10);
       _followersFuture = _global.fetchFollowerHistory(widget.memberKey);
     }
+  }
+
+  Future<List<YouTubeVideoModel>> _loadVideos(Member member) =>
+      Get.find<YouTubeController>().videosFor(member);
+
+  void _retryVideos() {
+    final member = _member;
+    if (member == null) return;
+    // 화살표 함수로 쓰면 대입식의 값(Future)을 돌려줘 setState가 assert로 거부한다.
+    setState(() {
+      _videosFuture = _loadVideos(member);
+    });
   }
 
   /// 이 멤버의 현재 라이브 상태 (없으면 null)
@@ -777,13 +790,27 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 );
               }
               final videos = snapshot.data ?? [];
+              // 실패는 나갔다 들어오지 않아도 여기서 다시 시도할 수 있게 한다.
+              // 빈 목록은 채널에 영상이 없는 경우라 재시도를 붙이지 않는다.
               if (snapshot.hasError || videos.isEmpty) {
                 return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                  child: Text(
-                    '최신 영상을 불러올 수 없습니다',
-                    style: TextStyle(fontSize: 13, color: context.textFaint),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: snapshot.hasError
+                        ? StatusMessage(
+                            compact: true,
+                            icon: Icons.wifi_off_rounded,
+                            iconColor: themeColor.withAlpha(150),
+                            title: '최신 영상을 불러오지 못했어요',
+                            onRetry: _retryVideos,
+                            actionColor: themeColor,
+                          )
+                        : StatusMessage(
+                            compact: true,
+                            icon: Icons.videocam_off_rounded,
+                            iconColor: themeColor.withAlpha(150),
+                            title: '아직 올라온 영상이 없어요',
+                          ),
                   ),
                 );
               }
