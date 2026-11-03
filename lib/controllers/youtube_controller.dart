@@ -52,6 +52,11 @@ class YouTubeController extends GetxController {
   RxBool hasError = false.obs;
   RxString errorMessage = ''.obs;
 
+  /// 영상 목록 조회 실패 시 화면에 보여줄 문구. 피드는 정상 채널에도 404/500을
+  /// 돌려주므로(유튜브 쪽 장애) 상태 코드 대신 할 수 있는 일을 알려준다.
+  static const String fetchFailedMessage =
+      'YouTube에서 영상 목록을 받아오지 못했어요.\n잠시 후 다시 시도해 주세요.';
+
   // 홈 대시보드용: 그룹 전체 멤버의 최신 영상
   RxList<YouTubeVideoModel> groupLatestVideos = <YouTubeVideoModel>[].obs;
   RxBool isGroupVideosLoading = false.obs;
@@ -185,16 +190,11 @@ class YouTubeController extends GetxController {
         videoList.value = videos;
       }
       // 빈 결과 + 기존 캐시 있음: 보여주던 캐시를 유지하고 덮어쓰지 않는다.
-    } on YouTubeServiceException catch (e) {
+    } catch (_) {
       // 이미 캐시로 표시 중이면 기존 콘텐츠를 유지하고 에러 화면을 띄우지 않는다.
       if (cached == null && effectiveSelectedMemberKey == memberKey) {
         hasError.value = true;
-        errorMessage.value = e.message;
-      }
-    } catch (e) {
-      if (cached == null && effectiveSelectedMemberKey == memberKey) {
-        hasError.value = true;
-        errorMessage.value = '알 수 없는 오류가 발생했습니다';
+        errorMessage.value = fetchFailedMessage;
       }
     } finally {
       // 다른 멤버로 바뀌었으면 그 멤버의 로딩 상태를 건드리지 않는다.

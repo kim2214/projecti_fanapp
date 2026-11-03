@@ -127,7 +127,7 @@ void main() {
 
       expect(c.videoList, isEmpty);
       expect(c.hasError.value, isTrue);
-      expect(c.errorMessage.value, '실패');
+      expect(c.errorMessage.value, YouTubeController.fetchFailedMessage);
     });
 
     test('늦게 도착한 이전 멤버 응답은 새 멤버의 목록·로딩을 건드리지 않음', () async {

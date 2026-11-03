@@ -395,7 +395,7 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '오류가 발생했습니다',
+                      '영상을 불러오지 못했어요',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -429,6 +429,19 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
                         ),
                       ),
                     ),
+                    // 피드 장애(유튜브 쪽 404/500)는 다시 시도해도 한동안 안 풀린다 —
+                    // 채널 페이지는 열리므로 영상은 거기서 볼 수 있게 한다.
+                    if (youtubeController.currentChannelUrl != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: _openChannelPage,
+                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                        label: const Text('YouTube에서 보기'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: context.textSub,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
