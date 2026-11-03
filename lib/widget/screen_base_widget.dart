@@ -180,13 +180,18 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   void _showNotificationSettings() {
     showModalBottomSheet(
       context: context,
+      // 기본 시트는 화면 높이의 9/16에서 잘린다 — 화면 크기 '크게'·큰 글꼴에선
+      // 맨 아래 "배터리 설정 열기"가 넘쳐 눌리지 않았다. 내용만큼 올리고,
+      // 그래도 넘치면 스크롤한다.
+      isScrollControlled: true,
       backgroundColor: context.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
+              child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Obx(() {
               // 서버가 멈춘 동안에는 "켜면 알림이 온다"고 약속하지 않는다.
@@ -290,7 +295,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                 ],
               );
             }),
-          ),
+          )),
         );
       },
     );
