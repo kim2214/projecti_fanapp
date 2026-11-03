@@ -92,64 +92,72 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
     return Scaffold(
       backgroundColor: context.bg,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildAppBar(context, themeColor)),
-          // 프로필·SNS는 스트리머 캐시를 읽으므로 Obx — 데이터가 오기 전에 열어도
-          // (홈 "내 최애" 타일은 로드 전에 누를 수 있다) 도착하면 채워진다.
-          SliverToBoxAdapter(
-            child: Obx(() =>
-                _buildProfileSection(context, themeColor, themeColorDark)),
-          ),
-          // 실시간 LIVE 상태 (방송 중일 때만)
-          SliverToBoxAdapter(
-            child: _buildLiveSection(context, themeColor),
-          ),
-          // 팔로워 추이 (기록이 있을 때만)
-          SliverToBoxAdapter(
-            child: _buildFollowerSection(context, themeColor),
-          ),
-          // 지난 방송 (기록이 있을 때만)
-          SliverToBoxAdapter(
-            child: _buildHistorySection(context, themeColor),
-          ),
-          // SNS 링크
-          SliverToBoxAdapter(
-            child: Obx(
-                () => _buildSocialSection(context, themeColor, themeColorDark)),
-          ),
-          // 최신 YouTube 영상
-          SliverToBoxAdapter(
-            child: _buildVideosSection(context, themeColor),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 50)),
-        ],
+      // 다른 상세 화면처럼 상단바를 고정하고 전체를 SafeArea로 감싼다 — 예전엔
+      // 상단바가 함께 스크롤돼, 올라간 본문이 상태 표시줄 아이콘과 겹쳤다.
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildAppBar(context, themeColor),
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  // 프로필·SNS는 스트리머 캐시를 읽으므로 Obx — 데이터가 오기 전에 열어도
+                  // (홈 "내 최애" 타일은 로드 전에 누를 수 있다) 도착하면 채워진다.
+                  SliverToBoxAdapter(
+                    child: Obx(() => _buildProfileSection(
+                        context, themeColor, themeColorDark)),
+                  ),
+                  // 실시간 LIVE 상태 (방송 중일 때만)
+                  SliverToBoxAdapter(
+                    child: _buildLiveSection(context, themeColor),
+                  ),
+                  // 팔로워 추이 (기록이 있을 때만)
+                  SliverToBoxAdapter(
+                    child: _buildFollowerSection(context, themeColor),
+                  ),
+                  // 지난 방송 (기록이 있을 때만)
+                  SliverToBoxAdapter(
+                    child: _buildHistorySection(context, themeColor),
+                  ),
+                  // SNS 링크
+                  SliverToBoxAdapter(
+                    child: Obx(() => _buildSocialSection(
+                        context, themeColor, themeColorDark)),
+                  ),
+                  // 최신 YouTube 영상
+                  SliverToBoxAdapter(
+                    child: _buildVideosSection(context, themeColor),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAppBar(BuildContext context, Color themeColor) {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            RoundIconButton.back(context, color: themeColor),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                '멤버 프로필',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: context.textMain,
-                ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          RoundIconButton.back(context, color: themeColor),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              '멤버 프로필',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: context.textMain,
               ),
             ),
-            // 최애 토글
-            _buildFavoriteButton(themeColor),
-          ],
-        ),
+          ),
+          // 최애 토글
+          _buildFavoriteButton(themeColor),
+        ],
       ),
     );
   }
