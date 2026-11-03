@@ -565,8 +565,11 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
               final isSelected = _currentIndex == index;
 
               // Flexible — 큰 글꼴에서 선택 탭 라벨이 길어져도 Row가 넘치지 않게
-              // 남는 폭만큼만 쓰고 라벨을 말줄임한다.
+              // 남는 폭만큼만 쓰고 라벨을 말줄임한다. 라벨이 붙는 선택 탭만 몫을
+              // 두 배로 준다 — 똑같이 나누면 화면 크기 '크게'에서 "YouTube"가
+              // "Yo…"로, 큰 글꼴에선 "스케줄"·"멤버"가 아예 사라졌다.
               return Flexible(
+                flex: isSelected ? 2 : 1,
                 child: _buildNavItem(
                   item: item,
                   isSelected: isSelected,
