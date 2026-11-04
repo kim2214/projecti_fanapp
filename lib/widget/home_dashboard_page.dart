@@ -79,7 +79,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     return Obx(() {
       final group = _globalController.currentGroup;
       final themeColor = AppColors.group(group);
-      final themeColorDark = AppColors.groupDark(group);
+      // 글자·아이콘용 톤 — acaxiaDark는 흰 배경 대비 1.8:1이라 쓰지 않는다(group_page와 동일).
+      final themeColorDark = context.groupInk(group);
 
       return Container(
         decoration: BoxDecoration(
@@ -140,7 +141,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               ),
               // 주간 스케줄 바로가기
               SliverToBoxAdapter(
-                child: _buildScheduleBanner(themeColor, themeColorDark),
+                child: _buildScheduleBanner(
+                    themeColor, AppColors.groupDark(group)),
               ),
               // 최신 영상
               SliverToBoxAdapter(
@@ -237,6 +239,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   // ---------------- 주간 스케줄 바로가기 ----------------
 
   Widget _buildScheduleBanner(Color themeColor, Color themeColorDark) {
+    // 브랜드색 면 위 글자색 — 라일락 위 흰 글자는 대비 1.5:1(ScheduleCard와 동일).
+    final onBanner = AppColors.onBrand(themeColor);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: TapSemantics(
@@ -264,17 +268,17 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(50),
+                  color: onBanner.withAlpha(50),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_month_rounded,
-                  color: Colors.white,
+                  color: onBanner,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -283,24 +287,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: onBanner,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       '이번 주 멤버들의 방송 일정 확인하기',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white70,
+                        color: onBanner.withAlpha(180),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: Colors.white,
+                color: onBanner,
                 size: 16,
               ),
             ],

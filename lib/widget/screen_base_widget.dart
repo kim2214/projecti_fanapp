@@ -78,7 +78,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     return Obx(() {
       final group = _globalController.currentGroup;
       final themeColor = AppColors.group(group);
-      final themeColorDark = AppColors.groupDark(group);
+      // 글자·아이콘용 톤 — acaxiaDark는 흰 배경 대비 1.8:1이라 쓰지 않는다(group_page와 동일).
+      final themeColorDark = context.groupInk(group);
 
       // 시스템 뒤로가기: 홈이 아닌 탭에서는 먼저 홈 탭으로 돌아가고, 홈에서만
       // 화면을 닫는다(그룹 선택으로). 앱바 ← 버튼은 context.pop()이라 이 판단을
@@ -110,6 +111,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
       scrolledUnderElevation: 0,
       centerTitle: false,
       leading: IconButton(
+        tooltip: '그룹 선택으로',
         icon: Icon(
           Icons.arrow_back_rounded,
           color: context.textMain,

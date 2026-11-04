@@ -25,7 +25,8 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
     return Obx(() {
       final group = globalController.currentGroup;
       final themeColor = AppColors.group(group);
-      final themeColorDark = AppColors.groupDark(group);
+      // 글자·아이콘용 톤 — acaxiaDark는 흰 배경 대비 1.8:1이라 쓰지 않는다(group_page와 동일).
+      final themeColorDark = context.groupInk(group);
       final members = globalController.membersOf(group);
       // 카탈로그가 순서·구성의 단일 소스이고, URL은 같은 순서로 펼쳐져 온다.
       // 지연 빌더(SliverChildBuilderDelegate) 안에서 읽으면 Obx가 스케줄 갱신을
@@ -66,9 +67,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: status == LoadStatus.failed
-                      // 글자용 톤 — acaxiaDark는 흰 배경 대비가 낮다(group_page와 동일).
-                      ? _buildLoadFailed(
-                          globalController, context.groupInk(group))
+                      ? _buildLoadFailed(globalController, themeColorDark)
                       : Padding(
                           padding: const EdgeInsets.only(bottom: 100),
                           child: Center(
@@ -93,7 +92,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                             imageURL: scheduleUrls[index],
                             memberName: members[index].name,
                             themeColor: themeColor,
-                            themeColorDark: themeColorDark,
+                            themeColorDark: AppColors.groupDark(group),
                           ),
                         );
                       },
