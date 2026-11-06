@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/model/group.dart';
+import 'package:projecti_fan_app/model/notification_target.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
@@ -47,6 +50,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   }
 
   void _onNavTap(int index) {
+    if (!_pageController.hasClients) return;
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -67,8 +71,59 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
     }
   }
 
+  /// 스케줄·생일 알림 탭 대기열 구독. 앱이 살아 있을 때 들어오는 탭을 받는다.
+  late final Worker _notificationTapWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationTapWorker = ever(_notificationController.pendingTarget,
+        (_) => _openNotificationTarget());
+    // 콜드 스타트: 스플래시 동안 이미 들어와 기다리던 탭. PageView가 붙은 뒤 처리한다.
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _openNotificationTarget());
+  }
+
+  /// 알림이 가리키는 그룹으로 바꾸고 스케줄 탭(스케줄 알림)이나 멤버 프로필
+  /// (생일 알림)을 연다.
+  Future<void> _openNotificationTarget() async {
+    final target = _notificationController.pendingTarget.value;
+    if (target == null || !mounted) return;
+    _notificationController.pendingTarget.value = null;
+
+    // 상세 화면·시트가 위에 떠 있으면 기본 화면까지 닫는다.
+    final baseRoute = ModalRoute.of(context);
+    if (baseRoute != null && !baseRoute.isCurrent) {
+      Navigator.of(context).popUntil((route) => route == baseRoute);
+    }
+
+    final groupChanged = _globalController.currentGroup != target.group;
+    if (groupChanged) await _globalController.selectGroup(target.group);
+    if (!mounted) return;
+
+    switch (target.type) {
+      case NotificationTargetType.schedule:
+        // 방금 올라온 스케줄이 보이도록 캐시가 있어도 다시 읽는다.
+        unawaited(_globalController.loadScheduleFireStore(forceRefresh: true));
+        _onNavTap(1);
+      case NotificationTargetType.birthday:
+        if (groupChanged) {
+          unawaited(_globalController.loadScheduleFireStore());
+        }
+        _onNavTap(0);
+        final key = target.memberKey;
+        final known = key != null &&
+            _globalController.membersOf(target.group).any((m) => m.key == key);
+        if (known) {
+          unawaited(context
+              .push('/streamerDetail?group=${target.group.id}&key=$key'));
+        }
+    }
+  }
+
   @override
   void dispose() {
+    _notificationTapWorker.dispose();
     _pageController.dispose();
     super.dispose();
   }

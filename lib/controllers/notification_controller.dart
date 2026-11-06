@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/group.dart';
+import 'package:projecti_fan_app/model/notification_target.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
 
@@ -71,6 +73,11 @@ class NotificationController extends GetxController {
   Set<String> _favoriteKeys = const {};
 
   bool _initialized = false;
+
+  /// 스케줄·생일 알림 탭으로 열어야 할 화면. 기본 화면([ScreenBaseWidget])이
+  /// 꺼내 처리하고 null로 비운다 — 콜드 스타트에선 스플래시가 끝나 기본 화면이
+  /// 뜰 때까지 여기서 기다린다.
+  final Rxn<NotificationTarget> pendingTarget = Rxn<NotificationTarget>();
 
   /// 포그라운드 로컬 알림 ID. `notification.hashCode`는 값이 겹치면 이전 알림을
   /// 덮어써 조용히 사라질 수 있어, 매 알림마다 고유하도록 단조 증가시킨다.
@@ -298,8 +305,9 @@ class NotificationController extends GetxController {
     final channelName = isLive ? '라이브 알림' : '스케줄 알림';
     final channelDesc =
         isLive ? '최애 멤버가 방송을 시작하면 알려드립니다.' : '멤버 스케줄이 등록되면 알려드립니다.';
-    // 라이브 알림은 탭 시 치지직으로 이동할 수 있게 broadcastId를 payload로 실는다.
-    final payload = isLive ? message.data['broadcastId'] : null;
+    // 탭 시 이동할 수 있게 알림 데이터(라이브 broadcastId, 스케줄·생일 group 등)를
+    // 그대로 payload로 싣는다.
+    final payload = message.data.isEmpty ? null : jsonEncode(message.data);
 
     _localNoti.show(
       id: _foregroundNotiId++,
@@ -332,15 +340,32 @@ class NotificationController extends GetxController {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleRemoteTap);
   }
 
-  void _handleRemoteTap(RemoteMessage message) {
-    if (message.data['type'] == 'live') {
-      _openLive(message.data['broadcastId']);
+  void _handleRemoteTap(RemoteMessage message) => handleTapData(message.data);
+
+  void _onLocalNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.isEmpty) return;
+    // 포그라운드 로컬 알림의 payload = 알림 데이터 JSON.
+    try {
+      final data = jsonDecode(payload);
+      if (data is Map<String, dynamic>) handleTapData(data);
+    } on FormatException {
+      // 예전 버전은 broadcastId 문자열만 실었다.
+      _openLive(payload);
     }
   }
 
-  void _onLocalNotificationTap(NotificationResponse response) {
-    // 포그라운드 로컬 알림의 payload = broadcastId (라이브 알림에만 존재)
-    _openLive(response.payload);
+  /// 알림 탭 처리: 라이브는 치지직으로, 스케줄·생일은 [pendingTarget]에 넣어
+  /// 기본 화면이 해당 그룹의 스케줄 탭·멤버 프로필을 열게 한다.
+  @visibleForTesting
+  void handleTapData(Map<String, dynamic> data) {
+    if (data['type'] == 'live') {
+      final id = data['broadcastId'];
+      _openLive(id is String ? id : null);
+      return;
+    }
+    final target = NotificationTarget.fromData(data);
+    if (target != null) pendingTarget.value = target;
   }
 
   /// 알림 데이터의 broadcastId는 없거나 비어 있을 수 있다 (라이브 알림에만 존재).

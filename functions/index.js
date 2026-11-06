@@ -81,6 +81,8 @@ async function handleScheduleWrite(group, event) {
         title: `${groupLabel} 스케줄 업데이트`,
         body: `${memberName} 이번 주 스케줄이 올라왔어요!`,
       },
+      // 탭 시 앱이 이 그룹의 스케줄 탭을 연다 (NotificationTarget.fromData).
+      data: { type: "schedule", group, memberKey },
       android: {
         priority: "high",
         notification: {
@@ -381,6 +383,8 @@ exports.birthdayPush = onSchedule(
               title: `오늘은 ${name} 생일! 🎂`,
               body: `${GROUP_LABELS[group]} ${name}에게 축하를 보내주세요 🎉`,
             },
+            // 탭 시 앱이 이 멤버의 프로필을 연다 (NotificationTarget.fromData).
+            data: { type: "birthday", group, memberKey: key },
             android: {
               priority: "high",
               notification: { channelId: "schedule_channel" },
