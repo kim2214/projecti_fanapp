@@ -3,6 +3,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/youtube_controller.dart';
+import 'package:projecti_fan_app/model/member.dart';
 import 'package:projecti_fan_app/widget/youtube_theme.dart';
 import 'package:projecti_fan_app/widget/components/video_card_skeleton.dart';
 import 'package:projecti_fan_app/widget/components/youtube_video_card.dart';
@@ -26,6 +27,32 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
   static const Color youtubeRed = Color(0xFFFF0000);
 
   Worker? _groupChangeWorker;
+  Worker? _memberChangeWorker;
+
+  /// 선택된 멤버 칩. 프로필의 "더보기"로 뒤쪽 멤버가 선택되면 칩 줄 밖에 있어
+  /// 누가 선택됐는지 안 보였다 — 선택이 바뀌면 이 칩이 보이게 스크롤한다.
+  /// (Scrollable.ensureVisible은 바깥 세로 목록까지 움직여 쓰지 않는다.)
+  final GlobalKey _selectedChipKey = GlobalKey();
+  final ScrollController _chipScrollController = ScrollController();
+
+  void _revealSelectedChip() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_chipScrollController.hasClients) return;
+      final chip = _selectedChipKey.currentContext?.findRenderObject();
+      final viewport = _chipScrollController.position.context.storageContext
+          .findRenderObject();
+      if (chip is! RenderBox || viewport is! RenderBox) return;
+      // 칩을 칩 줄 가운데로: 현재 화면상 위치만큼 스크롤 값을 옮긴다.
+      final chipLeft = chip.localToGlobal(Offset.zero, ancestor: viewport).dx;
+      final position = _chipScrollController.position;
+      final target = (position.pixels +
+              chipLeft -
+              (viewport.size.width - chip.size.width) / 2)
+          .clamp(position.minScrollExtent, position.maxScrollExtent);
+      _chipScrollController.animateTo(target,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    });
+  }
 
   @override
   void initState() {
@@ -40,11 +67,16 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
         _scrollController.jumpTo(0);
       }
     });
+    _memberChangeWorker =
+        ever(youtubeController.selectedMemberKey, (_) => _revealSelectedChip());
+    _revealSelectedChip();
   }
 
   @override
   void dispose() {
     _groupChangeWorker?.dispose();
+    _memberChangeWorker?.dispose();
+    _chipScrollController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -262,70 +294,73 @@ class _YouTubePageWidgetState extends State<YouTubePageWidget>
 
     return SizedBox(
       height: 56,
-      child: ListView.builder(
+      // 멤버는 그룹당 몇 명뿐이라 전부 만든다 — 지연 생성(ListView.builder)이면
+      // 화면 밖 칩은 아직 없어 선택 칩으로 스크롤할 수 없다.
+      child: SingleChildScrollView(
+        controller: _chipScrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: members.length,
-        itemBuilder: (context, index) {
-          final member = members[index];
-          final isSelected = member.key == selectedKey;
+        child: Row(children: [
+          for (final member in members)
+            _buildMemberChip(member, member.key == selectedKey),
+        ]),
+      ),
+    );
+  }
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: TapSemantics(
-                selected: isSelected,
-                child: GestureDetector(
-                  onTap: () {
-                    youtubeController.selectMember(member.key);
-                    if (_scrollController.hasClients) {
-                      _scrollController.jumpTo(0);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? youtubeRed : context.surface,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(
-                        color:
-                            isSelected ? youtubeRed : youtubeRed.withAlpha(50),
-                        width: 1.5,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: youtubeRed.withAlpha(60),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : [],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundImage: AssetImage(member.profileAssetPath),
+  Widget _buildMemberChip(Member member, bool isSelected) {
+    return Padding(
+      key: isSelected ? _selectedChipKey : null,
+      padding: const EdgeInsets.only(right: 10),
+      child: TapSemantics(
+          selected: isSelected,
+          child: GestureDetector(
+            onTap: () {
+              youtubeController.selectMember(member.key);
+              if (_scrollController.hasClients) {
+                _scrollController.jumpTo(0);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? youtubeRed : context.surface,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: isSelected ? youtubeRed : youtubeRed.withAlpha(50),
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: youtubeRed.withAlpha(60),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          member.name,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : context.textMain,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                      ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundImage: AssetImage(member.profileAssetPath),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    member.name,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : context.textMain,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
                     ),
                   ),
-                )),
-          );
-        },
-      ),
+                ],
+              ),
+            ),
+          )),
     );
   }
 

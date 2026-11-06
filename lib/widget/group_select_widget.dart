@@ -6,6 +6,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
 class GroupSelectWidget extends StatefulWidget {
@@ -17,15 +18,48 @@ class GroupSelectWidget extends StatefulWidget {
 
 class _GroupSelectWidgetState extends State<GroupSelectWidget> {
   final globalController = Get.find<GlobalController>();
+  final _notificationController = Get.find<NotificationController>();
+
+  /// 이 화면이 맨 위일 때(첫 실행·홈에서 ← 뒤) 알림을 탭하면 기본 화면이 없어
+  /// 대기열만 쌓였다가, 사용자가 고른 그룹을 알림 그룹으로 덮어썼다.
+  late final Worker _notificationTapWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationTapWorker = ever(
+        _notificationController.pendingTarget, (_) => _enterForNotification());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _enterForNotification());
+  }
+
+  @override
+  void dispose() {
+    _notificationTapWorker.dispose();
+    super.dispose();
+  }
+
+  /// 알림이 가리키는 그룹으로 바로 들어간다. 대기열은 그대로 두어 기본 화면이
+  /// 스케줄 탭·프로필을 열게 한다. 기본 화면이 위에 있으면(이 화면이 맨 위가
+  /// 아니면) 그쪽이 처리하므로 건드리지 않는다.
+  void _enterForNotification() {
+    final target = _notificationController.pendingTarget.value;
+    if (target == null || !mounted) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    unawaited(_selectGroup(target.group, fromNotification: true));
+  }
 
   // 로딩 상태
   /// 처리 중인 그룹 (없으면 null)
   Group? _loadingGroup;
 
-  Future<void> _selectGroup(Group group) async {
+  Future<void> _selectGroup(Group group,
+      {bool fromNotification = false}) async {
     // 한 그룹을 처리하는 동안 다른 카드 탭도 무시한다 — 연타하면 두 호출이
     // 모두 끝까지 돌아 /baseScreen이 두 겹으로 push됐다.
     if (_loadingGroup != null) return;
+    // 직접 고른 그룹이 우선 — 전에 탭했던 알림이 들어간 뒤 그룹을 바꾸지 않게 한다.
+    if (!fromNotification) _notificationController.pendingTarget.value = null;
     setState(() => _loadingGroup = group);
     try {
       await globalController.selectGroup(group);

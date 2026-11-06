@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/controllers/theme_controller.dart';
+import 'package:projecti_fan_app/controllers/youtube_controller.dart';
 import 'package:projecti_fan_app/widget/group_page.dart';
 import 'package:projecti_fan_app/widget/home_dashboard_page.dart';
 import 'package:projecti_fan_app/widget/youtube_page.dart';
@@ -85,7 +86,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   }
 
   /// 알림이 가리키는 그룹으로 바꾸고 스케줄 탭(스케줄 알림)이나 멤버 프로필
-  /// (생일 알림)을 연다.
+  /// (생일 알림), 멤버를 고른 YouTube 탭(프로필의 영상 더보기)을 연다.
   Future<void> _openNotificationTarget() async {
     final target = _notificationController.pendingTarget.value;
     if (target == null || !mounted) return;
@@ -118,6 +119,15 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
           unawaited(context
               .push('/streamerDetail?group=${target.group.id}&key=$key'));
         }
+      case NotificationTargetType.videos:
+        if (groupChanged) {
+          unawaited(_globalController.loadScheduleFireStore());
+        }
+        final key = target.memberKey;
+        if (key != null) {
+          unawaited(Get.find<YouTubeController>().selectMember(key));
+        }
+        _onNavTap(3);
     }
   }
 

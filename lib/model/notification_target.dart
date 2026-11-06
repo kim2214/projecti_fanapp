@@ -1,12 +1,16 @@
 import 'package:projecti_fan_app/model/group.dart';
 
-/// 스케줄·생일 알림을 탭했을 때 열 화면.
+/// 스케줄·생일 알림을 탭했을 때 열 화면. 앱 안의 바로가기(프로필 → 영상 더보기)도
+/// 같은 경로로 기본 화면에 이동을 맡긴다.
 enum NotificationTargetType {
   /// 해당 그룹의 스케줄 탭
   schedule,
 
   /// 해당 멤버의 프로필
   birthday,
+
+  /// 해당 멤버를 고른 YouTube 탭 (앱 안 바로가기 전용 — 서버 데이터로는 오지 않는다)
+  videos,
 }
 
 /// 알림 데이터(FCM `data`)에서 읽은 이동 대상.

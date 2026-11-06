@@ -3,6 +3,8 @@ import 'package:projecti_fan_app/model/group.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/favorites_controller.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/controllers/notification_controller.dart';
+import 'package:projecti_fan_app/model/notification_target.dart';
 import 'package:projecti_fan_app/model/live_check_model.dart';
 import 'package:projecti_fan_app/model/live_session_model.dart';
 import 'package:projecti_fan_app/model/member.dart';
@@ -20,6 +22,7 @@ import 'package:projecti_fan_app/utils/external_link.dart';
 import 'package:projecti_fan_app/widget/components/round_icon_button.dart';
 import 'package:projecti_fan_app/widget/components/status_message.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
+import 'package:projecti_fan_app/widget/home/home_section_title.dart';
 
 /// 멤버 프로필. 프로필 데이터(이름·생일·SNS)는 [group]/[memberKey]로
 /// [GlobalController]의 캐시에서 읽는다 — 경로가 쿼리만으로 완결되고, 화면
@@ -757,6 +760,14 @@ class _StreamerDetailState extends State<StreamerDetail> {
 
   // ---------------- 최신 YouTube 영상 ----------------
 
+  void _openAllVideos() {
+    Get.find<NotificationController>().pendingTarget.value = NotificationTarget(
+      type: NotificationTargetType.videos,
+      group: widget.group,
+      memberKey: widget.memberKey,
+    );
+  }
+
   Widget _buildVideosSection(BuildContext context, Color themeColor) {
     if (_videosFuture == null) return const SizedBox.shrink();
 
@@ -766,7 +777,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 16),
+            padding: const EdgeInsets.only(left: 8, bottom: 8),
             child: Row(
               children: [
                 const Icon(Icons.play_circle_fill_rounded,
@@ -780,6 +791,10 @@ class _StreamerDetailState extends State<StreamerDetail> {
                     color: context.textMain,
                   ),
                 ),
+                const Spacer(),
+                // 여기는 3개만 보인다 — 이 멤버를 고른 YouTube 탭으로 넘긴다.
+                // 그룹 전환·화면 정리는 기본 화면이 맡는다(알림 탭과 같은 경로).
+                HomeMoreLink('더보기', onTap: _openAllVideos),
               ],
             ),
           ),
