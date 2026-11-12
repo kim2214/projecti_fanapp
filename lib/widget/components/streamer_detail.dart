@@ -146,7 +146,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          RoundIconButton.back(context, color: themeColor),
+          // 글자·아이콘은 groupInk — 아카시아 브랜드색은 흰 배경 대비 1.5:1이다.
+          RoundIconButton.back(context, color: context.groupInk(widget.group)),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -241,11 +242,12 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   ),
                   child: Text(
                     widget.group.labelEn,
-                    style: const TextStyle(
+                    // 브랜드색 면 위 글자 — 라일락 위 흰 글자는 대비 1.5:1.
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.5,
-                      color: Colors.white,
+                      color: AppColors.onBrand(themeColor),
                     ),
                   ),
                 ),
@@ -461,7 +463,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
                 padding: const EdgeInsets.only(left: 8, bottom: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.history_rounded, size: 20, color: themeColor),
+                    Icon(Icons.history_rounded,
+                        size: 20, color: context.groupInk(widget.group)),
                     const SizedBox(width: 8),
                     Text(
                       '지난 방송',
@@ -552,7 +555,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: themeColor,
+                        color: context.groupInk(widget.group),
                       ),
                     ),
                   ),
@@ -650,7 +653,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
             padding: const EdgeInsets.only(left: 8, bottom: 16),
             child: Row(
               children: [
-                Icon(Icons.link_rounded, size: 20, color: themeColor),
+                Icon(Icons.link_rounded,
+                    size: 20, color: context.groupInk(widget.group)),
                 const SizedBox(width: 8),
                 Text(
                   'SNS & 채널',
@@ -747,7 +751,7 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   child: Icon(
                     Icons.arrow_forward_rounded,
                     size: 18,
-                    color: themeColor,
+                    color: context.groupInk(widget.group),
                   ),
                 ),
               ],
@@ -823,15 +827,17 @@ class _StreamerDetailState extends State<StreamerDetail> {
                         ? StatusMessage(
                             compact: true,
                             icon: Icons.wifi_off_rounded,
-                            iconColor: themeColor.withAlpha(150),
+                            iconColor:
+                                context.groupInk(widget.group).withAlpha(150),
                             title: '최신 영상을 불러오지 못했어요',
                             onRetry: _retryVideos,
-                            actionColor: themeColor,
+                            actionColor: context.groupInk(widget.group),
                           )
                         : StatusMessage(
                             compact: true,
                             icon: Icons.videocam_off_rounded,
-                            iconColor: themeColor.withAlpha(150),
+                            iconColor:
+                                context.groupInk(widget.group).withAlpha(150),
                             title: '아직 올라온 영상이 없어요',
                           ),
                   ),

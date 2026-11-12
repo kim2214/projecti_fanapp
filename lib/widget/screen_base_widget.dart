@@ -353,7 +353,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                       )),
                   Obx(() => SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        activeThumbColor: AppColors.acaxia,
+                        // 라일락 브랜드색은 켜짐이 꺼짐처럼 흐리게 보인다.
+                        activeThumbColor: context.acaxiaInk,
                         title: Text('아카시아 스케줄 알림',
                             style: TextStyle(color: context.textMain)),
                         value: _notificationController
