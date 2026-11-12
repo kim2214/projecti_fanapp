@@ -205,16 +205,21 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
             ),
           ),
           const SizedBox(width: 10),
+          // 큰 글꼴에선 오른쪽 버튼들에 밀려 "허…"로 잘렸다 — 자르는 대신 줄여서
+          // 이름 전체를 보여준다.
           Flexible(
-            child: Text(
-              group.label,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: context.textMain,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                group.label,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.textMain,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

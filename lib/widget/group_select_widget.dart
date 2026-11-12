@@ -137,7 +137,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
           const SizedBox(height: 30),
           // 하단 텍스트
           Text(
-            '그룹 선택시 스케줄 확인 및 앱 기능 사용이 가능합니다.',
+            '그룹을 선택하면 방송·스케줄·영상을 볼 수 있어요.',
             style: TextStyle(
               color: context.textFaint,
               fontSize: 13,
@@ -332,7 +332,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
                           //   ),
                           // ),
                           const SizedBox(height: 12),
-                          // 스케줄 보기 버튼
+                          // 들어가기 버튼 (누르면 그룹 홈으로 간다 — 예전 문구는 '스케줄 보기')
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -366,7 +366,7 @@ class _GroupSelectWidgetState extends State<GroupSelectWidget> {
                                   ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  isLoading ? '로딩 중...' : '스케줄 보기',
+                                  isLoading ? '로딩 중...' : '들어가기',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,

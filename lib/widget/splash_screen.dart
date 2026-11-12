@@ -317,7 +317,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Copyright © 2025 kimdev0821',
+            'Copyright © 2025–${DateTime.now().year} kimdev0821',
             style: TextStyle(
               fontSize: 11,
               color: context.textFaint,
