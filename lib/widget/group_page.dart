@@ -126,7 +126,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              color: themeColor,
+              color: themeColorDark,
               strokeWidth: 3,
             ),
             const SizedBox(height: 16),
@@ -287,7 +287,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                 Icon(
                   Icons.people_alt_rounded,
                   size: 18,
-                  color: themeColor,
+                  color: themeColorDark,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -308,7 +308,7 @@ class _GroupPageWidgetState extends State<GroupPageWidget>
                 Icon(
                   Icons.touch_app_rounded,
                   size: 16,
-                  color: themeColor,
+                  color: themeColorDark,
                 ),
                 const SizedBox(width: 8),
                 Text(

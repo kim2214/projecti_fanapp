@@ -220,7 +220,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 Icon(
                   Icons.people_alt_rounded,
                   size: 18,
-                  color: themeColor,
+                  color: themeColorDark,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -241,7 +241,7 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                 Icon(
                   Icons.calendar_today_rounded,
                   size: 16,
-                  color: themeColor,
+                  color: themeColorDark,
                 ),
                 const SizedBox(width: 8),
                 Text(

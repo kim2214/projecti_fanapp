@@ -431,7 +431,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
           child: FollowerTrendChart(
             history: history,
             color: themeColor,
-            colorDark: AppColors.groupDark(widget.group),
+            // 선·최신 막대는 글자용 톤 — 아카시아 브랜드색은 흰 배경에서 흐리다.
+            colorDark: context.groupInk(widget.group),
           ),
         );
       },
@@ -489,7 +490,8 @@ class _StreamerDetailState extends State<StreamerDetail> {
                   child: PeakViewerChart(
                     sessions: all,
                     color: themeColor,
-                    colorDark: AppColors.groupDark(widget.group),
+                    // 선·최신 막대는 글자용 톤 — 아카시아 브랜드색은 흰 배경에서 흐리다.
+                    colorDark: context.groupInk(widget.group),
                   ),
                 ),
               Container(

@@ -29,7 +29,9 @@ class AppColors {
 
   // ── 시맨틱 (라이트 보조) ──
   static const Color lightTextSecondary = Color(0xFF757575); // grey[600]
-  static const Color lightTextFaint = Color(0xFF9E9E9E); // grey[500]/[400]
+  // 흐린 글자지만 방송 시간·링크·설명처럼 정보를 담는 곳이 많다. 예전 grey[500]
+  // (#9E9E9E)은 흰 배경 대비 2.7:1이라 읽기 어려워 3.9:1로 올렸다.
+  static const Color lightTextFaint = Color(0xFF808080);
   static const Color lightDivider = Color(0xFFE0E0E0); // grey[300]
   static const Color lightSurfaceAlt = Color(0xFFF2F2F4);
 
