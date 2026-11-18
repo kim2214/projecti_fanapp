@@ -63,11 +63,11 @@ void main() {
     test('isLive(OPEN)인 멤버만 포함하고 시청자 수 내림차순 정렬', () {
       final c = GlobalController();
       // 맵에 없는 멤버 = 비방송. OPEN인 멤버만 넣는다.
-      c.honeyzLiveStatus.value = {
+      c.liveStatusOf(Group.honeyz).value = {
         'honeychurros': _live(status: 'OPEN', viewers: 100),
         'damyui': _live(status: 'OPEN', viewers: 500),
       };
-      c.acaxiaLiveStatus.value = {
+      c.liveStatusOf(Group.acaxia).value = {
         'popopopo': _live(status: 'OPEN', viewers: 300),
       };
 
@@ -86,7 +86,7 @@ void main() {
 
     test('일부 멤버만 상태가 있어도 key로 안전하게 매칭', () {
       final c = GlobalController();
-      c.honeyzLiveStatus.value = {
+      c.liveStatusOf(Group.honeyz).value = {
         'honeychurros': _live(status: 'OPEN', viewers: 10),
         'ayauke': _live(status: 'OPEN', viewers: 20),
       };
@@ -97,7 +97,7 @@ void main() {
 
     test('CLOSE 상태가 섞여 있어도 OPEN만 포함', () {
       final c = GlobalController();
-      c.honeyzLiveStatus.value = {
+      c.liveStatusOf(Group.honeyz).value = {
         'honeychurros': _live(status: 'CLOSE'),
         'ayauke': _live(status: 'OPEN', viewers: 50),
       };
@@ -108,7 +108,7 @@ void main() {
 
     test('concurrentUserCount가 null이면 0으로 취급되어 뒤로 정렬', () {
       final c = GlobalController();
-      c.honeyzLiveStatus.value = {
+      c.liveStatusOf(Group.honeyz).value = {
         'honeychurros': _live(status: 'OPEN', viewers: null),
         'ayauke': _live(status: 'OPEN', viewers: 50),
       };
@@ -331,7 +331,7 @@ void main() {
         // 종료 시각 없음 → 제외
         'ddddragon': LiveSessionModel(),
       };
-      c.honeyzLiveStatus.value = {
+      c.liveStatusOf(Group.honeyz).value = {
         'honeychurros': LiveCheckModel(status: 'OPEN'),
       };
 
@@ -349,7 +349,7 @@ void main() {
     test('문서가 없는 멤버가 있어도 카탈로그와 길이·순서가 일치한다', () {
       final c = GlobalController();
       // honeyz 5명 중 아야(1번)·오화요(4번)만 스케줄 문서가 있다.
-      c.honeyzSchedules.value = {
+      c.schedulesOf(Group.honeyz).value = {
         'ayauke': ScheduleModel(scheduleURL: 'https://example.com/aya.png'),
         'ohwayo': ScheduleModel(scheduleURL: 'https://example.com/ohwayo.png'),
       };
@@ -369,7 +369,7 @@ void main() {
 
     test('scheduleURL이 null이면 빈 문자열 (미등록으로 표시)', () {
       final c = GlobalController();
-      c.honeyzSchedules.value = {
+      c.schedulesOf(Group.honeyz).value = {
         'honeychurros': ScheduleModel(scheduleURL: null),
       };
 
@@ -387,7 +387,7 @@ void main() {
     test('다른 그룹의 멤버 key는 무시된다', () {
       final c = GlobalController();
       // honeyz 캐시에 acaxia 멤버 key를 넣어도 honeyz 결과에 새어들면 안 된다.
-      c.honeyzSchedules.value = {
+      c.schedulesOf(Group.honeyz).value = {
         'popopopo': ScheduleModel(scheduleURL: 'https://example.com/popo.png'),
       };
 
@@ -400,7 +400,7 @@ void main() {
     test('생일 미설정 멤버는 제외하고, 설정된 멤버만 반환', () {
       final c = GlobalController();
       // key로 매칭: 오화요만 생일 설정
-      c.honeyz.value = {
+      c.streamersOf(Group.honeyz).value = {
         'ohwayo': _streamer(birthday: '06-15'),
       };
 
@@ -413,7 +413,7 @@ void main() {
 
     test('남은 일수 오름차순으로 정렬된다', () {
       final c = GlobalController();
-      c.honeyz.value = {
+      c.streamersOf(Group.honeyz).value = {
         'honeychurros': _streamer(birthday: '01-01'),
         'ayauke': _streamer(birthday: '12-31'),
         'damyui': _streamer(birthday: '06-15'),

@@ -159,8 +159,9 @@ class GlobalController extends GetxController {
   // 스케줄도 멤버 데이터와 동일하게 member.key로 조회하는 Map으로 보관한다.
   // (리스트로 두면 문서가 없는 멤버가 빠지면서 카탈로그와 인덱스가 어긋나,
   //  소비 측에서 다른 멤버의 스케줄에 엉뚱한 이름이 붙는다.)
-  RxMap<String, ScheduleModel> honeyzSchedules = <String, ScheduleModel>{}.obs;
-  RxMap<String, ScheduleModel> acaxiaSchedules = <String, ScheduleModel>{}.obs;
+  final Map<Group, RxMap<String, ScheduleModel>> _schedules = {
+    for (final group in Group.values) group: <String, ScheduleModel>{}.obs,
+  };
 
   /// 그룹별 스케줄 로드 상태. 빈 캐시만으로는 "로딩 중·불러오기 실패·문서 없음
   /// (등록 전)"을 구분할 수 없어, 오프라인에서도 전원 "등록 전"으로 보였다.
@@ -170,12 +171,12 @@ class GlobalController extends GetxController {
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
   //  문서/조회 결과가 없는 멤버는 맵에 없을 뿐이며, 소비 측은 "없음 = 비방송"으로 다룬다.)
-  RxMap<String, StreamerModel> honeyz = <String, StreamerModel>{}.obs;
-  RxMap<String, StreamerModel> acaxia = <String, StreamerModel>{}.obs;
-  RxMap<String, LiveCheckModel> honeyzLiveStatus =
-      <String, LiveCheckModel>{}.obs;
-  RxMap<String, LiveCheckModel> acaxiaLiveStatus =
-      <String, LiveCheckModel>{}.obs;
+  final Map<Group, RxMap<String, StreamerModel>> _streamers = {
+    for (final group in Group.values) group: <String, StreamerModel>{}.obs,
+  };
+  final Map<Group, RxMap<String, LiveCheckModel>> _liveStatus = {
+    for (final group in Group.values) group: <String, LiveCheckModel>{}.obs,
+  };
 
   /// 마지막 라이브 갱신에서 상태를 하나도 받지 못한 그룹 (서버 집계·직접 폴링
   /// 모두 실패 — 오프라인 등). 이때 캐시는 직전 값이거나(있으면) 전원 CLOSE라,
@@ -287,22 +288,15 @@ class GlobalController extends GetxController {
   /// 캐시된 멤버 프로필 (Firestore 문서). 아직 로드 전이거나 문서가 없으면 null.
   StreamerModel? streamerOf(Group group, String key) => streamersOf(group)[key];
 
-  RxMap<String, ScheduleModel> _scheduleCacheOf(Group group) => switch (group) {
-        Group.honeyz => honeyzSchedules,
-        Group.acaxia => acaxiaSchedules,
-      };
+  /// 그룹의 스케줄 캐시 (member.key → 스케줄, Obx 구독용)
+  RxMap<String, ScheduleModel> schedulesOf(Group group) => _schedules[group]!;
 
   /// 그룹의 멤버 프로필 캐시 (member.key → 프로필, Obx 구독용)
-  RxMap<String, StreamerModel> streamersOf(Group group) => switch (group) {
-        Group.honeyz => honeyz,
-        Group.acaxia => acaxia,
-      };
+  RxMap<String, StreamerModel> streamersOf(Group group) => _streamers[group]!;
 
   /// 그룹의 라이브 상태 캐시 (member.key → 상태, Obx 구독용)
-  RxMap<String, LiveCheckModel> liveStatusOf(Group group) => switch (group) {
-        Group.honeyz => honeyzLiveStatus,
-        Group.acaxia => acaxiaLiveStatus,
-      };
+  RxMap<String, LiveCheckModel> liveStatusOf(Group group) =>
+      _liveStatus[group]!;
 
   /// 컬렉션의 모든 문서를 문서 ID(= 멤버 key) 기준 Map으로 반환.
   /// 멤버-문서 매칭을 O(n²) 중첩 루프 대신 O(1) 조회로 처리하기 위함.
@@ -393,7 +387,7 @@ class GlobalController extends GetxController {
     if (group == null) return {};
     final collection = group.scheduleCollection;
 
-    final cache = _scheduleCacheOf(group);
+    final cache = schedulesOf(group);
     if (forceRefresh || cache.isEmpty) {
       // 보여줄 캐시가 있으면 새로고침 중에도 화면은 그대로 둔다.
       if (cache.isEmpty) scheduleStatus[group] = LoadStatus.loading;
@@ -765,7 +759,7 @@ class GlobalController extends GetxController {
   /// 어긋나지 않는다. (문서 없는 멤버를 걸러낸 리스트를 쓰면 그 뒤 멤버들의 이름이
   ///  한 칸씩 밀려 다른 멤버의 스케줄에 엉뚱한 이름이 붙는다.)
   List<String> scheduleImageUrlsOf(Group group) {
-    final cache = _scheduleCacheOf(group);
+    final cache = schedulesOf(group);
     return [
       for (final member in membersOf(group))
         cache[member.key]?.scheduleURL ?? '',

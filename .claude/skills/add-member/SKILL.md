@@ -36,9 +36,11 @@ description: 멤버 또는 그룹을 추가/수정/삭제할 때 흩어진 동�
 - **`lib/model/group.dart`** — `Group` enum에 값 추가(`id`·`label`·`labelEn`·
   `scheduleCollection`). `id`는 기기 저장값·Firestore 컬렉션·FCM 토픽·에셋 폴더에
   쓰이므로 정한 뒤 바꾸지 않는다. 추가하면 `switch`로 분기하는 곳이 컴파일
-  오류로 드러난다 — `GlobalController`의 `membersOf`·`streamersOf`·`liveStatusOf`·
-  `_scheduleCacheOf`(캐시 RxMap도 그룹별로 추가), `AppColors.group`/`groupDark`·
-  `context.groupInk`, `schedule_detail`의 글자색.
+  오류로 드러난다 — `GlobalController`의 `catalogOf`(→`membersOf`),
+  `AppColors.group`/`groupDark`·`context.groupInk`, `schedule_detail`의 글자색.
+  단, 그룹별 캐시(`_schedules`·`_streamers`·`_liveStatus`)는 `Group.values`에서
+  자동 생성되므로 **별도 RxMap을 추가할 필요가 없다** — 새 enum 값만 넣으면
+  `schedulesOf`·`streamersOf`·`liveStatusOf`가 그대로 동작한다.
 - 컴파일러가 못 잡는 곳: 그룹 선택 화면 카드·상단바 그룹 토글·알림 설정 시트의
   그룹별 스위치(`screen_base_widget.dart`, `group_select_widget.dart`)는 그룹을
   하나씩 나열한다 — 새 그룹 항목을 직접 추가.
