@@ -69,10 +69,11 @@ GET https://api.chzzk.naver.com/polling/v2/channels/{broadcastId}/live-status
 
 ### key 기반 매칭 (member.key로 조회)
 
-라이브 상태는 `RxMap<String, LiveCheckModel>`(`honeyzLiveStatus`/`acaxiaLiveStatus`)에
-**`member.key` → 상태**로 보관한다. 카탈로그와 **인덱스로 페어링하지 않으므로**,
+라이브 상태는 그룹별 `RxMap<String, LiveCheckModel>`에 **`member.key` → 상태**로
+보관한다(`liveStatusOf(group)`로 접근, 내부적으로 `_liveStatus[group]` —
+`Group.values`에서 자동 생성). 카탈로그와 **인덱스로 페어링하지 않으므로**,
 멤버 추가·순서 변경에도 어긋나지 않는다. (스트리머 프로필도 동일하게
-`honeyz`/`acaxia` = `RxMap<String, StreamerModel>`.)
+`streamersOf(group)` = `RxMap<String, StreamerModel>`.)
 
 - **소비 규칙**: 맵에 없는 멤버는 "비방송(CLOSE)"으로 다룬다
   (`status?.isLive == true`인 멤버만 방송 중). `liveMembersAcrossGroups`·
