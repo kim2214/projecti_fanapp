@@ -61,6 +61,11 @@ class NotificationController extends GetxController {
   static const String scheduleChannelId = 'schedule_channel';
   static const String liveChannelId = 'live_channel';
 
+  /// 알림 작은 아이콘 — 투명 배경의 단색 실루엣(res/drawable-*). 런처 아이콘은
+  /// 불투명한 그림이라 상태 표시줄에서 알아보기 어렵고, 순정 Android에선 단색
+  /// 사각형이 된다. 매니페스트의 FCM 기본 아이콘과 같은 리소스를 쓴다.
+  static const String _smallIcon = '@drawable/ic_stat_notification';
+
   /// 현재 구독 중인 라이브 멤버 key 집합(영속). 최애 변경 시 이 집합과 diff해
   /// 추가/해제만 수행하고, 앱 재시작 후에도 실제 구독 상태를 추적한다.
   static const String _liveTopicsKey = 'noti_live_topics';
@@ -129,8 +134,7 @@ class NotificationController extends GetxController {
   }
 
   Future<void> _initLocalNotifications() async {
-    const androidInit =
-        AndroidInitializationSettings('@mipmap/projecti_fanapp_icon');
+    const androidInit = AndroidInitializationSettings(_smallIcon);
     const initSettings = InitializationSettings(android: androidInit);
     // 포그라운드에서 우리가 직접 띄운 로컬 알림의 탭 콜백.
     await _localNoti.initialize(
@@ -370,7 +374,7 @@ class NotificationController extends GetxController {
           channelDescription: channelDesc,
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/projecti_fanapp_icon',
+          icon: _smallIcon,
         ),
       ),
       payload: payload,
