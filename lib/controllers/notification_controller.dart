@@ -112,6 +112,7 @@ class NotificationController extends GetxController {
 
     // 알림 탭(백그라운드/종료 상태)으로 앱이 열렸을 때의 처리
     _setupInteraction();
+    await _step(_handleLocalNotificationLaunch, '로컬 알림 탭 콜드스타트 진입 조회');
 
     // 모든 단계를 시도한 뒤에만 완료로 표시한다.
     _initialized = true;
@@ -390,6 +391,17 @@ class NotificationController extends GetxController {
     });
     // 백그라운드(앱은 살아있음)에서 알림 탭한 경우
     FirebaseMessaging.onMessageOpenedApp.listen(_handleRemoteTap);
+  }
+
+  /// 포그라운드에서 우리가 띄운 로컬 알림이 트레이에 남아 있다가, 앱이 종료된
+  /// 뒤 탭돼 콜드 스타트한 경우. 이 탭은 FCM이 아니라 로컬 알림 플러그인이
+  /// 받으므로 [FirebaseMessaging.getInitialMessage]에도, 실행 중에만 불리는
+  /// [_onLocalNotificationTap] 콜백에도 오지 않는다 — 직접 물어봐야 한다.
+  Future<void> _handleLocalNotificationLaunch() async {
+    final details = await _localNoti.getNotificationAppLaunchDetails();
+    final response = details?.notificationResponse;
+    if (details?.didNotificationLaunchApp != true || response == null) return;
+    _onLocalNotificationTap(response);
   }
 
   void _handleRemoteTap(RemoteMessage message) => handleTapData(message.data);
