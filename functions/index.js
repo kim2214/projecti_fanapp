@@ -321,7 +321,7 @@ exports.pollLiveStatus = onSchedule(
       }
     }
 
-    // 11명 상태를 집계 문서 1개에 한 번에 기록 (주기당 읽기1 + 쓰기1).
+    // 멤버 전원의 상태를 집계 문서 1개에 한 번에 기록 (주기당 읽기1 + 쓰기1).
     // merge 없이 통째로 교체한다 — merge:true면 map이 깊은 병합되어, 카탈로그에서
     // 뺀 멤버의 옛 상태(OPEN 가능)가 문서에 영구 잔존한다.
     await ref.set({
@@ -433,7 +433,7 @@ exports.recordFollowerCounts = onSchedule(
     minBackoffSeconds: 60,
   },
   async () => {
-    // 채널 조회는 요청당 20개까지 — 카탈로그(11명)는 한 번에 들어간다.
+    // 채널 조회는 요청당 20개까지 — 카탈로그 전원(10명)이 한 번에 들어간다.
     const ids = MEMBER_CATALOG.map((m) => m.broadcastId).join(",");
     const url = `https://openapi.chzzk.naver.com/open/v1/channels?channelIds=${ids}`;
     const res = await fetch(url, {

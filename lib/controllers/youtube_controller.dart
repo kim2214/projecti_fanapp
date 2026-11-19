@@ -275,7 +275,7 @@ class YouTubeController extends GetxController {
             final vids = await _service.getChannelVideos(
               channelId: member.youtubeChannelId,
               timeout: _groupRequestTimeout,
-              // 그룹은 11개 채널 + 점진적 표시로 일부 실패를 흡수하므로 재시도 생략
+              // 그룹은 여러 채널 + 점진적 표시로 일부 실패를 흡수하므로 재시도 생략
               // (재시도 시 채널 수만큼 부하가 곱해져 오히려 레이트리밋을 악화).
               retries: 0,
             );

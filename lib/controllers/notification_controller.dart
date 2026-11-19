@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/group.dart';
+import 'package:projecti_fan_app/model/live_notification_mode.dart';
 import 'package:projecti_fan_app/model/notification_target.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projecti_fan_app/utils/external_link.dart';
@@ -18,7 +19,7 @@ import 'package:projecti_fan_app/utils/external_link.dart';
 ///   기본 ON. 생일 푸시도 이 토픽으로 온다.
 /// - 라이브 알림: 멤버별 토픽(`live_<memberKey>`). 서버 폴링(Cloud Function
 ///   pollLiveStatus)이 방송 시작을 감지해 발송한다. 구독 범위는 [liveMode]
-///   ('all' 전체 / 'favorites' 최애만(기본) / 'off' 끄기)가 정하고, 최애 목록이
+///   (전체 / 최애만(기본) / 끄기 — [LiveNotificationMode])가 정하고, 최애 목록이
 ///   바뀌면 [FavoritesController]가 [syncLiveSubscriptions]로 알려준다.
 class NotificationController extends GetxController {
   // 토픽 구독/해제·오류 기록은 테스트에서 주입할 수 있게 함수로 받는다.
@@ -53,7 +54,7 @@ class NotificationController extends GetxController {
 
   static const String _prefsPrefix = 'noti_schedule_'; // + group
 
-  /// 라이브 알림 모드 영속화 키 ('all' | 'favorites' | 'off')
+  /// 라이브 알림 모드 영속화 키 (값은 [LiveNotificationMode.id])
   static const String _liveModePrefsKey = 'noti_live_mode';
 
   /// 안드로이드 알림 채널 ID — Cloud Function의 channelId와 반드시 일치해야 한다.
@@ -72,8 +73,8 @@ class NotificationController extends GetxController {
     for (final group in Group.values) group: true,
   }.obs;
 
-  /// 라이브 알림 모드. 기본 'favorites'(최애만) — 기존 동작과 동일.
-  final RxString liveMode = 'favorites'.obs;
+  /// 라이브 알림 모드. 기본은 최애만 — 기존 동작과 동일.
+  final Rx<LiveNotificationMode> liveMode = LiveNotificationMode.favorites.obs;
   bool _liveModeLoaded = false;
 
   /// 마지막으로 전달받은 최애 key 집합 — 모드 변경 시 재조정에 쓴다.
@@ -241,13 +242,12 @@ class NotificationController extends GetxController {
   /// 구독 실패는 기록만 한다 — 영속 구독 집합은 성공했을 때만 갱신되므로 다음
   /// 재조정(앱 시작 시 최애 로드 등)에서 다시 시도된다. 설정 화면의 콜백에서
   /// 바로 불리므로 예외를 밖으로 던지지 않는다(던지면 fatal로 오분류된다).
-  Future<void> setLiveMode(String mode) async {
-    if (mode != 'all' && mode != 'favorites' && mode != 'off') return;
+  Future<void> setLiveMode(LiveNotificationMode mode) async {
     liveMode.value = mode;
     _liveModeLoaded = true; // 사용자가 방금 정한 값이 저장값보다 우선
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_liveModePrefsKey, mode);
+      await prefs.setString(_liveModePrefsKey, mode.id);
       await _reconcileLiveTopics();
     } catch (e, st) {
       _reportError(e, st, '라이브 알림 모드 반영 실패');
@@ -256,17 +256,13 @@ class NotificationController extends GetxController {
 
   /// 모드에 따른 라이브 알림 구독 대상 key 집합. (순수 판정 — 테스트 대상)
   @visibleForTesting
-  static Set<String> desiredLiveTopics(
-      String mode, Set<String> favoriteKeys, List<String> allKeys) {
-    switch (mode) {
-      case 'off':
-        return const {};
-      case 'all':
-        return allKeys.toSet();
-      default: // 'favorites' (기본)
-        return favoriteKeys;
-    }
-  }
+  static Set<String> desiredLiveTopics(LiveNotificationMode mode,
+          Set<String> favoriteKeys, List<String> allKeys) =>
+      switch (mode) {
+        LiveNotificationMode.off => const {},
+        LiveNotificationMode.all => allKeys.toSet(),
+        LiveNotificationMode.favorites => favoriteKeys,
+      };
 
   static List<String> get _allMemberKeys => [
         for (final m in GlobalController.honeyzMembers) m.key,
@@ -294,10 +290,10 @@ class NotificationController extends GetxController {
     // 저장된 모드는 첫 재조정 시점에 지연 로드한다 — FavoritesController의
     // 첫 동기화가 init()보다 먼저 도착해도 저장된 모드가 적용되게.
     if (!_liveModeLoaded) {
-      final saved = prefs.getString(_liveModePrefsKey);
-      if (saved == 'all' || saved == 'favorites' || saved == 'off') {
-        liveMode.value = saved!;
-      }
+      // 모르는 저장값이면 기본(최애만)을 그대로 둔다.
+      final saved =
+          LiveNotificationMode.fromId(prefs.getString(_liveModePrefsKey));
+      if (saved != null) liveMode.value = saved;
       _liveModeLoaded = true;
     }
 

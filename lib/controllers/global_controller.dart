@@ -51,7 +51,7 @@ class GlobalController extends GetxController {
   static const Duration _requestTimeout = ChzzkService.defaultTimeout;
 
   // 서버(Cloud Function pollLiveStatus)가 1분 주기로 10명 상태를 집계하는 문서.
-  // 클라는 이 문서를 우선 읽어 치지직 직접 폴링(클라 수 × 11요청)을 대체한다.
+  // 클라는 이 문서를 우선 읽어 치지직 직접 폴링(클라 수 × 멤버 수만큼의 요청)을 대체한다.
   static const String _liveStatusDocPath = 'live_status/current';
 
   // 집계 문서가 이보다 오래되면(서버 폴링 중단 의심) 치지직 직접 폴링으로 폴백한다.

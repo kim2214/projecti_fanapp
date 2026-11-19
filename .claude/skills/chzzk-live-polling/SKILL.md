@@ -184,8 +184,9 @@ chzzk API가 바뀌어 라이브가 안 뜬다는 리포트가 오면 이 Crashl
 ### 클라이언트 수신 (`notification_controller.dart`)
 
 - `live_channel` 채널 생성(스케줄과 분리).
-- 구독 범위는 **`liveMode` 설정**('all' 전체 / 'favorites' 최애만(기본) /
-  'off' 끄기, 알림 설정 시트에서 변경·영속)이 정한다. 최애 목록이 바뀌면
+- 구독 범위는 **`liveMode` 설정**(`LiveNotificationMode` — 전체 / 최애만(기본) /
+  끄기, 저장값은 id 문자열 'all'·'favorites'·'off', 알림 설정 시트
+  `notification_settings_sheet.dart`에서 변경·영속)이 정한다. 최애 목록이 바뀌면
   `FavoritesController`가 `syncLiveSubscriptions(keys)`로 알리고,
   `desiredLiveTopics(mode, favorites, all)`(순수, 테스트 대상)가 정한 대상과
   영속 집합을 diff해 `live_<key>`를 추가/해제한다.

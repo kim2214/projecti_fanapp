@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/model/group.dart';
+import 'package:projecti_fan_app/model/live_notification_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 호출을 기록하고, [hold]가 켜져 있으면 테스트가 완료시킬 때까지 멈추는 가짜 FCM.
@@ -85,34 +86,39 @@ void main() {
     test("'favorites'(기본)는 최애 집합 그대로", () {
       expect(
         NotificationController.desiredLiveTopics(
-            'favorites', favorites, allKeys),
+            LiveNotificationMode.favorites, favorites, allKeys),
         {'b'},
       );
     });
 
     test("'all'은 최애와 무관하게 전체 멤버", () {
       expect(
-        NotificationController.desiredLiveTopics('all', favorites, allKeys),
+        NotificationController.desiredLiveTopics(
+            LiveNotificationMode.all, favorites, allKeys),
         {'a', 'b', 'c'},
       );
       expect(
-        NotificationController.desiredLiveTopics('all', const {}, allKeys),
+        NotificationController.desiredLiveTopics(
+            LiveNotificationMode.all, const {}, allKeys),
         {'a', 'b', 'c'},
       );
     });
 
     test("'off'는 최애가 있어도 빈 집합 — 전부 구독 해제", () {
       expect(
-        NotificationController.desiredLiveTopics('off', favorites, allKeys),
+        NotificationController.desiredLiveTopics(
+            LiveNotificationMode.off, favorites, allKeys),
         isEmpty,
       );
     });
 
-    test('알 수 없는 모드 값은 기본(최애만)으로 동작', () {
-      expect(
-        NotificationController.desiredLiveTopics('weird', favorites, allKeys),
-        {'b'},
-      );
+    test('저장값(id)으로 모드를 찾고, 모르는 값은 null — 기본(최애만) 유지', () {
+      expect(LiveNotificationMode.fromId('all'), LiveNotificationMode.all);
+      expect(LiveNotificationMode.fromId('favorites'),
+          LiveNotificationMode.favorites);
+      expect(LiveNotificationMode.fromId('off'), LiveNotificationMode.off);
+      expect(LiveNotificationMode.fromId('weird'), isNull);
+      expect(LiveNotificationMode.fromId(null), isNull);
     });
   });
 
@@ -203,9 +209,9 @@ void main() {
     });
 
     test('라이브 모드: 구독이 실패해도 모드는 저장되고 예외를 던지지 않는다', () async {
-      await c.setLiveMode('all');
+      await c.setLiveMode(LiveNotificationMode.all);
 
-      expect(c.liveMode.value, 'all');
+      expect(c.liveMode.value, LiveNotificationMode.all);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('noti_live_mode'), 'all');
       // 구독 집합은 성공했을 때만 저장 — 다음 재조정에서 다시 시도된다.
