@@ -89,8 +89,11 @@ class NotificationController extends GetxController {
 
   /// 포그라운드 로컬 알림 ID. `notification.hashCode`는 값이 겹치면 이전 알림을
   /// 덮어써 조용히 사라질 수 있어, 매 알림마다 고유하도록 단조 증가시킨다.
-  /// (Android 알림 ID는 32비트 int — 세션 내 증가로 충분하다.)
-  int _foregroundNotiId = 0;
+  /// 0부터 세면 앱을 다시 켠 뒤 온 알림이 트레이에 남은 이전 실행의 알림을
+  /// 덮어쓰므로, 시작값을 현재 시각(초)에서 잡는다. (Android 알림 ID는 32비트
+  /// int — 2^30 안에서 시작해 세션 내 증가로는 넘치지 않는다.)
+  int _foregroundNotiId =
+      (DateTime.now().millisecondsSinceEpoch ~/ 1000) % (1 << 30);
 
   /// main()에서 Firebase 초기화 직후 1회 호출.
   ///
@@ -282,8 +285,16 @@ class NotificationController extends GetxController {
     return run;
   }
 
+  /// 이번 실행에서 저장된 구독 집합을 실제 구독과 한 번 맞췄는지.
+  bool _liveTopicsVerified = false;
+
   /// 원하는 구독 집합(모드×최애)과 영속된 실제 구독 집합을 diff해 추가/해제할
   /// 토픽만 처리한다 — 중복 구독이나 불필요한 네트워크 호출이 없다.
+  ///
+  /// 단, 실행 후 첫 재조정은 저장값을 믿지 않고 원하는 토픽을 전부 다시
+  /// 구독한다. 저장값은 기기 백업으로 새 기기에 복원되지만 FCM 토큰은 새로
+  /// 발급돼 실제 구독은 비어 있다 — diff만 하면 "이미 구독됨"으로 보고 라이브
+  /// 알림이 조용히 끊긴다. 구독은 멱등이라 다시 해도 해가 없다(최대 멤버 수만큼).
   Future<void> _reconcileLiveTopicsNow() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -301,13 +312,16 @@ class NotificationController extends GetxController {
         desiredLiveTopics(liveMode.value, _favoriteKeys, _allMemberKeys);
     final current = (prefs.getStringList(_liveTopicsKey) ?? const []).toSet();
 
-    for (final key in desired.difference(current)) {
+    final toSubscribe =
+        _liveTopicsVerified ? desired.difference(current) : desired;
+    for (final key in toSubscribe) {
       await _subscribe('live_$key');
     }
     for (final key in current.difference(desired)) {
       await _unsubscribe('live_$key');
     }
     await prefs.setStringList(_liveTopicsKey, desired.toList());
+    _liveTopicsVerified = true;
   }
 
   /// 포그라운드에서 받은 FCM 메시지를 로컬 알림으로 표시.
@@ -342,7 +356,9 @@ class NotificationController extends GetxController {
     // 그대로 payload로 싣는다.
     final payload = message.data.isEmpty ? null : jsonEncode(message.data);
 
-    _localNoti.show(
+    // 표시 실패를 잡지 않으면 아무도 받지 못해 fatal 크래시로 오분류된다.
+    unawaited(_localNoti
+        .show(
       id: _foregroundNotiId++,
       title: notification.title,
       body: notification.body,
@@ -357,7 +373,10 @@ class NotificationController extends GetxController {
         ),
       ),
       payload: payload,
-    );
+    )
+        .catchError((Object e, StackTrace st) {
+      _reportError(e, st, '포그라운드 알림 표시 실패');
+    }));
   }
 
   /// 백그라운드/종료 상태에서 알림을 탭해 앱이 열렸을 때의 진입 처리.

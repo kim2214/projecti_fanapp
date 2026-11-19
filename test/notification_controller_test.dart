@@ -149,6 +149,38 @@ void main() {
       expect(await _savedTopics(), isEmpty);
     });
 
+    test('실행 후 첫 재조정은 저장값이 있어도 다시 구독한다 (기기 이전·복원)', () async {
+      // 백업에서 저장값만 복원되고 FCM 토큰은 새로 발급된 상태.
+      SharedPreferences.setMockInitialValues({
+        'noti_live_topics': ['damyui', 'ohwayo'],
+      });
+      await c.syncLiveSubscriptions({'damyui'});
+      expect(fcm.calls, ['+live_damyui', '-live_ohwayo']);
+      expect(await _savedTopics(), ['damyui']);
+
+      fcm.calls.clear();
+      await c.syncLiveSubscriptions({'damyui'}); // 두 번째부터는 diff만
+      expect(fcm.calls, isEmpty);
+    });
+
+    test('첫 재조정이 실패하면 다음 재조정에서 다시 전부 구독한다', () async {
+      SharedPreferences.setMockInitialValues({
+        'noti_live_topics': ['damyui'],
+      });
+      var fail = true;
+      final flaky = NotificationController(
+        subscribeToTopic: (t) =>
+            fail ? Future.error(Exception('offline')) : fcm.subscribe(t),
+        unsubscribeFromTopic: fcm.unsubscribe,
+      );
+      await expectLater(
+          flaky.syncLiveSubscriptions({'damyui'}), throwsException);
+
+      fail = false;
+      await flaky.syncLiveSubscriptions({'damyui'});
+      expect(fcm.calls, ['+live_damyui']);
+    });
+
     test('해제 중에 바로 재지정해도 최종 구독이 남는다 (재조정 직렬화)', () async {
       await c.syncLiveSubscriptions({'damyui'});
       fcm.calls.clear();
