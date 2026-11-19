@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:projecti_fan_app/controllers/notification_controller.dart';
 import 'package:projecti_fan_app/model/group.dart';
@@ -32,6 +33,53 @@ Future<List<String>?> _savedTopics() async =>
 void main() {
   const allKeys = ['a', 'b', 'c'];
   const favorites = {'b'};
+
+  group('알림 권한 상태 (permissionDenied)', () {
+    NotificationController controllerWith(
+            Future<AuthorizationStatus> Function() status,
+            {List<String>? errors}) =>
+        NotificationController(
+          subscribeToTopic: (_) async {},
+          unsubscribeFromTopic: (_) async {},
+          reportError: (_, __, reason) => errors?.add(reason),
+          authorizationStatus: status,
+        );
+
+    test('거부·영구 거부만 꺼짐으로 본다', () {
+      expect(
+          NotificationController.isDenied(AuthorizationStatus.denied), isTrue);
+      expect(
+          NotificationController.isDenied(
+              AuthorizationStatus.deniedPermanently),
+          isTrue);
+      expect(NotificationController.isDenied(AuthorizationStatus.authorized),
+          isFalse);
+      expect(NotificationController.isDenied(AuthorizationStatus.notDetermined),
+          isFalse);
+    });
+
+    test('다시 읽으면 바뀐 권한 상태를 반영한다 (설정에서 켜고 복귀)', () async {
+      var status = AuthorizationStatus.denied;
+      final c = controllerWith(() async => status);
+      expect(c.permissionDenied.value, isFalse); // 확인 전에는 안내하지 않는다
+
+      await c.refreshPermissionStatus();
+      expect(c.permissionDenied.value, isTrue);
+
+      status = AuthorizationStatus.authorized;
+      await c.refreshPermissionStatus();
+      expect(c.permissionDenied.value, isFalse);
+    });
+
+    test('조회 실패는 던지지 않고 기록만 하며 직전 값을 유지한다', () async {
+      final errors = <String>[];
+      final c =
+          controllerWith(() async => throw StateError('boom'), errors: errors);
+      await c.refreshPermissionStatus();
+      expect(c.permissionDenied.value, isFalse);
+      expect(errors, ['알림 권한 상태 조회 실패']);
+    });
+  });
 
   group('desiredLiveTopics (라이브 알림 구독 대상)', () {
     test("'favorites'(기본)는 최애 집합 그대로", () {

@@ -75,9 +75,14 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   /// 스케줄·생일 알림 탭 대기열 구독. 앱이 살아 있을 때 들어오는 탭을 받는다.
   late final Worker _notificationTapWorker;
 
+  /// 시스템 설정에서 알림을 켜고 돌아오면 권한 안내가 바로 사라지게 한다.
+  late final AppLifecycleListener _lifecycleListener;
+
   @override
   void initState() {
     super.initState();
+    _lifecycleListener = AppLifecycleListener(
+        onResume: _notificationController.refreshPermissionStatus);
     _notificationTapWorker = ever(_notificationController.pendingTarget,
         (_) => _openNotificationTarget());
     // 콜드 스타트: 스플래시 동안 이미 들어와 기다리던 탭. PageView가 붙은 뒤 처리한다.
@@ -134,6 +139,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   @override
   void dispose() {
     _notificationTapWorker.dispose();
+    _lifecycleListener.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -250,6 +256,7 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
   }
 
   void _showNotificationSettings() {
+    unawaited(_notificationController.refreshPermissionStatus());
     showModalBottomSheet(
       context: context,
       // 기본 시트는 화면 높이의 9/16에서 잘린다 — 화면 크기 '크게'·큰 글꼴에선
@@ -268,6 +275,8 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
             child: Obx(() {
               // 서버가 멈춘 동안에는 "켜면 알림이 온다"고 약속하지 않는다.
               final down = _globalController.pushServiceDown.value;
+              // 기기에서 알림이 꺼져 있으면 아래 스위치를 켜도 알림이 뜨지 않는다.
+              final denied = _notificationController.permissionDenied.value;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,6 +299,10 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                   const SizedBox(height: 16),
                   if (down) ...[
                     _buildServiceDownBanner(),
+                    const SizedBox(height: 16),
+                  ],
+                  if (denied) ...[
+                    _buildPermissionDeniedBanner(),
                     const SizedBox(height: 16),
                   ],
                   Text(
@@ -413,6 +426,67 @@ class _ScreenBaseWidgetState extends State<ScreenBaseWidget> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 기기에서 이 앱의 알림이 꺼져 있을 때 시트 상단에 띄우는 안내.
+  /// 원인이 앱 설정이 아니므로 시스템 알림 설정으로 바로 보낸다.
+  Widget _buildPermissionDeniedBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.birthday.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.birthday.withAlpha(80)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notifications_off_rounded,
+                  size: 18, color: AppColors.birthday),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '기기에서 알림이 꺼져 있어요',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.textMain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '이 앱의 알림이 허용되지 않아, 아래 설정을 켜도 알림이 표시되지 않습니다.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: context.textSub,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => AppSettings.openAppSettings(
+                  type: AppSettingsType.notification),
+              icon: const Icon(Icons.settings_rounded, size: 18),
+              label: const Text('알림 설정 열기'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.textMain,
+                side: BorderSide(color: context.textFaint.withAlpha(80)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
         ],

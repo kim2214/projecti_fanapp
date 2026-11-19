@@ -109,6 +109,9 @@ class GlobalController extends GetxController {
   void _handleResume() {
     if (_liveRefreshTimer != null) return;
     refreshAllLiveStatus();
+    // 앱을 최근 앱에 둔 채 며칠 뒤 열어도 지난 스케줄이 남지 않게 한다
+    // (오래됐을 때만 다시 읽는다 — [scheduleMaxAge]).
+    unawaited(loadScheduleFireStore());
     _startLiveRefreshTimer();
   }
 
@@ -167,6 +170,27 @@ class GlobalController extends GetxController {
   /// (등록 전)"을 구분할 수 없어, 오프라인에서도 전원 "등록 전"으로 보였다.
   /// 키가 없으면 아직 요청 전(스플래시가 곧 시작한다) — 로딩 중으로 다룬다.
   final RxMap<Group, LoadStatus> scheduleStatus = <Group, LoadStatus>{}.obs;
+
+  /// 스케줄 캐시를 다시 읽지 않고 믿는 시간. 앱 프로세스는 며칠씩 살아 있을 수
+  /// 있어, 한 번 읽은 캐시를 끝까지 쓰면 지난 주 스케줄이 계속 보인다.
+  static const Duration scheduleMaxAge = Duration(minutes: 10);
+
+  /// 그룹별 스케줄을 서버에서 마지막으로 읽어 온 시각 (성공한 조회만).
+  final Map<Group, DateTime> _scheduleLoadedAt = {};
+
+  /// 마지막 조회([loadedAt])가 없거나 [scheduleMaxAge]보다 오래됐는지.
+  /// (시계와 분리된 순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static bool isScheduleStale(DateTime? loadedAt, DateTime now) =>
+      loadedAt == null || now.difference(loadedAt) > scheduleMaxAge;
+
+  /// 스케줄 푸시를 앱이 켜진 채 받았을 때: 그 그룹의 캐시를 오래된 것으로
+  /// 표시하고, 지금 보고 있는 그룹이면 바로 다시 읽는다. 다른 그룹이면 그
+  /// 그룹으로 전환할 때 다시 읽힌다.
+  void onSchedulePushed(Group group) {
+    _scheduleLoadedAt.remove(group);
+    if (selectedGroup.value == group) unawaited(loadScheduleFireStore());
+  }
 
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
@@ -388,7 +412,9 @@ class GlobalController extends GetxController {
     final collection = group.scheduleCollection;
 
     final cache = schedulesOf(group);
-    if (forceRefresh || cache.isEmpty) {
+    if (forceRefresh ||
+        cache.isEmpty ||
+        isScheduleStale(_scheduleLoadedAt[group], DateTime.now())) {
       // 보여줄 캐시가 있으면 새로고침 중에도 화면은 그대로 둔다.
       if (cache.isEmpty) scheduleStatus[group] = LoadStatus.loading;
       final docsByKey = await _fetchDocsByKey(collection);
@@ -401,6 +427,7 @@ class GlobalController extends GetxController {
             if (docsByKey[member.key] != null)
               member.key: ScheduleModel.fromJson(docsByKey[member.key]!),
         };
+        _scheduleLoadedAt[group] = DateTime.now();
         scheduleStatus[group] = LoadStatus.loaded;
       } else if (cache.isEmpty) {
         scheduleStatus[group] = LoadStatus.failed;

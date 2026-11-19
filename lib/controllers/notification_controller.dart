@@ -27,7 +27,9 @@ class NotificationController extends GetxController {
     Future<void> Function(String topic)? subscribeToTopic,
     Future<void> Function(String topic)? unsubscribeFromTopic,
     void Function(Object error, StackTrace stack, String reason)? reportError,
-  })  : _subscribe = subscribeToTopic ??
+    Future<AuthorizationStatus> Function()? authorizationStatus,
+  })  : _authorizationStatus = authorizationStatus ?? _fcmAuthorizationStatus,
+        _subscribe = subscribeToTopic ??
             ((topic) => FirebaseMessaging.instance.subscribeToTopic(topic)),
         _unsubscribe = unsubscribeFromTopic ??
             ((topic) => FirebaseMessaging.instance.unsubscribeFromTopic(topic)),
@@ -37,6 +39,11 @@ class NotificationController extends GetxController {
   final Future<void> Function(String topic) _unsubscribe;
   final void Function(Object error, StackTrace stack, String reason)
       _reportError;
+  final Future<AuthorizationStatus> Function() _authorizationStatus;
+
+  static Future<AuthorizationStatus> _fcmAuthorizationStatus() async =>
+      (await FirebaseMessaging.instance.getNotificationSettings())
+          .authorizationStatus;
 
   static void _reportToCrashlytics(
       Object error, StackTrace stack, String reason) {
@@ -149,11 +156,32 @@ class NotificationController extends GetxController {
   }
 
   Future<void> _requestPermission() async {
-    await FirebaseMessaging.instance.requestPermission(
+    final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
+    permissionDenied.value = isDenied(settings.authorizationStatus);
+  }
+
+  /// 기기에서 이 앱의 알림이 꺼져 있는지 (권한 거부 또는 시스템 설정에서 끔).
+  /// 이때는 앱 안의 스위치를 켜도 알림이 뜨지 않으므로 설정 화면이 먼저 알린다.
+  final RxBool permissionDenied = false.obs;
+
+  /// 아직 묻지 않은 상태(notDetermined)는 거부가 아니다. (순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static bool isDenied(AuthorizationStatus status) =>
+      status == AuthorizationStatus.denied ||
+      status == AuthorizationStatus.deniedPermanently;
+
+  /// 기기의 알림 권한 상태를 다시 읽는다. 알림 설정을 열 때와, 시스템 설정에
+  /// 다녀온 뒤(앱 복귀)에 부른다. 화면 콜백에서 바로 불리므로 던지지 않는다.
+  Future<void> refreshPermissionStatus() async {
+    try {
+      permissionDenied.value = isDenied(await _authorizationStatus());
+    } catch (e, st) {
+      _reportError(e, st, '알림 권한 상태 조회 실패');
+    }
   }
 
   /// 저장된 설정을 읽어 스케줄 토픽 구독 상태를 동기화한다.
@@ -295,6 +323,15 @@ class NotificationController extends GetxController {
         Get.find<GlobalController>().refreshAllLiveStatus();
       }
       return;
+    }
+
+    // 스케줄 푸시(포그라운드): 보고 있던 스케줄 화면이 바로 새 스케줄로 바뀌게 한다.
+    // (생일 푸시는 같은 토픽으로 오지만 type이 달라 여기 해당하지 않는다.)
+    if (message.data['type'] == 'schedule') {
+      final group = Group.fromId(message.data['group'] as String?);
+      if (group != null && Get.isRegistered<GlobalController>()) {
+        Get.find<GlobalController>().onSchedulePushed(group);
+      }
     }
 
     final notification = message.notification;

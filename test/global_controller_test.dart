@@ -439,6 +439,26 @@ void main() {
     });
   });
 
+  group('isScheduleStale (스케줄 재조회 판정)', () {
+    final now = DateTime(2026, 11, 19, 12);
+
+    test('읽은 적이 없으면 오래된 것으로 본다', () {
+      expect(GlobalController.isScheduleStale(null, now), isTrue);
+    });
+
+    test('scheduleMaxAge 이내면 캐시를 그대로 쓴다', () {
+      final loadedAt = now.subtract(GlobalController.scheduleMaxAge);
+      expect(GlobalController.isScheduleStale(loadedAt, now), isFalse);
+    });
+
+    test('scheduleMaxAge를 넘기면 다시 읽는다', () {
+      final loadedAt = now
+          .subtract(GlobalController.scheduleMaxAge)
+          .subtract(const Duration(seconds: 1));
+      expect(GlobalController.isScheduleStale(loadedAt, now), isTrue);
+    });
+  });
+
   group('isAggregateStale (서버 집계 폴백 판정)', () {
     // 기준 시각을 고정해 결정적으로 검증한다.
     final now = DateTime(2026, 7, 20, 12, 0, 0);
