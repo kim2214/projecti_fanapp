@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
 import 'package:projecti_fan_app/model/member.dart';
@@ -120,6 +121,26 @@ class YouTubeController extends GetxController {
     if (_globalController.selectedGroup.value != null) {
       loadGroupLatestVideos();
     }
+    // 앱 프로세스는 며칠씩 살아 있을 수 있어, 복귀 때 다시 보지 않으면 어제
+    // 영상 목록이 계속 보인다.
+    _lifecycleListener = AppLifecycleListener(onResume: _refreshOnResume);
+  }
+
+  AppLifecycleListener? _lifecycleListener;
+
+  @override
+  void onClose() {
+    _lifecycleListener?.dispose();
+    super.onClose();
+  }
+
+  /// 앱 복귀: 화면에 보이는 영상 목록을 오래됐을 때만(캐시 10분) 다시 읽는다.
+  /// 멤버 영상은 이미 본 적이 있을 때만 — YouTube 탭을 연 적이 없으면 조회하지
+  /// 않는다. onResume은 알림창을 내릴 때도 불리지만, 신선한 캐시면 요청이 없다.
+  void _refreshOnResume() {
+    if (_globalController.selectedGroup.value == null) return;
+    loadGroupLatestVideos();
+    if (_cache.containsKey(effectiveSelectedMemberKey)) loadVideos();
   }
 
   void _onGroupChanged() {
