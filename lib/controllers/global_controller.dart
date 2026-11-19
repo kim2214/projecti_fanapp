@@ -112,6 +112,8 @@ class GlobalController extends GetxController {
     // 앱을 최근 앱에 둔 채 며칠 뒤 열어도 지난 스케줄이 남지 않게 한다
     // (오래됐을 때만 다시 읽는다 — [scheduleMaxAge]).
     unawaited(loadScheduleFireStore());
+    // 프로필(생일·SNS 링크)도 같은 이유로 — 다시 읽으면 생일 D-day도 새로 그려진다.
+    unawaited(loadStreamerFireStore());
     _startLiveRefreshTimer();
   }
 
@@ -191,6 +193,20 @@ class GlobalController extends GetxController {
     _scheduleLoadedAt.remove(group);
     if (selectedGroup.value == group) unawaited(loadScheduleFireStore());
   }
+
+  /// 멤버 프로필 캐시를 다시 읽지 않고 믿는 시간. 프로필(생일·SNS 링크)은 거의
+  /// 바뀌지 않아 스케줄보다 길게 둔다 — 그래도 프로세스가 며칠 살아 있으면
+  /// 당겨서 새로고침 전까지 옛 값이 남으므로 끝없이 믿지는 않는다.
+  static const Duration streamerMaxAge = Duration(hours: 1);
+
+  /// 그룹별 프로필을 서버에서 마지막으로 읽어 온 시각 (성공한 조회만).
+  final Map<Group, DateTime> _streamersLoadedAt = {};
+
+  /// 마지막 조회([loadedAt])가 없거나 [streamerMaxAge]보다 오래됐는지.
+  /// (시계와 분리된 순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static bool isStreamerStale(DateTime? loadedAt, DateTime now) =>
+      loadedAt == null || now.difference(loadedAt) > streamerMaxAge;
 
   // 멤버 데이터/라이브 상태는 member.key로 조회하는 Map으로 보관한다.
   // (카탈로그와 인덱스로 페어링하지 않으므로, 멤버 추가·순서 변경에도 어긋나지 않는다.
@@ -444,7 +460,9 @@ class GlobalController extends GetxController {
     if (group == null) return {};
 
     final cache = streamersOf(group);
-    if (forceRefresh || cache.isEmpty) {
+    if (forceRefresh ||
+        cache.isEmpty ||
+        isStreamerStale(_streamersLoadedAt[group], DateTime.now())) {
       final docsByKey = await _fetchDocsByKey(group.streamerCollection);
       // 조회 실패 시 기존 캐시를 빈 값으로 덮어쓰지 않는다.
       if (docsByKey != null) {
@@ -455,6 +473,7 @@ class GlobalController extends GetxController {
             if (docsByKey[member.key] != null)
               member.key: StreamerModel.fromJson(docsByKey[member.key]!),
         };
+        _streamersLoadedAt[group] = DateTime.now();
       } else if (cache.isEmpty) {
         _notifyLoadFailed();
       }

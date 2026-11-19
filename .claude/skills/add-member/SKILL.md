@@ -17,7 +17,7 @@ description: 멤버 또는 그룹을 추가/수정/삭제할 때 흩어진 동�
    - `chzzkBroadcastId`: 치지직 채널 ID (라이브 폴링용)
    - `youtubeChannelId`: `UC...` 형식 (RSS 피드용)
 2. **`functions/index.js`** — `MEMBER_CATALOG` 배열 (`key`/`name`/`group`/
-   `broadcastId`). 스케줄 푸시(`MEMBER_NAMES`는 여기서 파생)와 서버 라이브
+   `broadcastId`). 스케줄·생일 푸시와 서버 라이브
    폴링([[chzzk-live-polling]])이 함께 쓴다. dart 카탈로그의 key/name/group/
    `chzzkBroadcastId`와 **정확히 일치**해야 한다. 수정 후 재배포 필요:
    `firebase deploy --only functions`.

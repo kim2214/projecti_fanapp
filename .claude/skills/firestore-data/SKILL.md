@@ -43,7 +43,7 @@ firebase deploy --only firestore:rules
 
 - `schedule_image` 필드가 **새로 들어오거나 바뀐 경우에만** 해당 그룹 토픽으로
   푸시를 보낸다 (다른 필드 변경/삭제는 무시).
-- 알림 문구는 `MEMBER_NAMES`(key→이름), `GROUP_LABELS`(그룹→라벨) 맵을 쓴다 —
+- 알림 문구는 `MEMBER_CATALOG`의 이름과 `GROUP_LABELS`(그룹→라벨) 맵을 쓴다 —
   dart 카탈로그와 동기화 필수.
 
 **생일 푸시**: `birthdayPush`(매일 KST 09:00 스케줄러)가 `honeyz`/`acaxia`
@@ -51,7 +51,9 @@ firebase deploy --only firestore:rules
 `functions/birthday_logic.js` 순수 함수(node --test 검증). 별도 토픽 없이
 **`schedule_{group}` 토픽·`schedule_channel` 채널을 재사용**하므로 클라 변경이
 필요 없고, 그룹 알림을 끈 사용자에게는 가지 않는다. 생일 데이터는 콘솔에서
-프로필 문서의 `birthday` 필드로 관리한다.
+프로필 문서의 `birthday` 필드로 관리한다. 발송이 실패하면 스케줄러가 재시도하고
+(`retryCount: 3`), `birthday_push_log/{group}_{key}`의 발송 날짜로 이미 보낸
+멤버는 건너뛴다(Admin 전용 컬렉션 — `firestore.rules` 추가 불필요).
 
 **팔로워 기록**: `recordFollowerCounts`(매일 KST 09:05)가 치지직 공식 Open API
 `GET https://openapi.chzzk.naver.com/open/v1/channels?channelIds=...`(요청당 20채널)로

@@ -470,6 +470,23 @@ void main() {
     });
   });
 
+  group('isStreamerStale (프로필 재조회 판정)', () {
+    final now = DateTime(2026, 11, 19, 12);
+
+    test('읽은 적이 없으면 다시 읽는다', () {
+      expect(GlobalController.isStreamerStale(null, now), isTrue);
+    });
+
+    test('streamerMaxAge 이내면 캐시를 그대로 쓰고, 넘기면 다시 읽는다', () {
+      final loadedAt = now.subtract(GlobalController.streamerMaxAge);
+      expect(GlobalController.isStreamerStale(loadedAt, now), isFalse);
+      expect(
+          GlobalController.isStreamerStale(
+              loadedAt.subtract(const Duration(seconds: 1)), now),
+          isTrue);
+    });
+  });
+
   group('isScheduleStale (스케줄 재조회 판정)', () {
     final now = DateTime(2026, 11, 19, 12);
 

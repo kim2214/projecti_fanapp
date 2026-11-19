@@ -35,9 +35,6 @@ const MEMBER_CATALOG = [
   { key: "ryushiho",     name: "류시호",         group: "acaxia", broadcastId: "f36320c432d9f06095ce2cfbbf681c26" },
 ];
 
-// 멤버 key → 표시 이름 (카탈로그에서 파생 — 스케줄 푸시가 사용)
-const MEMBER_NAMES = Object.fromEntries(MEMBER_CATALOG.map((m) => [m.key, m.name]));
-
 const GROUP_LABELS = {
   honeyz: "허니즈",
   acaxia: "아카시아",
@@ -356,8 +353,12 @@ exports.pollLiveStatus = onSchedule(
 //
 // 별도 토픽/채널 없이 기존 schedule_{group} 토픽·schedule_channel 채널을
 // 재사용한다 — 클라 변경 없이 현재 설치된 앱에도 즉시 동작하고, 그룹 알림을
-// 끈 사용자에게는 가지 않는다(설정 일관성). 하루 1회 스케줄(재시도 없음)이라
-// 별도 중복 방지 기록은 두지 않는다.
+// 끈 사용자에게는 가지 않는다(설정 일관성).
+//
+// 하루 1회라 일시 실패(Firestore 읽기·FCM 발송)가 그해 생일 알림 누락으로
+// 이어진다 — 실패하면 throw해 Cloud Scheduler가 재시도하게 하고, 멤버별 발송
+// 날짜를 birthday_push_log에 남겨 재시도 때 이미 보낸 멤버는 건너뛴다
+// (Admin 전용 컬렉션, 클라 규칙 불필요).
 // ─────────────────────────────────────────────────────────────────────────
 
 exports.birthdayPush = onSchedule(
@@ -368,9 +369,14 @@ exports.birthdayPush = onSchedule(
     memory: "256MiB",
     timeoutSeconds: 60,
     maxInstances: 1,
+    retryCount: 3,
+    minBackoffSeconds: 60,
   },
   async () => {
     const db = getFirestore();
+    const now = new Date();
+    const dateKey = kstDateKey(now);
+    let failures = 0;
 
     for (const group of ["honeyz", "acaxia"]) {
       // 스트리머 컬렉션 이름은 그룹 이름과 동일 (firestore-data skill 참고).
@@ -378,10 +384,18 @@ exports.birthdayPush = onSchedule(
       const profiles = {};
       snapshot.forEach((doc) => (profiles[doc.id] = doc.data()));
 
-      for (const key of birthdayKeysOn(new Date(), profiles)) {
-        // 카탈로그에 없는 key(탈퇴/오타 문서)는 발송하지 않는다.
-        const name = MEMBER_NAMES[key];
-        if (!name) continue;
+      for (const key of birthdayKeysOn(now, profiles)) {
+        // 카탈로그에 없는 key(탈퇴/오타 문서·다른 그룹 컬렉션에 남은 문서)는
+        // 발송하지 않는다.
+        const member = MEMBER_CATALOG.find((m) => m.key === key && m.group === group);
+        if (!member) continue;
+        const name = member.name;
+
+        const logRef = db.doc(`birthday_push_log/${group}_${key}`);
+        if ((await logRef.get()).data()?.lastDate === dateKey) {
+          console.log(`birthday push skipped (already sent): ${group}/${key}`);
+          continue;
+        }
 
         try {
           await getMessaging().send({
@@ -398,11 +412,16 @@ exports.birthdayPush = onSchedule(
             },
           });
           console.log(`birthday push sent: ${group}/${key}`);
+          await logRef.set({ lastDate: dateKey, sentAt: FieldValue.serverTimestamp() });
         } catch (err) {
           console.error(`birthday push failed: ${group}/${key}`, err);
+          failures++;
         }
       }
     }
+
+    // 한 건이라도 실패하면 재시도를 건다 — 이미 보낸 멤버는 위 기록으로 건너뛴다.
+    if (failures > 0) throw new Error(`birthday push 실패 ${failures}건`);
   }
 );
 
