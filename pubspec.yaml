@@ -40,10 +40,10 @@ dependencies:
   cloud_firestore: ^7.2.0
   firebase_messaging: ^17.1.0
   firebase_crashlytics: ^6.1.0
-  # 26.08.28 20.1.0 → 22.3.0. 이 앱이 쓰는 API(initialize/createNotificationChannel/
-  # show)는 그대로이고, breaking 항목(최소 Flutter 3.38·Android API 24·compileSdk 36)은
-  # 모두 충족. analyze·실기기 실행으로 확인했다.
-  flutter_local_notifications: ^22.3.3
+  # 26.11.19 22.3.3 → 23.0.3. 이 앱이 쓰는 API(initialize/createNotificationChannel/
+  # show)는 그대로다. breaking 항목(최소 Flutter 3.44·compileSdk 37·AGP 9.1)을 맞추려고
+  # 빌드 도구를 함께 올렸다(AGP 9.1.1·Gradle 9.3.1·Kotlin 2.3.20).
+  flutter_local_notifications: ^23.0.3
   app_settings: ^9.0.1
   extended_image: ^10.0.0
   url_launcher: ^6.3.3

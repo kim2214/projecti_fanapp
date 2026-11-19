@@ -54,11 +54,11 @@ gradle.taskGraph.whenReady { graph ->
 
 android {
     namespace "com.devkim.honeyz_fan_app"
-    // Play 정책: Android 16(API 36) 타겟 요구. Flutter 3.35 기본값(35)을 override.
-    compileSdkVersion 36
-    // Firebase 등 플러그인들이 최소 NDK 27.0.12077973을 요구한다. NDK는 하위 호환이라
-    // 설치돼 있는 상위 버전(27.2.x)으로 지정해 요구치를 충족한다.
-    ndkVersion "27.2.12479018"
+    // flutter_local_notifications 23(androidx.core 1.19)이 compileSdk 37을 요구한다.
+    // targetSdk(런타임 동작)는 Play 정책 기준인 36 그대로 둔다.
+    compileSdkVersion 37
+    // 플러그인 중 가장 높은 요구치(Flutter 3.44 기본값)에 맞춘다. NDK는 하위 호환.
+    ndkVersion "28.2.13676358"
 
     compileOptions {
         coreLibraryDesugaringEnabled true
