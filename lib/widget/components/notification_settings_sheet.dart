@@ -17,6 +17,9 @@ void showNotificationSettingsSheet(BuildContext context) {
     // 맨 아래 "배터리 설정 열기"가 넘쳐 눌리지 않았다. 내용만큼 올리고,
     // 그래도 넘치면 스크롤한다.
     isScrollControlled: true,
+    // 큰 글꼴 + 안내 배너로 내용이 화면보다 길어지면 시트가 상태 표시줄까지
+    // 올라가 제목이 시계와 겹쳤다 — 상태 표시줄 아래에서 멈추게 한다.
+    useSafeArea: true,
     backgroundColor: context.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
