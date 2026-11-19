@@ -439,6 +439,37 @@ void main() {
     });
   });
 
+  group('isServerBackingOff (429 백오프는 서버 중단이 아님)', () {
+    final now = DateTime.utc(2026, 11, 19, 3);
+    int msFromNow(Duration d) => now.add(d).millisecondsSinceEpoch;
+
+    test('백오프 중이면 true', () {
+      expect(
+          GlobalController.isServerBackingOff(
+              msFromNow(const Duration(minutes: 4)), now),
+          isTrue);
+    });
+
+    test('백오프가 끝난 직후에도 첫 폴링이 쓸 때까지는 true', () {
+      expect(
+          GlobalController.isServerBackingOff(
+              msFromNow(const Duration(minutes: -4)), now),
+          isTrue);
+    });
+
+    test('백오프가 끝나고도 한참 갱신이 없으면 false (서버 중단)', () {
+      expect(
+          GlobalController.isServerBackingOff(
+              msFromNow(const Duration(minutes: -6)), now),
+          isFalse);
+    });
+
+    test('필드가 없거나 숫자가 아니면 false', () {
+      expect(GlobalController.isServerBackingOff(null, now), isFalse);
+      expect(GlobalController.isServerBackingOff('soon', now), isFalse);
+    });
+  });
+
   group('isScheduleStale (스케줄 재조회 판정)', () {
     final now = DateTime(2026, 11, 19, 12);
 

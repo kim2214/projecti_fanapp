@@ -61,9 +61,16 @@ async function handleScheduleWrite(group, event) {
   // schedule_image가 직전과 동일하면(다른 필드만 수정/재저장) 중복 발송 방지
   if (beforeData && beforeData.schedule_image === url) return;
 
+  // 카탈로그에 없는 문서(탈퇴 멤버·그룹 단위로 남은 옛 문서)는 발송하지 않는다 —
+  // 앱은 카탈로그 멤버의 스케줄만 보여주므로 알림을 눌러도 볼 것이 없다.
   const memberKey = event.params.memberKey;
-  const memberName = MEMBER_NAMES[memberKey] || "멤버";
-  const groupLabel = GROUP_LABELS[group] || "";
+  const member = MEMBER_CATALOG.find((m) => m.key === memberKey && m.group === group);
+  if (!member) {
+    console.warn(`schedule push skipped (unknown member): group=${group} member=${memberKey}`);
+    return;
+  }
+  const memberName = member.name;
+  const groupLabel = GROUP_LABELS[group];
 
   // 멱등 가드: Firestore 트리거는 at-least-once라 같은 쓰기 이벤트가 재전달될 수
   // 있고, 그때 before/after 비교만으로는 중복 발송을 못 막는다. 마지막으로 발송한

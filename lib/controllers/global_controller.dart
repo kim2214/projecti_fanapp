@@ -214,8 +214,9 @@ class GlobalController extends GetxController {
 
   /// 서버 폴링(`pollLiveStatus`)이 멈춘 것으로 관측됐는지.
   ///
-  /// 집계 문서가 없거나 stale일 때만 true로 둔다 — 조회 실패(오프라인 등)는
-  /// 서버 상태를 알 수 없으므로 건드리지 않는다.
+  /// 집계 문서가 없거나 stale일 때만 true로 둔다 — 조회 실패·오프라인 캐시
+  /// 응답은 서버 상태를 알 수 없으므로 건드리지 않고, 429 백오프로 쉬는 중이면
+  /// ([isServerBackingOff]) 중단으로 보지 않는다.
   ///
   /// **추론**: 푸시를 보내는 함수들(라이브·스케줄·생일)은 폴링과 같은 Functions
   /// 배포에 있으므로, 폴링이 멈췄으면 푸시도 오지 않는다고 본다. 알림 설정
@@ -597,9 +598,14 @@ class GlobalController extends GetxController {
       }
 
       // 서버 폴링이 멈췄으면(문서가 오래됨) 신선한 직접 폴링으로 폴백한다.
-      if (isAggregateStale(
-          data['updatedAt'], DateTime.now(), serverStatusMaxAge)) {
-        pushServiceDown.value = true;
+      final now = DateTime.now();
+      if (isAggregateStale(data['updatedAt'], now, serverStatusMaxAge)) {
+        // 오프라인에서 로컬 캐시로 받은 문서는 서버 상태를 말해주지 않는다.
+        // 429 백오프로 잠시 쉬는 중인 것도 중단이 아니다(스케줄·생일 푸시는 정상).
+        if (!snapshot.metadata.isFromCache) {
+          pushServiceDown.value =
+              !isServerBackingOff(data['rateLimitedUntil'], now);
+        }
         return false;
       }
       pushServiceDown.value = false;
@@ -608,7 +614,6 @@ class GlobalController extends GetxController {
           (data['members'] as Map?)?.cast<String, dynamic>() ?? const {};
       final caches = liveCachesFromAggregate(members);
       if (caches == null) return false;
-      final now = DateTime.now();
       for (final group in Group.values) {
         liveStatusOf(group).value = caches[group]!;
         // 집계에 없는 멤버도 "비방송"으로 확인된 것이다.
@@ -646,6 +651,17 @@ class GlobalController extends GetxController {
       Object? updatedAt, DateTime now, Duration maxAge) {
     return updatedAt is Timestamp &&
         now.difference(updatedAt.toDate()) > maxAge;
+  }
+
+  /// 서버가 치지직 429/403 백오프로 폴링을 쉬는 중인지 (`rateLimitedUntil`,
+  /// epoch ms). 백오프 동안 집계 문서는 갱신되지 않아 오래돼 보이지만 서버는
+  /// 살아 있다. 백오프가 끝난 뒤 첫 폴링이 문서를 다시 쓸 때까지의 여유로
+  /// [serverStatusMaxAge]를 더 본다. (순수 판정 — 테스트 대상)
+  @visibleForTesting
+  static bool isServerBackingOff(Object? rateLimitedUntil, DateTime now) {
+    if (rateLimitedUntil is! num) return false;
+    return now.millisecondsSinceEpoch <
+        rateLimitedUntil + serverStatusMaxAge.inMilliseconds;
   }
 
   /// 서버 집계 members를 그룹별 캐시 값으로 변환한다. 어느 한 그룹이라도 채우지
