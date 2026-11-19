@@ -34,17 +34,17 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
-  go_router: ^17.5.0
-  firebase_core: ^4.15.2
-  cloud_firestore: ^6.10.2
-  firebase_messaging: ^16.7.1
-  firebase_crashlytics: ^5.4.1
+  cupertino_icons: ^2.0.0
+  go_router: ^18.1.4
+  firebase_core: ^5.2.0
+  cloud_firestore: ^7.2.0
+  firebase_messaging: ^17.1.0
+  firebase_crashlytics: ^6.1.0
   # 26.08.28 20.1.0 → 22.3.0. 이 앱이 쓰는 API(initialize/createNotificationChannel/
   # show)는 그대로이고, breaking 항목(최소 Flutter 3.38·Android API 24·compileSdk 36)은
   # 모두 충족. analyze·실기기 실행으로 확인했다.
   flutter_local_notifications: ^22.3.3
-  app_settings: ^6.0.0
+  app_settings: ^9.0.1
   extended_image: ^10.0.0
   url_launcher: ^6.3.3
   http: ^1.2.2
@@ -55,13 +55,21 @@ dependencies:
   in_app_review: ^2.0.12
 
   # YouTube RSS 피드 파싱
-  xml: ^6.5.0
-  home_widget: ^0.9.4
+  xml: ^7.0.1
+  home_widget: ^0.10.0
   package_info_plus: ^10.2.2
 
   # 스케줄 이미지 공유(시스템 공유 시트)·갤러리 저장
   share_plus: ^13.3.1
-  gal: ^2.3.3
+  gal: ^3.0.1
+
+# 26.11.19 jni 1.2.0은 path_provider_android 2.3.1(생성된 JNI 바인딩)과 맞지 않아
+# 임시 폴더 조회가 ClassNotFoundException("Landroid/content/Context;")으로 실패한다
+# — 스케줄 이미지 저장·공유와 이미지 디스크 캐시가 깨진다(실기기 확인). pubspec.lock이
+# 커밋되지 않으므로 여기서 고정한다. path_provider_android가 jni 1.2에 맞춰 올라오면 제거.
+dependency_overrides:
+  jni: 1.1.1
+  jni_flutter: 1.0.4+1
 
 dev_dependencies:
   flutter_test:

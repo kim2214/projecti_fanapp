@@ -52,7 +52,7 @@ Future<void> saveScheduleImage(String url, String memberName) async {
   }
   try {
     // Android 10 이상·iOS 14 이상은 추가 전용 저장이라 보통 권한 창이 뜨지 않는다.
-    if (!await Gal.hasAccess() && !await Gal.requestAccess()) {
+    if (!await Gal.hasPermission() && !await Gal.requestPermission()) {
       showAppSnackBar('사진 저장 권한이 없어 저장하지 못했어요');
       return;
     }
