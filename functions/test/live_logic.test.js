@@ -292,3 +292,32 @@ test("parseLiveImageUrl: https 문자열만 통과, 그 외(형식 변경)는 nu
   assert.equal(parseLiveImageUrl({ liveImageUrl: 123 }), null);
   assert.equal(parseLiveImageUrl(undefined), null);
 });
+
+test("nextMemberState: 같은 방송이 끊겼다 이어지면 최고 시청자를 이어받는다", () => {
+  const live = { status: "OPEN", openDate: "d1", lastNotifiedOpenDate: "d1", peakConcurrentUserCount: 500 };
+  // 끊김: CLOSE 관측 → 세션이 한 번 기록되고, 끝난 세션 정보가 상태에 남는다.
+  const closed = nextMemberState(live, { ok: true, status: "CLOSE", openDate: null });
+  assert.equal(closed.ended.peakConcurrentUserCount, 500);
+  assert.equal(closed.next.endedOpenDate, "d1");
+  assert.equal(closed.next.endedPeak, 500);
+  // CLOSE가 이어져도 유지된다.
+  const stillClosed = nextMemberState(closed.next, { ok: true, status: "CLOSE", openDate: null });
+  assert.equal(stillClosed.next.endedPeak, 500);
+  // 같은 openDate로 재개: 0부터가 아니라 500에서 이어 센다. 알림도 다시 가지 않는다.
+  const resumed = nextMemberState(stillClosed.next, {
+    ok: true, status: "OPEN", openDate: "d1", concurrentUserCount: 120,
+  });
+  assert.equal(resumed.next.peakConcurrentUserCount, 500);
+  assert.equal(resumed.notify, false);
+  // 실제 종료 기록에는 끊기기 전 최고치가 남는다.
+  const ended = nextMemberState(resumed.next, { ok: true, status: "CLOSE", openDate: null });
+  assert.equal(ended.ended.peakConcurrentUserCount, 500);
+});
+
+test("nextMemberState: 다른 방송(openDate가 다름)은 최고 시청자를 새로 센다", () => {
+  const closed = { status: "CLOSE", endedOpenDate: "d1", endedPeak: 500 };
+  const { next } = nextMemberState(closed, {
+    ok: true, status: "OPEN", openDate: "d2", concurrentUserCount: 30,
+  });
+  assert.equal(next.peakConcurrentUserCount, 30);
+});

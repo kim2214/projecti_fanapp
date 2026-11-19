@@ -34,6 +34,10 @@ function parseLiveContent(content) {
  *   openDate가 없던 세션은 식별/중복 방지가 불가능해 기록하지 않는다.
  * - `peakConcurrentUserCount`: 같은 세션(openDate) 동안의 최고 동시 시청자.
  *   새 세션이면 리셋, 종료 기록에 쓰인다.
+ * - `endedOpenDate`/`endedPeak`: 직전에 끝난 세션의 openDate와 최고 시청자.
+ *   치지직이 방송 중에 잠깐 CLOSE를 돌려줬다가 같은 openDate로 다시 OPEN이
+ *   되면(끊김) 최고 시청자를 0부터 다시 세지 않고 이어받는다. 끊김 시점에 세션이
+ *   한 번 기록되지만, 실제 종료 때 같은 문서(openDate 파생 ID)를 덮어쓴다.
  */
 function nextMemberState(prev, result) {
   if (!result.ok) return { next: prev, notify: false, ended: null };
@@ -58,6 +62,15 @@ function nextMemberState(prev, result) {
         }
       : null;
 
+  // 방금 끝난 세션이 있으면 그 값을, 아니면 직전 값을 이어받는다(CLOSE가 이어지는 동안).
+  const endedOpenDate = ended ? ended.openDate : (prev.endedOpenDate ?? null);
+  const endedPeak = ended ? ended.peakConcurrentUserCount : (prev.endedPeak ?? null);
+  // 같은 방송이 끊겼다 이어진 것이면 끊기기 전 최고 시청자에서 이어 센다.
+  const resumedPeak =
+    isLive && !sameSession && result.openDate != null && endedOpenDate === result.openDate
+      ? (endedPeak ?? 0)
+      : 0;
+
   return {
     next: {
       status: result.status,
@@ -71,10 +84,12 @@ function nextMemberState(prev, result) {
       liveImageUrl: sameSession ? (prev.liveImageUrl ?? null) : null,
       peakConcurrentUserCount: isLive
         ? Math.max(
-            sameSession ? (prev.peakConcurrentUserCount ?? 0) : 0,
+            sameSession ? (prev.peakConcurrentUserCount ?? 0) : resumedPeak,
             result.concurrentUserCount ?? 0
           )
         : null,
+      endedOpenDate,
+      endedPeak,
     },
     notify: Boolean(isLive && !already && result.openDate != null),
     ended,
