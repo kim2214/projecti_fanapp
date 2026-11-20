@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 적응형 아이콘 (Android 8+). 그 아래 버전은 mipmap-*/projecti_fanapp_icon.png를 쓴다.
+     전경은 assets/fanapp_logo.png의 흰 바탕을 투명하게 뺀 것으로, 어떤 마스크에도
+     잘리지 않게 안전 영역(지름 66dp) 안에 넣었다. monochrome은 Android 13+ 테마 아이콘용
+     (알파만 쓰이므로 전경을 그대로 쓴다). -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/launcher_icon_background" />
+    <foreground android:drawable="@mipmap/projecti_fanapp_icon_foreground" />
+    <monochrome android:drawable="@mipmap/projecti_fanapp_icon_foreground" />
+</adaptive-icon>

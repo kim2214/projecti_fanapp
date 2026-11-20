@@ -6,4 +6,6 @@
     <color name="widget_text_sub">#FF757575</color>
     <color name="widget_text_faint">#FF9E9E9E</color>
     <color name="widget_live">#FFFF3B30</color>
+    <!-- 런처 적응형 아이콘 배경 — 다크 모드에서도 흰색 유지 (values-night에 두지 않는다) -->
+    <color name="launcher_icon_background">#FFFFFFFF</color>
 </resources>
