@@ -60,7 +60,8 @@ class HomeBirthdaySection extends StatelessWidget {
   Widget _buildBirthdayCard(BuildContext context, BirthdayEntry entry,
       Color themeColor, Color themeColorDark) {
     return Container(
-      width: 230,
+      // 글꼴을 키워도 이름이 잘리지 않게 폭도 함께 키운다.
+      width: homeRowHeight(context, 230),
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

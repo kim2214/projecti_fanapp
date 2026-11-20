@@ -76,7 +76,8 @@ class HomeFavoritesSection extends StatelessWidget {
         onTap: () => context
             .push('/streamerDetail?group=${member.group.id}&key=${member.key}'),
         child: SizedBox(
-          width: 76,
+          // 글꼴을 키워도 이름이 잘리지 않게 폭도 함께 키운다.
+          width: homeRowHeight(context, 76),
           child: Column(
             children: [
               Stack(

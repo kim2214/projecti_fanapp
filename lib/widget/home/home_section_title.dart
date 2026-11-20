@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 
-/// 가로 스크롤 카드 행의 높이. 고정 높이는 시스템 글꼴을 키우면 카드 안의
-/// 다단 텍스트가 넘치므로, 글꼴 배율(최대 1.6배까지)에 맞춰 함께 키운다.
+/// 가로 스크롤 카드 행의 높이(와 카드 폭). 고정 크기는 시스템 글꼴을 키우면 카드
+/// 안의 다단 텍스트가 넘치거나 이름이 잘리므로, 글꼴 배율(최대 1.6배까지)에 맞춰
+/// 함께 키운다.
 double homeRowHeight(BuildContext context, double base) =>
     base * MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
 

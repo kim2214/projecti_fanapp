@@ -292,7 +292,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '이번 주 멤버들의 방송 일정 확인하기',
+                      '멤버들의 이번 주 방송 일정',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
