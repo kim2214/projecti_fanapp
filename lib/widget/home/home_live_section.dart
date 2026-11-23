@@ -112,12 +112,14 @@ class HomeLiveSection extends StatelessWidget {
       );
     }
 
-    // 카드 폭 270 - 패딩 32 = 238 → 16:9 썸네일 134 + 간격 12. 한 명이라도
+    // 카드 폭 - 패딩 32 → 16:9 썸네일 + 간격 12 (기본 폭 270이면 146). 한 명이라도
     // 썸네일이 있으면 줄 전체를 그만큼 키운다 (가로 스크롤 줄은 높이가 하나).
+    final cardWidth = _liveCardWidth(context);
     final hasThumbnail =
         liveMembers.any((m) => liveStatus[m.key]?.thumbnailUrl() != null);
     final cards = SizedBox(
-      height: homeRowHeight(context, 200) + (hasThumbnail ? 146 : 0),
+      height: homeRowHeight(context, 200) +
+          (hasThumbnail ? (cardWidth - 32) * 9 / 16 + 12 : 0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -155,6 +157,13 @@ class HomeLiveSection extends StatelessWidget {
     );
   }
 
+  /// 라이브 카드 폭. 글꼴을 키우면 이름이 별·LIVE 배지에 밀려 잘리므로 글꼴 배율에
+  /// 맞춰 넓히되, 좁은 화면에서 카드가 화면보다 넓어지지 않게 막는다.
+  static double _liveCardWidth(BuildContext context) =>
+      homeRowHeight(context, 270)
+          .clamp(270.0, MediaQuery.sizeOf(context).width - 56)
+          .toDouble();
+
   Widget _buildLiveCard(
     BuildContext context, {
     required LiveCheckModel status,
@@ -171,7 +180,7 @@ class HomeLiveSection extends StatelessWidget {
         child: GestureDetector(
       onTap: () => openChzzkLive(broadcastId),
       child: Container(
-        width: 270,
+        width: _liveCardWidth(context),
         margin: const EdgeInsets.only(right: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

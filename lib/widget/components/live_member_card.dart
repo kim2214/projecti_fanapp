@@ -93,23 +93,31 @@ class LiveMemberCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          _buildGroupBadge(context, entry.group, groupColor),
                         ],
                       ),
-                      if (status.liveCategoryValue?.isNotEmpty == true) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          status.liveCategoryValue!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: context.textFaint,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                      const SizedBox(height: 4),
+                      // 그룹 배지는 이름과 같은 줄에 두면 글꼴을 키웠을 때 이름이
+                      // 잘려서 카테고리 줄에 둔다.
+                      Row(
+                        children: [
+                          _buildGroupBadge(context, entry.group, groupColor),
+                          if (status.liveCategoryValue?.isNotEmpty == true) ...[
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                status.liveCategoryValue!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: context.textFaint,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),

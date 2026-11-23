@@ -69,8 +69,7 @@ class StreamerCard extends StatelessWidget {
               offset: const Offset(0, 6),
             ),
           ],
-          border:
-              isLive ? Border.all(color: AppColors.live, width: 2.5) : null,
+          border: isLive ? Border.all(color: AppColors.live, width: 2.5) : null,
         ),
         child: Stack(
           children: [
@@ -96,9 +95,25 @@ class StreamerCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: Image.asset(
-                        Member.profileAssetPathOf(group, assetName),
-                        fit: BoxFit.cover,
+                      // 방송 제목 띠는 사진 영역 안 아래쪽에 붙인다 — 카드 바닥 기준
+                      // 고정 위치로 띄우면 글꼴을 키웠을 때 이름을 덮는다.
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            Member.profileAssetPathOf(group, assetName),
+                            fit: BoxFit.cover,
+                          ),
+                          if (isLive &&
+                              status.liveTitle != null &&
+                              status.liveTitle!.isNotEmpty)
+                            Positioned(
+                              left: 8,
+                              right: 8,
+                              bottom: 8,
+                              child: _buildLiveTitle(status.liveTitle!),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -117,15 +132,28 @@ class StreamerCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        memberName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: context.textMain,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // LIVE 배지는 이름 줄이 아니라 그룹 줄에 둔다 — 이름과 같은 줄이면
+                      // 글꼴을 키웠을 때 이름이 잘린다.
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              memberName,
+                              group.label,
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: context.textMain,
+                                fontSize: 12,
+                                color: themeColorDark,
+                                fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -164,49 +192,11 @@ class StreamerCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        group.label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: themeColorDark,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            // 라이브 중일 때 방송 제목 오버레이
-            if (isLive &&
-                status.liveTitle != null &&
-                status.liveTitle!.isNotEmpty)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 65,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(180),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    status.liveTitle!,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
             // 생일 임박 배지 (7일 이내)
             if (showBirthday)
               Positioned(
@@ -218,6 +208,28 @@ class StreamerCard extends StatelessWidget {
         ),
       ),
     ));
+  }
+
+  /// 라이브 중일 때 사진 아래쪽에 겹쳐 보여 주는 방송 제목 띠.
+  Widget _buildLiveTitle(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(180),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 10,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+      ),
+    );
   }
 
   Widget _buildFavoriteButton() {
