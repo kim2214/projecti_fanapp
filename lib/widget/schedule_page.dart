@@ -5,6 +5,7 @@ import 'package:projecti_fan_app/theme/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:projecti_fan_app/controllers/global_controller.dart';
+import 'package:projecti_fan_app/utils/date_label.dart';
 import 'package:projecti_fan_app/widget/components/tap_semantics.dart';
 import 'package:projecti_fan_app/widget/components/status_message.dart';
 
@@ -90,6 +91,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
                           padding: const EdgeInsets.only(bottom: 16),
                           child: ScheduleCard(
                             imageURL: scheduleUrls[index],
+                            registeredAt: globalController
+                                .schedulesOf(group)[members[index].key]
+                                ?.updatedAt,
                             memberName: members[index].name,
                             themeColor: themeColor,
                             themeColorDark: AppColors.groupDark(group),
@@ -266,6 +270,9 @@ class _SchedulePageWidgetState extends State<SchedulePageWidget>
 
 class ScheduleCard extends StatelessWidget {
   final String imageURL;
+
+  /// 스케줄 이미지 등록 시각 — 없으면(기록 전에 등록된 스케줄) 날짜 없이 표시한다.
+  final DateTime? registeredAt;
   final String memberName;
   final Color themeColor;
   final Color themeColorDark;
@@ -273,10 +280,21 @@ class ScheduleCard extends StatelessWidget {
   const ScheduleCard({
     super.key,
     required this.imageURL,
+    this.registeredAt,
     required this.memberName,
     required this.themeColor,
     required this.themeColorDark,
   });
+
+  /// 카드 헤더의 상태 문구. 등록 시각이 있으면 "11/18 등록"처럼 날짜를 보여 줘
+  /// 지난주 스케줄이 이번 주 것처럼 읽히지 않게 한다. [now]는 테스트용 주입.
+  @visibleForTesting
+  static String statusLabel(
+      {required bool hasSchedule, DateTime? registeredAt, DateTime? now}) {
+    if (!hasSchedule) return '스케줄 등록 전';
+    if (registeredAt == null) return '스케줄 등록됨';
+    return '${shortDateLabel(registeredAt, now: now)} 등록';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +378,9 @@ class ScheduleCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          hasSchedule ? '스케줄 등록됨' : '스케줄 등록 전',
+                          statusLabel(
+                              hasSchedule: hasSchedule,
+                              registeredAt: registeredAt),
                           style: TextStyle(
                             fontSize: 11,
                             color: onHeader.withAlpha(180),

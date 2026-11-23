@@ -42,7 +42,8 @@ const GROUP_LABELS = {
 
 /**
  * 스케줄 문서 쓰기 이벤트를 받아, schedule_image가 실제로 새로 들어왔거나
- * 바뀐 경우에만 해당 그룹 토픽으로 푸시를 보낸다.
+ * 바뀐 경우에만 등록 시각(schedule_updated_at)을 남기고 해당 그룹 토픽으로
+ * 푸시를 보낸다.
  */
 async function handleScheduleWrite(group, event) {
   const beforeData = event.data.before.exists ? event.data.before.data() : null;
@@ -68,6 +69,15 @@ async function handleScheduleWrite(group, event) {
   }
   const memberName = member.name;
   const groupLabel = GROUP_LABELS[group];
+
+  // 등록 시각을 문서에 남긴다 — 앱이 카드에 "11/18 등록"으로 보여 줘 지난주
+  // 스케줄이 이번 주 것처럼 읽히지 않게 한다. 이 쓰기로 트리거가 다시 불리지만
+  // schedule_image가 같아 위에서 바로 끝난다. 실패해도 푸시는 보낸다.
+  try {
+    await event.data.after.ref.update({ schedule_updated_at: FieldValue.serverTimestamp() });
+  } catch (err) {
+    console.error(`schedule timestamp failed: group=${group} member=${memberKey}`, err);
+  }
 
   // 멱등 가드: Firestore 트리거는 at-least-once라 같은 쓰기 이벤트가 재전달될 수
   // 있고, 그때 before/after 비교만으로는 중복 발송을 못 막는다. 마지막으로 발송한

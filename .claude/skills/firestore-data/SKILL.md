@@ -17,7 +17,7 @@ Admin SDK(Cloud Functions)로만 하며, `firestore.rules`는 클라이언트 �
 |---|---|---|
 | `honeyz/{key}` | 멤버 key | 허니즈 멤버 프로필 (생일, SNS 등) |
 | `acaxia/{key}` | 멤버 key | 아카시아 멤버 프로필 |
-| `schedule/{key}` | 멤버 key | 허니즈 주간 스케줄 (`schedule_image` 필드) |
+| `schedule/{key}` | 멤버 key | 허니즈 주간 스케줄 (`schedule_image` 필드. `schedule_updated_at`은 이미지가 바뀔 때 서버 트리거가 남기는 등록 시각 — 콘솔에서 직접 넣지 않는다. 앱 카드에 "11/18 등록"으로 표시) |
 | `schedule_acaxia/{key}` | 멤버 key | 아카시아 주간 스케줄 |
 | `live_status/current` | 고정 문서 | 서버 폴링 라이브 집계(멤버별 `liveImageUrl` 썸네일 템플릿 포함) + `lastSessions`(멤버별 마지막 세션 요약, 48h 보존 — 홈 "오늘 방송했어요") ([[chzzk-live-polling]]) |
 | `follower_history/{key}/daily/{yyyyMMdd}` | KST 날짜 | 치지직 팔로워 수 일별 기록 (`followerCount`, `recordedAt`). 서버 `recordFollowerCounts`(매일 KST 09:05, 공식 Open API Client 인증, Secret `CHZZK_CLIENT_ID`/`CHZZK_CLIENT_SECRET`)가 기록, 클라 멤버 프로필 "팔로워" 섹션이 `recordedAt` 내림차순 30개를 읽음 (`FollowerPointModel`). **문서 ID(`__name__`) 내림차순 정렬은 복합 인덱스가 필요해 실패하므로 쓰지 않는다** — 하위 컬렉션 정렬은 단일 필드(자동 인덱스)로만 하거나 `firestore.indexes.json`에 인덱스를 추가·배포 |
@@ -43,6 +43,8 @@ firebase deploy --only firestore:rules
 
 - `schedule_image` 필드가 **새로 들어오거나 바뀐 경우에만** 해당 그룹 토픽으로
   푸시를 보낸다 (다른 필드 변경/삭제는 무시).
+- 같은 조건에서 문서에 `schedule_updated_at`(서버 시각)을 먼저 남긴다. 이 쓰기로
+  트리거가 한 번 더 불리지만 `schedule_image`가 같아 바로 끝난다.
 - 알림 문구는 `MEMBER_CATALOG`의 이름과 `GROUP_LABELS`(그룹→라벨) 맵을 쓴다 —
   dart 카탈로그와 동기화 필수.
 
